@@ -30,6 +30,33 @@ app.get("/api/teams", async (req, res) => {
   }
 });
 
+app.get("/api/matches", async (req, res) => {
+  try {
+    const { group } = req.query;
+
+    const matches = await prisma.match.findMany({
+      where: group
+        ? {
+            OR: [
+              { homeTeam: { group } },
+              { awayTeam: { group } },
+            ],
+          }
+        : {},
+      include: {
+        homeTeam: true,
+        awayTeam: true,
+        stadium: true,
+      },
+    });
+
+    res.json(matches);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch matches" });
+  }
+});
+
 
 const PORT = process.env.PORT || 5050;
 
