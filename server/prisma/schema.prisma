@@ -36,6 +36,8 @@ model Match {
   homeScore  Int?
   awayScore  Int?
 
+  prediction Prediction[]
+
   homeTeam Team    @relation("HomeTeam", fields: [homeTeamId], references: [id])
   awayTeam Team    @relation("AwayTeam", fields: [awayTeamId], references: [id])
   stadium  Stadium @relation(fields: [stadiumId], references: [id])
@@ -46,4 +48,20 @@ model User {
   email     String   @unique
   password  String
   createdAt DateTime @default(now())
+
+  prediction Prediction[]
+}
+
+model Prediction {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  matchId   Int
+  homeScore Int
+  awayScore Int
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  match Match @relation(fields: [matchId], references: [id])
+
+  @@unique([userId, matchId]) // one prediction per user per match
 }

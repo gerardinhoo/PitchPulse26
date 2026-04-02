@@ -2,18 +2,18 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { prisma } from "../lib/prisma.js";
-// import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import authRoutes from "../routes/auth.js";
+import predictionsRoutes from "../routes/predictions.js";
 
 
 dotenv.config()
 
 const app = express();
-// const adapter = new PrismaBetterSqlite3({ url: "file:./dev.db" });
 
 app.use(cors());
 app.use(express.json())
 app.use("/api/auth", authRoutes);
+app.use("/api/predictions", predictionsRoutes);
 
 
 app.get("/api/health", (req, res) => {
