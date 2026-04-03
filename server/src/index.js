@@ -5,6 +5,7 @@ import { prisma } from "../lib/prisma.js";
 import authRoutes from "../routes/auth.js";
 import predictionsRoutes from "../routes/predictions.js";
 import leaderboardRoutes from "../routes/leaderboard.js";
+import adminRoutes from "../routes/admin.js";
 
 
 dotenv.config()
@@ -16,6 +17,7 @@ app.use(express.json())
 app.use("/api/auth", authRoutes);
 app.use("/api/predictions", predictionsRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/api/health", (req, res) => {
     res.json({ status: "API is running!"});
