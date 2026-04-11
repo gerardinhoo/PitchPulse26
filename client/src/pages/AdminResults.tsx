@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../api/axios";
 import MatchCard from "../components/MatchCard";
 import ScoreInput from "../components/ScoreInput";
+import Spinner from "../components/Spinner";
 
 type Match = {
   id: number;
@@ -81,13 +82,7 @@ export default function AdminResults() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-6 h-6 border-2 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (loading) return <Spinner />;
 
   const unplayed = matches.filter((m) => m.homeScore === null);
   const played = matches.filter((m) => m.homeScore !== null);

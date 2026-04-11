@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../api/axios";
 import MatchCard from "../components/MatchCard";
 import ScoreInput from "../components/ScoreInput";
+import Spinner from "../components/Spinner";
 
 type Match = {
   id: number;
@@ -83,18 +84,20 @@ export default function Matches() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-6 h-6 border-2 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (loading) return <Spinner />;
 
   return (
     <div className="animate-fade-in">
       <h1 className="text-2xl font-bold mb-6">Matches</h1>
 
+      {matches.length === 0 ? (
+        <div className="card text-center py-12">
+          <p className="text-3xl mb-3">🏟️</p>
+          <p className="text-[var(--color-text-muted)]">
+            No matches scheduled yet. Check back soon!
+          </p>
+        </div>
+      ) : (
       <div className="space-y-3 stagger-children">
         {matches.map((match) => {
           const pred = predictions[match.id];
@@ -128,6 +131,7 @@ export default function Matches() {
           );
         })}
       </div>
+      )}
     </div>
   );
 }
