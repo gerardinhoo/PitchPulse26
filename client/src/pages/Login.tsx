@@ -27,21 +27,22 @@ export default function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center h-screen">
+    <div className="flex items-center justify-center min-h-[60vh] animate-fade-in">
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-lg shadow-md w-80"
+        className="card w-full max-w-sm p-8"
       >
-        <h2 className="text-xl font-bold mb-4">Login</h2>
+        <h2 className="text-2xl font-bold mb-1">Welcome back</h2>
+        <p className="text-sm text-[var(--color-text-muted)] mb-6">Sign in to your account</p>
 
         {error && (
-          <p className="text-red-500 text-sm mb-2">{error}</p>
+          <p className="text-red-400 text-sm mb-3 bg-red-400/10 rounded-md px-3 py-2">{error}</p>
         )}
 
         <input
           type="email"
           placeholder="Email"
-          className="w-full mb-3 p-2 border rounded"
+          className="w-full mb-3"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -49,7 +50,7 @@ export default function Login() {
         <input
           type="password"
           placeholder="Password"
-          className="w-full mb-3 p-2 border rounded"
+          className="w-full mb-4"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
@@ -57,15 +58,15 @@ export default function Login() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:opacity-50"
+          className="w-full bg-[var(--color-accent)] text-white py-2.5 rounded-lg font-medium hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-50"
         >
-          {submitting ? "Logging in..." : "Login"}
+          {submitting ? "Signing in..." : "Sign In"}
         </button>
 
-        <p className="text-sm mt-3">
+        <p className="text-sm text-[var(--color-text-muted)] mt-4 text-center">
           No account?{" "}
-          <Link to="/register" className="text-blue-500 hover:underline">
-            Register
+          <Link to="/register" className="text-[var(--color-accent)] hover:underline">
+            Sign up
           </Link>
         </p>
       </form>

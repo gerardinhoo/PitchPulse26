@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
+import MatchCard from "../components/MatchCard";
+import ScoreInput from "../components/ScoreInput";
 
 type Match = {
   id: number;
@@ -10,12 +12,12 @@ type Match = {
   awayScore: number | null;
 };
 
-type ScoreInput = { homeScore: string; awayScore: string };
+type ScoreEntry = { homeScore: string; awayScore: string };
 
 export default function AdminResults() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
-  const [scores, setScores] = useState<Record<number, ScoreInput>>({});
+  const [scores, setScores] = useState<Record<number, ScoreEntry>>({});
   const [submitting, setSubmitting] = useState<number | null>(null);
 
   useEffect(() => {
@@ -24,8 +26,7 @@ export default function AdminResults() {
         const res = await api.get("/matches");
         setMatches(res.data.data);
 
-        // Pre-fill inputs for matches that already have results
-        const existing: Record<number, ScoreInput> = {};
+        const existing: Record<number, ScoreEntry> = {};
         for (const m of res.data.data) {
           if (m.homeScore !== null && m.awayScore !== null) {
             existing[m.id] = {
@@ -45,35 +46,27 @@ export default function AdminResults() {
     fetchMatches();
   }, []);
 
-  const handleChange = (matchId: number, field: keyof ScoreInput, value: string) => {
+  const handleChange = (matchId: number, field: "homeScore" | "awayScore", value: string) => {
     setScores((prev) => ({
       ...prev,
-      [matchId]: {
-        ...prev[matchId],
-        [field]: value,
-      },
+      [matchId]: { ...prev[matchId], [field]: value },
     }));
   };
 
   const handleSubmit = async (matchId: number) => {
     const s = scores[matchId];
-
-    // Check for undefined/empty string, NOT falsy (so "0" is valid)
     if (s?.homeScore === undefined || s?.homeScore === "" ||
         s?.awayScore === undefined || s?.awayScore === "") {
-      alert("Enter both scores");
       return;
     }
 
     setSubmitting(matchId);
-
     try {
       await api.patch(`/admin/matches/${matchId}/result`, {
         homeScore: Number(s.homeScore),
         awayScore: Number(s.awayScore),
       });
 
-      // Update the match in local state so UI reflects the change immediately
       setMatches((prev) =>
         prev.map((m) =>
           m.id === matchId
@@ -88,90 +81,69 @@ export default function AdminResults() {
     }
   };
 
-  if (loading) return <div className="p-6">Loading matches...</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-6 h-6 border-2 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
-  // Show unplayed matches first, then played
   const unplayed = matches.filter((m) => m.homeScore === null);
   const played = matches.filter((m) => m.homeScore !== null);
 
   return (
-    <div className="p-6">
+    <div className="animate-fade-in">
       <h1 className="text-2xl font-bold mb-6">Admin — Set Match Results</h1>
 
       {unplayed.length > 0 && (
-        <>
-          <h2 className="text-lg font-semibold mb-3">Pending Results</h2>
-          <div className="space-y-3 mb-8">
+        <section className="mb-10">
+          <h2 className="text-lg font-semibold text-[var(--color-text-muted)] mb-3">
+            Pending ({unplayed.length})
+          </h2>
+          <div className="space-y-3 stagger-children">
             {unplayed.map((match) => (
-              <div
+              <MatchCard
                 key={match.id}
-                className="p-4 border rounded flex justify-between items-center"
+                homeTeam={match.homeTeam.name}
+                awayTeam={match.awayTeam.name}
+                date={match.date}
+                homeScore={match.homeScore}
+                awayScore={match.awayScore}
               >
-                <div>
-                  <p className="font-semibold">
-                    {match.homeTeam.name} vs {match.awayTeam.name}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {new Date(match.date).toLocaleString()}
-                  </p>
-                </div>
-
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="H"
-                    className="w-14 p-1 border rounded text-center"
-                    value={scores[match.id]?.homeScore || ""}
-                    onChange={(e) => handleChange(match.id, "homeScore", e.target.value)}
-                  />
-                  <span>-</span>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="A"
-                    className="w-14 p-1 border rounded text-center"
-                    value={scores[match.id]?.awayScore || ""}
-                    onChange={(e) => handleChange(match.id, "awayScore", e.target.value)}
-                  />
-                  <button
-                    onClick={() => handleSubmit(match.id)}
-                    disabled={submitting === match.id}
-                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 disabled:opacity-50"
-                  >
-                    {submitting === match.id ? "Saving..." : "Set"}
-                  </button>
-                </div>
-              </div>
+                <ScoreInput
+                  homeScore={scores[match.id]?.homeScore || ""}
+                  awayScore={scores[match.id]?.awayScore || ""}
+                  onChange={(field, value) => handleChange(match.id, field, value)}
+                  onSubmit={() => handleSubmit(match.id)}
+                  submitLabel="Set"
+                  submitting={submitting === match.id}
+                  variant="admin"
+                />
+              </MatchCard>
             ))}
           </div>
-        </>
+        </section>
       )}
 
       {played.length > 0 && (
-        <>
-          <h2 className="text-lg font-semibold mb-3">Completed</h2>
+        <section>
+          <h2 className="text-lg font-semibold text-[var(--color-text-muted)] mb-3">
+            Completed ({played.length})
+          </h2>
           <div className="space-y-3">
             {played.map((match) => (
-              <div
+              <MatchCard
                 key={match.id}
-                className="p-4 border rounded flex justify-between items-center bg-gray-50"
-              >
-                <div>
-                  <p className="font-semibold">
-                    {match.homeTeam.name} vs {match.awayTeam.name}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {new Date(match.date).toLocaleString()}
-                  </p>
-                </div>
-                <p className="font-bold text-lg">
-                  {match.homeScore} - {match.awayScore}
-                </p>
-              </div>
+                homeTeam={match.homeTeam.name}
+                awayTeam={match.awayTeam.name}
+                date={match.date}
+                homeScore={match.homeScore}
+                awayScore={match.awayScore}
+              />
             ))}
           </div>
-        </>
+        </section>
       )}
     </div>
   );
