@@ -1,5 +1,10 @@
 node_modules/
-client/node_modules/
-server/node_modules/.env
+.env
 dist
 build
+
+# Terraform
+infra/.terraform/
+infra/*.tfstate*
+infra/terraform.tfvars
+infra/.terraform.lock.hcl
