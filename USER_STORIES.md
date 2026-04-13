@@ -586,3 +586,17 @@
 
 **Priority:** Low | **Labels:** devops, reliability
 
+### PP-036: Custom Domain Setup (pitchpulse26.com) for Pitch Pulse 26  [Done]
+**As a** user
+**I want** to access the Pitch Pulse 2026 app using a custom domain (pitchpulse26.com),
+**So that** the application looks professional, trustworthy, and easy to remember.
+
+**Acceptance Criteria:**
+- pitchpulse26.com is connected to the AWS Amplify app
+- www.pitchpulse26.com is also connected
+- Visiting pitchpulse26.com redirects to www.pitchpulse26.com or vice versa
+- Only one canonical domain is used (no duplicate content)
+- HTTPS is enabled for both domain versions and SSL certificate is successfully provisioned by Amplify
+- Domain automatically updates when new changes are deployed via Amplify and no manual steps required after initial setup
+
+**Priority:** Medium | **Labels:** deployment, custom domain
