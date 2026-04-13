@@ -37,7 +37,7 @@ export default function AdminResults() {
           }
         }
         setScores(existing);
-      } catch (err) {
+      } catch {
         console.error("Failed to fetch matches");
       } finally {
         setLoading(false);
@@ -75,8 +75,10 @@ export default function AdminResults() {
             : m
         )
       );
-    } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to update result");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to update result";
+      const axiosErr = err as { response?: { data?: { error?: string } } };
+      alert(axiosErr.response?.data?.error || message);
     } finally {
       setSubmitting(null);
     }

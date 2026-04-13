@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Register() {
   const { register, login } = useAuth();
@@ -21,8 +21,9 @@ export default function Register() {
       await register({ email, password, displayName });
       await login({ email, password });
       navigate("/matches");
-    } catch (err: any) {
-      const data = err.response?.data;
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: string; details?: Record<string, string[]> } } };
+      const data = axiosErr.response?.data;
       // Show field-level errors from Zod validation if available
       if (data?.details) {
         const messages = Object.values(data.details).flat() as string[];

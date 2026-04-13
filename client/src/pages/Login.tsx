@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Login() {
   const { login } = useAuth();
@@ -19,8 +19,9 @@ export default function Login() {
     try {
       await login({ email, password });
       navigate("/matches");
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Login failed");
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: string } } };
+      setError(axiosErr.response?.data?.error || "Login failed");
     } finally {
       setSubmitting(false);
     }

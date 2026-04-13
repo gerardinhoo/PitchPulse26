@@ -42,7 +42,7 @@ export default function Matches() {
           }
           setPredictions(saved);
         }
-      } catch (err) {
+      } catch {
         console.error("Failed to fetch data");
       } finally {
         setLoading(false);
@@ -77,8 +77,9 @@ export default function Matches() {
         ...prev,
         [matchId]: { ...prev[matchId], saved: true },
       }));
-    } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to submit");
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: string } } };
+      alert(axiosErr.response?.data?.error || "Failed to submit");
     } finally {
       setSubmitting(null);
     }

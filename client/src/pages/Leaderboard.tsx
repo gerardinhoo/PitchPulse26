@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import Spinner from "../components/Spinner";
 
 type LeaderboardEntry = {
@@ -28,7 +28,7 @@ export default function Leaderboard() {
       try {
         const res = await api.get("/leaderboard");
         setLeaders(res.data.data);
-      } catch (err) {
+      } catch {
         console.error("Failed to fetch leaderboard");
       } finally {
         setLoading(false);
