@@ -258,7 +258,7 @@
 
 ---
 
-### PP-017: Team Rankings Within Groups
+### PP-017: Team Rankings Within Groups [In-Progress]
 **As a** user
 **I want to** see each team's rank within their group (1st, 2nd, 3rd, 4th)
 **So that** I can see who qualifies for the knockout round

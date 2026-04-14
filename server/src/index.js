@@ -9,6 +9,7 @@ import leaderboardRoutes from "../routes/leaderboard.js";
 import adminRoutes from "../routes/admin.js";
 import teamsRoutes from "../routes/teams.js";
 import matchesRoutes from "../routes/matches.js";
+import groupsRoutes from "../routes/groups.js";
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/teams", teamsRoutes);
 app.use("/api/matches", matchesRoutes);
+app.use("/api/groups", groupsRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });

@@ -38,6 +38,7 @@ router.get("/", async (req, res, next) => {
       data: matches,
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
+
   } catch (error) {
     next(error);
   }
