@@ -222,21 +222,24 @@
 
 ---
 
-## Epic 5: Groups, Standings & Team Metadata [TODO]
+## Epic 5: Groups, Standings & Team Metadata
 
-### PP-015: Group Standings
+### PP-015: Group Standings [DONE]
 **As a** user
 **I want to** see group standings for all 12 World Cup groups
 **So that** I can follow tournament progression
 
 **Acceptance Criteria:**
 - GET /api/groups returns all 12 groups with their teams
-- GET /api/groups/:name/standings returns computed standings table
+- GET /api/groups/:groupId returns computed standings table
 - Standings include: MP, W, D, L, GF, GA, GD, Pts (3/1/0 system)
 - Standings computed dynamically from match results (not stored)
-- Frontend shows group selector/grid with standings table per group
+- Frontend shows group selector grid with standings table per group
 - Teams sorted by: points → goal difference → goals for
 - Standings update automatically when admin sets match results
+- Top 2 qualifying positions highlighted with emerald badge
+- GD color-coded (green positive, red negative)
+- All 48 teams confirmed (playoff placeholders replaced with actual teams)
 
 **Priority:** Medium | **Labels:** feature, tournament
 
@@ -258,7 +261,7 @@
 
 ---
 
-### PP-017: Team Rankings Within Groups [In-Progress]
+### PP-017: Team Rankings Within Groups [DONE]
 **As a** user
 **I want to** see each team's rank within their group (1st, 2nd, 3rd, 4th)
 **So that** I can see who qualifies for the knockout round
