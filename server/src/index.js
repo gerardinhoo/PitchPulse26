@@ -13,22 +13,15 @@ import groupsRoutes from "../routes/groups.js";
 
 const app = express();
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:3000",
-  "https://pitchpulse26.com",
-  "https://www.pitchpulse26.com",
-];
+// const allowedOrigins = [
+//   "http://localhost:5173",
+//   "http://localhost:3000",
+//   "https://pitchpulse26.com",
+//   "https://www.pitchpulse26.com",
+// ];
 
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.log("❌ Blocked by CORS:", origin);
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
+  origin: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
@@ -36,18 +29,9 @@ const corsOptions = {
  
 // ── Security middleware ──
 app.use(helmet());
-app.use(cors({
-  origin: true, 
-  credentials: true,
-}));
-
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "10kb" }));
 
-app.options("*", cors({
-  origin: true,
-  credentials: true,
-}));
 // Rate limit auth endpoints to prevent brute-force
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
