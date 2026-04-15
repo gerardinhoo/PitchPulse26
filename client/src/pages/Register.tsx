@@ -70,16 +70,18 @@ export default function Register() {
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        <input
-          type="password"
-          name="password"
-          autoComplete="new-password"
-          inputMode="text"
-          placeholder="Password (min 8 characters)"
-          className="w-full mb-4"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+       <input
+        type="password"
+        name="password"
+        autoComplete="new-password"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
+        inputMode="text"
+        className="w-full mb-4 relative z-50 bg-white text-black"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
 
         <button
           type="submit"
