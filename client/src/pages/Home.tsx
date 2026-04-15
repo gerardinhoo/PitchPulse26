@@ -14,11 +14,11 @@ export default function Home() {
       >
         {/* Background image */}
         <div
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center pointer-events-none"
           style={{ backgroundImage: `url(${trophyBg})` }}
         />
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/70" />
+        <div className="absolute inset-0 bg-black/70 pointer-events-none" />
 
         {/* Content */}
         <div className="relative z-10 max-w-2xl px-6">

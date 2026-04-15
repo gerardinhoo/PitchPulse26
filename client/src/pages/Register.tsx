@@ -45,7 +45,7 @@ export default function Register() {
     <div className="flex items-center justify-center min-h-[60vh] animate-fade-in">
       <form
         onSubmit={handleSubmit}
-        className="card w-full max-w-sm p-8"
+        className="card w-full max-w-sm p-8 relative z-50"
       >
         <h2 className="text-2xl font-bold mb-1">Create account</h2>
         <p className="text-sm text-[var(--color-text-muted)] mb-6">Join the prediction game</p>
