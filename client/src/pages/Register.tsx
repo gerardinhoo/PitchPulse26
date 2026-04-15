@@ -71,17 +71,17 @@ export default function Register() {
         />
 
        <input
-        type="text"
-        name="password"
-        autoComplete="new-password"
-        autoCorrect="off"
-        autoCapitalize="off"
-        spellCheck={false}
-        inputMode="text"
-        className="w-full mb-4 relative z-50 bg-white text-black"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+          type="text"
+          style={{
+            position: "fixed",
+            top: "200px",
+            left: "20px",
+            zIndex: 999999,
+            background: "white",
+            color: "black",
+            padding: "10px",
+          }}
+       />
 
         <button
           type="submit"
