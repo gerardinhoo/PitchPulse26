@@ -7,7 +7,10 @@ export default function Register() {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
+  
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [password, setPassword] = useState("");
+
   const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
