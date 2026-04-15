@@ -83,6 +83,7 @@ export default function Register() {
           padding: "10px",
           width: "200px"
         }}
+        onChange={(e) => setPassword(e.target.value)}
       />
 
         <button
