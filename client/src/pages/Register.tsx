@@ -42,7 +42,7 @@ export default function Register() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[60vh] animate-fade-in">
+    <div className="flex items-center justify-center min-h-[60vh] animate-fade-in relative z-50">
       <form
         onSubmit={handleSubmit}
         className="card w-full max-w-sm p-8 relative z-50"
