@@ -1,6 +1,12 @@
 import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client.ts";
 import { PrismaNeon } from "@prisma/adapter-neon";
+import { neonConfig } from "@neondatabase/serverless";
+import ws from "ws";
+
+if (!neonConfig.webSocketConstructor) {
+  neonConfig.webSocketConstructor = ws;
+}
 
 const adapter = new PrismaNeon({
   connectionString: process.env.DATABASE_URL,
@@ -24,7 +30,9 @@ function stadium(stadiums, name) {
 async function main() {
   console.log("🌱 Seeding database...");
 
-  // 🧹 Clear existing data
+  // 🧹 Clear existing data in FK-safe order:
+  // Predictions reference Matches; Matches reference Teams + Stadiums.
+  await prisma.prediction.deleteMany();
   await prisma.match.deleteMany();
   await prisma.stadium.deleteMany();
   await prisma.team.deleteMany();

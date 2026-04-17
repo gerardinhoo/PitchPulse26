@@ -48,19 +48,14 @@ app.use("/api/teams", teamsRoutes);
 app.use("/api/matches", matchesRoutes);
 app.use("/api/groups", groupsRoutes);
 
-
-app.use((err, req, res, next) => {
-  console.error("🔥 ERROR:", err);
-  res.status(500).json({ message: "Internal Server Error" });
-});
-
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
 // ── Global error handler ──
+// eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  console.error(err.stack || err);
+  console.error("🔥 ERROR:", err?.stack || err);
 
   const status = err.status || 500;
   const message =
