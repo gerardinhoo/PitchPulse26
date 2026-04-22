@@ -8,7 +8,9 @@
     "seed": "node prisma/seed.js"
   },
   "scripts": {
-    "dev": "nodemon --exec tsx src/index.js"
+    "dev": "nodemon --exec tsx src/index.js",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "",
@@ -31,8 +33,10 @@
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
+    "@vitest/coverage-v8": "^1.6.1",
     "nodemon": "^3.1.14",
     "prisma": "^7.5.0",
-    "tsx": "^4.21.0"
+    "tsx": "^4.21.0",
+    "vitest": "^1.6.1"
   }
 }
