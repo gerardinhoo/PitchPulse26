@@ -69,8 +69,11 @@ app.use((err, req, res, next) => {
 // Export app for Lambda handler
 export { app };
 
-// Only start the server when running locally (not on Lambda)
-if (process.env.AWS_LAMBDA_FUNCTION_NAME === undefined) {
+// Only start the server when running locally outside the test environment.
+if (
+  process.env.AWS_LAMBDA_FUNCTION_NAME === undefined &&
+  process.env.NODE_ENV !== "test"
+) {
   const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });
