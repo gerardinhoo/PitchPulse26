@@ -45,3 +45,15 @@ variable "github_token" {
   type        = string
   sensitive   = true
 }
+
+variable "email_domain" {
+  description = "Root domain to verify in SES (used as the sender domain)"
+  type        = string
+  default     = "pitchpulse26.com"
+}
+
+variable "email_from" {
+  description = "From address used for transactional email (must live under email_domain)"
+  type        = string
+  default     = "no-reply@pitchpulse26.com"
+}

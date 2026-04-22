@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../api/axios";
+import { useAuth } from "../hooks/useAuth";
 import MatchCard from "../components/MatchCard";
 import Pagination from "../components/Pagination";
 import ScoreInput from "../components/ScoreInput";
@@ -25,6 +26,8 @@ function parsePage(value: string | null): number {
 }
 
 export default function Matches() {
+  const { user } = useAuth();
+  const isVerified = user?.emailVerified !== false;
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parsePage(searchParams.get("page"));
 
@@ -150,6 +153,9 @@ export default function Matches() {
                   ? `Match locked — your prediction: ${pred.homeScore} – ${pred.awayScore}`
                   : "Match locked";
                 statusColor = "text-[var(--color-text-muted)]";
+              } else if (!isVerified) {
+                statusLabel = "Verify your email to submit predictions";
+                statusColor = "text-yellow-300";
               } else if (pred?.saved && !hasResult) {
                 statusLabel = `Your prediction: ${pred.homeScore} – ${pred.awayScore}`;
               }
@@ -167,7 +173,7 @@ export default function Matches() {
                   statusLabel={statusLabel}
                   statusColor={statusColor}
                 >
-                  {!isLocked && (
+                  {!isLocked && isVerified && (
                     <ScoreInput
                       homeScore={pred?.homeScore || ""}
                       awayScore={pred?.awayScore || ""}

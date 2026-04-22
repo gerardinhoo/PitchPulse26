@@ -58,7 +58,7 @@
 
 ---
 
-### PP-005: Email Verification [TODO]
+### PP-005: Email Verification [DONE]
 **As a** platform operator
 **I want** users to verify their email address
 **So that** I can prevent fake accounts and ensure fair competition

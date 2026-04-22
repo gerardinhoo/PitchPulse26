@@ -7,6 +7,7 @@ type User = {
   email: string;
   displayName?: string;
   role?: string;
+  emailVerified?: boolean;
 };
 
 type LoginPayload = {

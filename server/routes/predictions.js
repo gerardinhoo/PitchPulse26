@@ -11,6 +11,18 @@ router.post("/", authMiddleware, validate(predictionSchema), async (req, res, ne
     const { matchId, homeScore, awayScore } = req.body;
     const userId = req.user.userId;
 
+    // PP-005: only verified users can submit predictions
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { emailVerified: true },
+    });
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+    if (!user.emailVerified) {
+      return res.status(403).json({ error: "Please verify your email before submitting predictions" });
+    }
+
     // Prevent predictions on matches that already have results
     const match = await prisma.match.findUnique({ where: { id: matchId } });
     if (!match) {

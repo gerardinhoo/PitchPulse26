@@ -11,6 +11,10 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+export const verifyEmailSchema = z.object({
+  token: z.string().min(10, "token is required"),
+});
+
 export const predictionSchema = z.object({
   matchId: z.number().int().positive("matchId must be a positive integer"),
   homeScore: z.number().int().min(0, "homeScore must be >= 0"),
