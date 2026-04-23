@@ -528,7 +528,7 @@
 
 ---
 
-### PP-031A: GitHub Actions Test Gate[TODO]
+### PP-031A: GitHub Actions Test Gate[DONE]
 **As a** developer
 **I want** GitHub Actions to run the frontend and backend test suites on pull requests
 **So that** failing tests block merges before code reaches `main`
@@ -642,7 +642,7 @@
 
 ---
 
-## Epic 10: Real-World UX Improvements [SUGGESTED]
+## Epic 10: Real-World UX Improvements [TODO]
 
 ### PP-037: Auth Form Guidance & Recovery
 **As a** user
