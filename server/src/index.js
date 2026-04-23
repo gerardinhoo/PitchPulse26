@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import { PORT, CORS_ORIGIN } from "./config.js";
+import { PORT, CORS_ORIGINS } from "./config.js";
 import authRoutes from "../routes/auth.js";
 import predictionsRoutes from "../routes/predictions.js";
 import leaderboardRoutes from "../routes/leaderboard.js";
@@ -21,10 +21,20 @@ const app = express();
 // ];
 
 const corsOptions = {
-  origin: true,
+  origin(origin, callback) {
+    // Allow same-origin/server-to-server requests with no Origin header.
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (CORS_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`Origin ${origin} is not allowed by CORS`));
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
 };
  
 // ── Security middleware ──

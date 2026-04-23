@@ -392,7 +392,7 @@
 
 ---
 
-## Epic 8: Testing [TODO]
+## Epic 8: Testing [DONE]
 
 ### PP-024: Backend Unit Tests
 **As a** developer
@@ -525,6 +525,24 @@
 - Dedicated CI IAM user with minimal permissions
 
 **Priority:** High | **Labels:** devops, ci-cd
+
+---
+
+### PP-031A: GitHub Actions Test Gate[TODO]
+**As a** developer
+**I want** GitHub Actions to run the frontend and backend test suites on pull requests
+**So that** failing tests block merges before code reaches `main`
+
+**Acceptance Criteria:**
+- GitHub Actions workflow runs on pull requests to `main`
+- Backend tests executed in CI: `cd server && npm test`
+- Frontend tests executed in CI: `cd client && npm test`
+- Workflow fails if either test suite fails
+- Test step runs before any deploy step
+- PR status clearly shows test success/failure in GitHub checks
+- README or workflow comments document the required CI test commands
+
+**Priority:** High | **Labels:** devops, ci-cd, testing
 
 ---
 

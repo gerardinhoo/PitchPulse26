@@ -17,7 +17,7 @@ export default function Login() {
     setSubmitting(true);
 
     try {
-      await login({ email, password });
+      await login({ email: email.trim(), password });
       navigate("/matches");
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: string } } };

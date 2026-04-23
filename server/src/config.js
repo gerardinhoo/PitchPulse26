@@ -3,7 +3,13 @@ dotenv.config();
 
 export const PORT = process.env.PORT || 5050;
 export const JWT_SECRET = process.env.JWT_SECRET;
-export const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5173";
+
+const rawCorsOrigins = process.env.CORS_ORIGIN || "http://localhost:5173";
+export const CORS_ORIGINS = rawCorsOrigins
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+export const CORS_ORIGIN = CORS_ORIGINS[0] || "http://localhost:5173";
 
 // Email / SES
 export const AWS_REGION = process.env.AWS_REGION || "us-east-1";
@@ -15,6 +21,5 @@ export const APP_URL = process.env.APP_URL || CORS_ORIGIN;
 if (!JWT_SECRET) {
   throw new Error("JWT_SECRET environment variable is required");
 }
-
 
 
