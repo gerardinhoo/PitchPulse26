@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  ci:
-    name: Lint & Build
+  frontend-checks:
+    name: Frontend Lint, Test & Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,13 +27,42 @@ jobs:
         run: npm run lint
         working-directory: client
 
+      # PP-031A: keep frontend tests as an explicit PR check.
+      - name: Frontend tests
+        run: npm test
+        working-directory: client
+
       - name: Typecheck & Build
         run: npm run build
         working-directory: client
 
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    env:
+      JWT_SECRET: ci-test-secret
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install server dependencies
+        run: npm ci
+        working-directory: server
+
+      # PP-031A: backend unit + integration suites must pass before deploy.
+      - name: Backend tests
+        run: npm test
+        working-directory: server
+
   deploy-backend:
     name: Deploy Lambda
-    needs: ci
+    needs: [frontend-checks, backend-tests]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
