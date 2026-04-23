@@ -562,6 +562,24 @@
 
 ---
 
+### PP-032A: Exposed Secret Rotation [TODO]
+**As a** developer
+**I want** exposed credentials rotated across infrastructure and CI
+**So that** leaked secrets can no longer be used against the application or deployment pipeline
+
+**Acceptance Criteria:**
+- Rotate `JWT_SECRET` and update the active value in AWS SSM Parameter Store
+- Rotate the database credential/connection string and update all environments that use it
+- Rotate the GitHub access token used for Amplify/repository integration
+- Rotate the CI IAM access key and update GitHub Actions secrets
+- Verify Lambda, Amplify, and GitHub Actions all work after rotation
+- Remove or replace any locally stored exposed values in untracked config files
+- Document the rotation steps and ownership in README or ops notes
+
+**Priority:** High | **Labels:** security, aws, ci-cd
+
+---
+
 ### PP-033: Monitoring Dashboard (CloudWatch)
 **As a** developer
 **I want** a CloudWatch dashboard
@@ -621,3 +639,133 @@
 - Domain automatically updates when new changes are deployed via Amplify and no manual steps required after initial setup
 
 **Priority:** Medium | **Labels:** deployment, custom domain
+
+---
+
+## Epic 10: Real-World UX Improvements [SUGGESTED]
+
+### PP-037: Auth Form Guidance & Recovery
+**As a** user
+**I want** clearer login and registration guidance
+**So that** I can recover from mistakes quickly instead of getting stuck
+
+**Acceptance Criteria:**
+- Login and registration show field-level validation messages near the relevant input
+- Auth forms disable submit until required fields are valid
+- Loading, success, and failure states are clearly communicated
+- Login page includes a "Forgot password" entry point or a visible placeholder for upcoming recovery
+- Registration explains email verification requirements before submit
+
+**Priority:** High | **Labels:** ux, auth, frontend
+
+---
+
+### PP-038: Match Filters & Quick Navigation
+**As a** user
+**I want** to filter and jump through matches quickly
+**So that** I can find the games I care about without paging through long lists
+
+**Acceptance Criteria:**
+- Matches page supports filtering by group
+- Matches page supports quick tabs or chips such as "All", "Today", "Upcoming", and "Completed"
+- Active filters are reflected in the URL
+- Filter state works together with pagination without confusing resets
+- Empty states explain why no matches are shown for the current filter
+
+**Priority:** High | **Labels:** ux, matches, frontend
+
+---
+
+### PP-039: Prediction Save Feedback
+**As a** user
+**I want** obvious feedback when I save or update a prediction
+**So that** I know my picks were actually recorded
+
+**Acceptance Criteria:**
+- Saving a prediction shows an inline success confirmation without using `alert()`
+- Failed saves show a friendly inline error with retry guidance
+- Saved predictions display last-saved state clearly on the match card
+- Submit buttons prevent accidental double-submits while a request is in flight
+- Locked matches explain why editing is unavailable
+
+**Priority:** High | **Labels:** ux, predictions, frontend
+
+---
+
+### PP-040: Empty, Error, and Offline States
+**As a** user
+**I want** clear fallback states when data fails to load
+**So that** temporary issues feel understandable instead of broken
+
+**Acceptance Criteria:**
+- Matches, leaderboard, groups, and auth pages show designed error states instead of silent console failures
+- Error states include a retry action where appropriate
+- Empty states use friendly copy that explains what happens next
+- Network failures are distinguished from validation errors where possible
+- Loading indicators avoid blank screens on slower connections
+
+**Priority:** High | **Labels:** ux, reliability, frontend
+
+---
+
+### PP-041: Personal Dashboard & Progress Summary
+**As a** returning user
+**I want** a simple summary of my prediction progress
+**So that** I can quickly see what I’ve completed and what still needs attention
+
+**Acceptance Criteria:**
+- User sees counts for predicted matches, remaining matches, and locked matches
+- Dashboard highlights the next upcoming match they have not predicted yet
+- Dashboard shows current leaderboard rank when available
+- Summary is visible on matches page or a lightweight profile/dashboard view
+- Empty/new-user state guides first action clearly
+
+**Priority:** Medium | **Labels:** ux, engagement, frontend
+
+---
+
+### PP-042: Leaderboard Context & Player Identity
+**As a** user
+**I want** more context around the leaderboard
+**So that** I can understand my standing and recognize who I’m competing with
+
+**Acceptance Criteria:**
+- Current user’s rank is always visible even when they are off the current page
+- Leaderboard explains how points are earned in-context
+- Users without a display name are shown with a friendlier fallback than "Anonymous"
+- Ties are presented consistently and clearly
+- Leaderboard empty state links users toward making their first prediction
+
+**Priority:** Medium | **Labels:** ux, leaderboard, frontend
+
+---
+
+### PP-043: Accessibility & Form Usability Pass
+**As a** user on any device
+**I want** the app to be accessible and easy to use with assistive technology
+**So that** I can interact with it reliably in real-world conditions
+
+**Acceptance Criteria:**
+- All interactive controls have accessible names and visible focus states
+- Forms use labels or equivalent accessible associations, not placeholder-only inputs
+- Errors are announced accessibly for screen readers
+- Color contrast for text, status badges, and buttons meets accessibility expectations
+- Core flows are fully keyboard navigable on desktop
+
+**Priority:** High | **Labels:** accessibility, ux, frontend
+
+---
+
+### PP-044: Mobile Prediction Flow Polish
+**As a** mobile user
+**I want** the prediction flow to feel fast and comfortable on small screens
+**So that** I can submit picks quickly without fighting the interface
+
+**Acceptance Criteria:**
+- Prediction inputs remain stable when the mobile keyboard opens
+- Primary actions stay visible without awkward scrolling on smaller screens
+- Touch targets meet comfortable mobile sizing
+- Mobile layout reduces accidental taps between pagination, nav, and submit actions
+- Common iPhone and Android viewport sizes are verified manually
+
+**Priority:** High | **Labels:** mobile, ux, frontend

@@ -25,7 +25,10 @@ describe("Matches", () => {
   beforeEach(() => {
     mockGet.mockReset();
     mockPost.mockReset();
-    window.scrollTo = vi.fn();
+    vi.stubGlobal(
+      "scrollTo",
+      vi.fn<[ScrollToOptions | number | undefined, number | undefined], void>(),
+    );
   });
 
   it("shows inline success feedback after saving a prediction", async () => {
