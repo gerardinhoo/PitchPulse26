@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import Spinner from "../components/Spinner";
 import Flag from "../components/Flag";
+import StatePanel from "../components/StatePanel";
 
 type TeamStanding = {
   position: number;
@@ -31,6 +32,12 @@ export default function GroupsPage() {
   const [groups, setGroups] = useState<string[]>([]);
   const [standings, setStandings] = useState<TeamStanding[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorState, setErrorState] = useState<{
+    title: string;
+    description: string;
+    icon: string;
+  } | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const selectedGroup = groupId || "A";
 
@@ -40,55 +47,109 @@ export default function GroupsPage() {
       try {
         const res = await api.get<Group[]>("/groups");
         if (!ignore) setGroups(res.data.map((g) => g.name));
-      } catch {
-        console.error("Failed to fetch groups");
+      } catch (err: unknown) {
+        const axiosErr = err as { response?: { status?: number } };
+        if (!ignore) {
+          setGroups([]);
+          setErrorState(
+            axiosErr.response
+              ? {
+                  title: "We couldn't load the groups",
+                  description: "Please try again to browse the latest standings.",
+                  icon: "🏆",
+                }
+              : {
+                  title: "You're offline",
+                  description: "Reconnect to the internet to load group navigation and standings.",
+                  icon: "📡",
+                },
+          );
+        }
       }
     };
     void load();
     return () => { ignore = true; };
-  }, []);
+  }, [reloadKey]);
 
   useEffect(() => {
     let ignore = false;
     setLoading(true);
+    setErrorState(null);
     const load = async () => {
       try {
         const res = await api.get<TeamStanding[]>(`/groups/${selectedGroup}`);
         if (!ignore) setStandings(res.data);
-      } catch {
-        console.error("Failed to fetch standings");
+      } catch (err: unknown) {
+        const axiosErr = err as { response?: { status?: number } };
+        if (!ignore) {
+          setStandings([]);
+          setErrorState(
+            axiosErr.response
+              ? {
+                  title: `Group ${selectedGroup} standings aren't available yet`,
+                  description: "Please try again in a moment while we refresh the table.",
+                  icon: "📋",
+                }
+              : {
+                  title: "You're offline",
+                  description: "Reconnect to load the latest group table and qualification picture.",
+                  icon: "📡",
+                },
+          );
+        }
       } finally {
         if (!ignore) setLoading(false);
       }
     };
     void load();
     return () => { ignore = true; };
-  }, [selectedGroup]);
+  }, [selectedGroup, reloadKey]);
+
+  const handleRetry = () => {
+    setReloadKey((current) => current + 1);
+  };
 
   return (
     <div className="animate-fade-in">
       <h1 className="text-2xl font-bold mb-6">Group Standings</h1>
 
-      {/* Group selector */}
-      <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-12 gap-2 mb-8">
-        {groups.map((g) => (
-          <button
-            key={g}
-            onClick={() => navigate(`/groups/${g}`)}
-            className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-              selectedGroup === g
-                ? "bg-[var(--color-accent)] text-white shadow-lg shadow-emerald-900/30"
-                : "bg-[var(--color-card)] border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-white hover:border-[var(--color-accent)]/50"
-            }`}
-          >
-            {g}
-          </button>
-        ))}
-      </div>
+      {!!groups.length && (
+        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-12 gap-2 mb-8">
+          {groups.map((g) => (
+            <button
+              key={g}
+              onClick={() => navigate(`/groups/${g}`)}
+              className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                selectedGroup === g
+                  ? "bg-[var(--color-accent)] text-white shadow-lg shadow-emerald-900/30"
+                  : "bg-[var(--color-card)] border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-white hover:border-[var(--color-accent)]/50"
+              }`}
+            >
+              {g}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Standings table */}
       {loading ? (
         <Spinner />
+      ) : errorState ? (
+        <StatePanel
+          title={errorState.title}
+          description={errorState.description}
+          icon={errorState.icon}
+          actionLabel="Retry"
+          onAction={handleRetry}
+          tone="error"
+        />
+      ) : standings.length === 0 ? (
+        <StatePanel
+          title={`Group ${selectedGroup} standings are on the way`}
+          description="Results will populate this table once teams have started playing."
+          icon="📋"
+          tone="empty"
+        />
       ) : (
         <div className="card p-0 overflow-hidden animate-slide-up">
           <div className="px-4 py-3 border-b border-[var(--color-border)]">

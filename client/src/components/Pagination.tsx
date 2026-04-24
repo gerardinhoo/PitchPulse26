@@ -25,7 +25,7 @@ export default function Pagination({
   };
 
   const btnBase =
-    "px-4 py-2 rounded-md text-sm font-medium border border-[var(--color-border)] transition-colors";
+    "min-h-12 px-4 py-2 rounded-lg text-sm font-medium border border-[var(--color-border)] transition-colors";
   const btnEnabled =
     "text-[var(--color-text-muted)] hover:text-white hover:border-[var(--color-accent)]";
   const btnDisabled = "opacity-40 cursor-not-allowed";
@@ -33,14 +33,14 @@ export default function Pagination({
   return (
     <nav
       aria-label="Pagination"
-      className={`flex items-center justify-between gap-3 mt-6 ${className}`}
+      className={`flex flex-col items-stretch gap-3 mt-8 sm:flex-row sm:items-center sm:justify-between ${className}`}
     >
       <button
         type="button"
         onClick={goPrev}
         disabled={isFirst}
         aria-label="Previous page"
-        className={`${btnBase} ${isFirst ? btnDisabled : btnEnabled}`}
+        className={`w-full sm:w-auto ${btnBase} ${isFirst ? btnDisabled : btnEnabled}`}
       >
         ← Previous
       </button>
@@ -58,7 +58,7 @@ export default function Pagination({
         onClick={goNext}
         disabled={isLast}
         aria-label="Next page"
-        className={`${btnBase} ${isLast ? btnDisabled : btnEnabled}`}
+        className={`w-full sm:w-auto ${btnBase} ${isLast ? btnDisabled : btnEnabled}`}
       >
         Next →
       </button>

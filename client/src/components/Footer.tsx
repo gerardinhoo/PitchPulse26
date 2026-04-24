@@ -36,15 +36,7 @@ export default function Footer() {
 
           {/* Right — Credits */}
           <div className="text-center md:text-right">
-            <a
-              href="https://github.com/gerardinhoo"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[var(--color-text-muted)] hover:text-white transition-colors"
-            >
-              GitHub
-            </a>
-            <p className="text-[var(--color-text-muted)] mt-1">Built by Gerard</p>
+            <p className="text-[var(--color-text-muted)] mt-1">Built by Gerard Eklu</p>
           </div>
         </div>
 

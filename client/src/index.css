@@ -21,6 +21,13 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid rgba(16, 185, 129, 0.9);
+  outline-offset: 3px;
+}
+
 /* Utility animations */
 @keyframes fade-in {
   from { opacity: 0; }
@@ -94,6 +101,10 @@ input:focus {
   border-color: var(--color-accent);
 }
 
+input[aria-invalid="true"] {
+  border-color: #f87171;
+}
+
 input::placeholder {
   color: var(--color-text-muted);
 }
@@ -137,4 +148,33 @@ input[type="number"] {
 
 .btn-glow:hover {
   box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  border-radius: 0.5rem;
+  background: var(--color-accent);
+  color: white;
+  padding: 0.75rem 1rem;
+  transform: translateY(-200%);
+  transition: transform 0.2s ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
 }

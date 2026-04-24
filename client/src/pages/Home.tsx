@@ -27,8 +27,8 @@ export default function Home() {
             <span className="text-[var(--color-accent)]">Win.</span>
           </h1>
           <p className="text-lg sm:text-xl text-[var(--color-text-muted)] mb-8 animate-slide-up" style={{ animationDelay: "100ms" }}>
-            Pick your scores for every group stage of World Cup 2026 match. Climb the
-            leaderboard. Prove you can accurately predict football scores better than everyone else.
+            Predict the score for every World Cup 2026 group-stage match, climb the leaderboard,
+            and prove your football instincts against other fans.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 animate-slide-up" style={{ animationDelay: "200ms" }}>
             <Link
@@ -55,24 +55,21 @@ export default function Home() {
             <div className="text-3xl mb-3">🏟️</div>
             <h3 className="font-semibold mb-1">Pick Your Scores</h3>
             <p className="text-sm text-[var(--color-text-muted)]">
-              Predict the final score for every group stage match.
+              Make your picks for every World Cup 2026 group-stage match.
             </p>
           </div>
           <div className="card text-center">
             <div className="text-3xl mb-3">⚽</div>
             <h3 className="font-semibold mb-1">Earn Points</h3>
             <p className="text-sm text-[var(--color-text-muted)]">
-              3 points for the exact score.
-            </p>
-            <p className="text-sm text-[var(--color-text-muted)]">
-              1 point for the correct winner or draw.
+              Score 3 points for an exact result and 1 point for the correct winner or draw.
             </p>
           </div>
           <div className="card text-center">
             <div className="text-3xl mb-3">🏆</div>
             <h3 className="font-semibold mb-1">Climb the Ranks</h3>
             <p className="text-sm text-[var(--color-text-muted)]">
-              Compete against other fans on the global leaderboard.
+              See how your predictions stack up against other fans on the leaderboard.
             </p>
           </div>
         </div>

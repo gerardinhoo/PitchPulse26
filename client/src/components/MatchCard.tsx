@@ -28,10 +28,10 @@ export default function MatchCard({
   const hasResult = homeScore !== null && awayScore !== null;
 
   return (
-    <div className="card flex items-center justify-between gap-4">
+    <article className="card flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between">
       {/* Left: teams + date */}
       <div className="min-w-0 flex-1">
-        <p className="font-semibold text-sm sm:text-base truncate flex items-center gap-1.5 flex-wrap">
+        <p className="font-semibold text-sm sm:text-base flex items-center gap-1.5 flex-wrap leading-snug">
           <Flag code={homeCode} size={16} /> {homeTeam}
           <span className="text-[var(--color-text-muted)]">vs</span>
           <Flag code={awayCode} size={16} /> {awayTeam}
@@ -51,7 +51,7 @@ export default function MatchCard({
       </div>
 
       {/* Right: score or input */}
-      <div className="shrink-0">
+      <div className="w-full shrink-0 sm:w-auto">
         {hasResult ? (
           <div className="text-center animate-score-pop">
             <p className="text-xl font-bold tabular-nums">
@@ -65,6 +65,6 @@ export default function MatchCard({
           children
         )}
       </div>
-    </div>
+    </article>
   );
 }

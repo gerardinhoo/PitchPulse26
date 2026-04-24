@@ -118,8 +118,12 @@ export default function AdminResults() {
                   onChange={(field, value) => handleChange(match.id, field, value)}
                   onSubmit={() => handleSubmit(match.id)}
                   submitLabel="Set"
+                  submitAriaLabel={`Set final score for ${match.homeTeam.name} versus ${match.awayTeam.name}`}
                   submitting={submitting === match.id}
                   variant="admin"
+                  homeLabel={`${match.homeTeam.name} final score`}
+                  awayLabel={`${match.awayTeam.name} final score`}
+                  idPrefix={`admin-result-${match.id}`}
                 />
               </MatchCard>
             ))}
