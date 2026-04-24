@@ -1,6 +1,8 @@
 # Pitch Pulse 26
 
-A full-stack World Cup 2026 prediction app where users predict match scores, earn points, and compete on a leaderboard.
+A full-stack World Cup 2026 prediction app where fans create accounts, predict group-stage match scores, earn points, and compete on a live leaderboard.
+
+The current product scope is focused on World Cup 2026 group-stage matches.
 
 
 ## Tech Stack
@@ -8,6 +10,16 @@ A full-stack World Cup 2026 prediction app where users predict match scores, ear
 **Backend:** Node.js, Express 5, Prisma ORM, PostgreSQL (Neon, via `@prisma/adapter-neon` + `ws`)
 **Frontend:** React, TypeScript, Vite, Tailwind CSS, React Router
 **Infra:** AWS Lambda + API Gateway (backend), AWS Amplify (frontend), Terraform, GitHub Actions CI/CD
+
+## Current Experience
+
+- Home page with product overview and scoring explainer
+- Email/password authentication with email verification
+- Paginated match browsing with prediction entry and save/update feedback
+- Personal dashboard on the Matches page showing prediction progress and next action
+- Dynamic group standings and leaderboard views
+- Admin results workflow for posting final scores
+- Responsive UI improvements for accessibility and mobile prediction flow
 
 ## Project Structure
 
@@ -47,11 +59,16 @@ PitchPulse26/
 ## Features
 
 - Email + password auth with JWT (1-day expiry), role-based access (`user` / `admin`)
+- Email verification flow with verified-user gating for predictions
 - Score predictions with one-per-user-per-match upsert, pre-filled on return
 - **Prediction lockout after kickoff** (API + UI) so users can't change picks mid-match
 - 12 group standings computed dynamically from results (MP / W / D / L / GF / GA / GD / Pts)
-- Leaderboard with medal icons for top 3 and current-user highlight
+- Leaderboard with medal icons for top 3, current-user context, and clearer tie handling
 - Paginated Matches and Leaderboard with `?page=N` URL state for shareable links
+- Matches dashboard with predicted / remaining / locked counts and next upcoming match prompt
+- Friendly empty, loading, error, and offline states across core frontend pages
+- Accessibility improvements: labels, focus states, skip link, keyboard-friendly navigation
+- Mobile prediction flow polish with larger touch targets and stacked controls
 - Admin panel to set final match scores, which updates predictions and standings
 - Responsive dark theme with hamburger nav on mobile and iOS-Safari-friendly forms (16px inputs, proper `autoComplete`/`autoCapitalize`)
 
@@ -105,6 +122,35 @@ npm run dev
 
 The web app runs at `http://localhost:5173`. It reads `VITE_API_URL` (defaults to `http://localhost:5050/api`).
 
+## Local Development Flow
+
+Run the backend in one terminal:
+
+```bash
+cd server
+npm run dev
+```
+
+Run the frontend in another:
+
+```bash
+cd client
+npm run dev
+```
+
+Recommended local test accounts:
+
+- `admin` account for posting final results
+- `verified user` account for prediction flows
+- `unverified user` account for verification gating and restricted prediction testing
+
+Recommended match data for manual QA:
+
+- at least 1 future match
+- at least 1 locked match (kickoff passed, no result yet)
+- at least 1 completed match with a final score
+- enough matches to trigger pagination
+
 ## API Endpoints
 
 ### Public
@@ -123,6 +169,8 @@ The web app runs at `http://localhost:5173`. It reads `VITE_API_URL` (defaults t
 | POST | `/api/auth/register` | Create account |
 | POST | `/api/auth/login` | Login, returns JWT |
 | GET | `/api/auth/me` | Get current user profile (requires token) |
+| POST | `/api/auth/verify-email` | Verify email token |
+| POST | `/api/auth/resend-verification` | Resend verification email (requires auth) |
 
 ### Protected (requires JWT)
 
@@ -183,6 +231,41 @@ POST /api/predictions  (Authorization: Bearer <token>)
 | Exact score match | 3 |
 | Correct winner/draw | 1 |
 | Wrong | 0 |
+
+## Testing
+
+### Frontend
+
+```bash
+cd client
+npm test
+```
+
+Vitest is configured with `jsdom`, and the frontend test suite currently lives under `client/src/test`.
+
+### Backend
+
+```bash
+cd server
+npm test
+```
+
+### Type Checking
+
+```bash
+cd client
+npx tsc -b
+```
+
+## Manual QA Suggestions
+
+- Register a new user and complete the email verification flow
+- Confirm unverified users cannot submit predictions
+- Submit and update predictions for upcoming matches
+- Confirm matches lock after kickoff
+- Set a final score as admin and verify leaderboard / standings update
+- Test the app in both desktop and mobile-sized viewports
+- Verify offline and retry states by temporarily stopping the API
 
 ## Security
 

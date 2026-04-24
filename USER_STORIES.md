@@ -642,9 +642,9 @@
 
 ---
 
-## Epic 10: Real-World UX Improvements [TODO]
+## Epic 10: Real-World UX Improvements [IN PROGRESS]
 
-### PP-037: Auth Form Guidance & Recovery
+### PP-037: Auth Form Guidance & Recovery [DONE]
 **As a** user
 **I want** clearer login and registration guidance
 **So that** I can recover from mistakes quickly instead of getting stuck
@@ -660,7 +660,7 @@
 
 ---
 
-### PP-038: Match Filters & Quick Navigation
+### PP-038: Match Filters & Quick Navigation [TODO]
 **As a** user
 **I want** to filter and jump through matches quickly
 **So that** I can find the games I care about without paging through long lists
@@ -676,7 +676,7 @@
 
 ---
 
-### PP-039: Prediction Save Feedback
+### PP-039: Prediction Save Feedback [DONE]
 **As a** user
 **I want** obvious feedback when I save or update a prediction
 **So that** I know my picks were actually recorded
@@ -692,7 +692,7 @@
 
 ---
 
-### PP-040: Empty, Error, and Offline States
+### PP-040: Empty, Error, and Offline States [DONE]
 **As a** user
 **I want** clear fallback states when data fails to load
 **So that** temporary issues feel understandable instead of broken
@@ -708,7 +708,7 @@
 
 ---
 
-### PP-041: Personal Dashboard & Progress Summary
+### PP-041: Personal Dashboard & Progress Summary [DONE]
 **As a** returning user
 **I want** a simple summary of my prediction progress
 **So that** I can quickly see what I’ve completed and what still needs attention
@@ -724,7 +724,7 @@
 
 ---
 
-### PP-042: Leaderboard Context & Player Identity
+### PP-042: Leaderboard Context & Player Identity [DONE]
 **As a** user
 **I want** more context around the leaderboard
 **So that** I can understand my standing and recognize who I’m competing with
@@ -740,7 +740,7 @@
 
 ---
 
-### PP-043: Accessibility & Form Usability Pass
+### PP-043: Accessibility & Form Usability Pass [DONE]
 **As a** user on any device
 **I want** the app to be accessible and easy to use with assistive technology
 **So that** I can interact with it reliably in real-world conditions
@@ -756,7 +756,7 @@
 
 ---
 
-### PP-044: Mobile Prediction Flow Polish
+### PP-044: Mobile Prediction Flow Polish [DONE]
 **As a** mobile user
 **I want** the prediction flow to feel fast and comfortable on small screens
 **So that** I can submit picks quickly without fighting the interface
