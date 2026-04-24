@@ -1,13 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import GroupsPage from "./GroupsPage";
+import GroupsPage from "../../pages/GroupsPage";
 
 const { mockGet } = vi.hoisted(() => ({
   mockGet: vi.fn(),
 }));
 
-vi.mock("../api/axios", () => ({
+vi.mock("../../api/axios", () => ({
   default: {
     get: mockGet,
   },

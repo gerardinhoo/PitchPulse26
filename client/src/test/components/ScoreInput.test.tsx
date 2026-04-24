@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import ScoreInput from "./ScoreInput";
+import ScoreInput from "../../components/ScoreInput";
 
 describe("ScoreInput", () => {
   it("renders inputs and fires onChange and onSubmit", () => {

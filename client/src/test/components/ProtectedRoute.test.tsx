@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it } from "vitest";
-import ProtectedRoute from "./ProtectedRoute";
-import { AuthContext } from "../hooks/useAuth";
+import ProtectedRoute from "../../components/ProtectedRoute"
+import { AuthContext } from "../../hooks/useAuth";
 
 describe("ProtectedRoute", () => {
   it("redirects unauthenticated users to /login", () => {

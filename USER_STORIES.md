@@ -642,7 +642,7 @@
 
 ---
 
-## Epic 10: Real-World UX Improvements [TODO]
+## Epic 10: Real-World UX Improvements [DONE]
 
 ### PP-037: Auth Form Guidance & Recovery
 **As a** user

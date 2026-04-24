@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
-import Navbar from "./Navbar";
-import { AuthContext } from "../hooks/useAuth";
+import Navbar from "../../components/Navbar";
+import { AuthContext } from "../../hooks/useAuth";
 
 function renderNavbar(user: {
   id: number;
