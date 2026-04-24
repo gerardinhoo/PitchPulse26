@@ -1,15 +1,15 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import Login from "./Login";
-import Register from "./Register";
+import Login from "../../pages/Login";
+import Register from "../../pages/Register";
 
 const { mockLogin, mockRegister } = vi.hoisted(() => ({
   mockLogin: vi.fn(),
   mockRegister: vi.fn(),
 }));
 
-vi.mock("../hooks/useAuth", () => ({
+vi.mock("../../hooks/useAuth", () => ({
   useAuth: () => ({
     login: mockLogin,
     register: mockRegister,

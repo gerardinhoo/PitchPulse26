@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import MatchCard from "./MatchCard";
+import MatchCard from "../../components/MatchCard";
 
 describe("MatchCard", () => {
   it("displays team names, formatted date, and final score", () => {

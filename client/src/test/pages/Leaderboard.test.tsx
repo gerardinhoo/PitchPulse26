@@ -1,19 +1,19 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import Leaderboard from "./Leaderboard";
+import Leaderboard from "../../pages/Leaderboard";
 
 const { mockGet } = vi.hoisted(() => ({
   mockGet: vi.fn(),
 }));
 
-vi.mock("../api/axios", () => ({
+vi.mock("../../api/axios", () => ({
   default: {
     get: mockGet,
   },
 }));
 
-vi.mock("../hooks/useAuth", () => ({
+vi.mock("../../hooks/useAuth", () => ({
   useAuth: () => ({
     user: { id: 7 },
   }),

@@ -1,21 +1,21 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import Matches from "./Matches";
+import Matches from "../../pages/Matches";
 
 const { mockGet, mockPost } = vi.hoisted(() => ({
   mockGet: vi.fn(),
   mockPost: vi.fn(),
 }));
 
-vi.mock("../api/axios", () => ({
+vi.mock("../../api/axios", () => ({
   default: {
     get: mockGet,
     post: mockPost,
   },
 }));
 
-vi.mock("../hooks/useAuth", () => ({
+vi.mock("../../hooks/useAuth", () => ({
   useAuth: () => ({
     user: { id: 1, email: "user@example.com", emailVerified: true },
   }),
