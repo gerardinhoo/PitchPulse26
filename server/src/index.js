@@ -13,13 +13,6 @@ import groupsRoutes from "../routes/groups.js";
 
 const app = express();
 
-// const allowedOrigins = [
-//   "http://localhost:5173",
-//   "http://localhost:3000",
-//   "https://pitchpulse26.com",
-//   "https://www.pitchpulse26.com",
-// ];
-
 const corsOptions = {
   origin(origin, callback) {
     // Allow same-origin/server-to-server requests with no Origin header.
