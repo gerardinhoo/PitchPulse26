@@ -34,8 +34,8 @@ export default function Footer() {
             ))}
           </nav>
 
-          {/* Right — Credits */}
-            <div className="text-center md:text-right space-y-2">
+          <div className="text-center md:text-right space-y-2">
+            {/* Right — Credits */}
               {/* Instagram */}
               <a
                 href="https://instagram.com/pitchpulse26"
