@@ -107,7 +107,7 @@ export default function Navbar() {
           {user ? (
             <>
               <span className="text-sm text-[var(--color-text-muted)] hidden sm:inline">
-                {user.displayName || user.email}
+                Welcome {user.displayName || user.email}
               </span>
               <button
                 onClick={handleLogout}

@@ -11,10 +11,14 @@ import StatePanel from "../components/StatePanel";
 type Match = {
   id: number;
   date: string;
-  homeTeam: { name: string; code?: string };
-  awayTeam: { name: string; code?: string };
+  homeTeam: { name: string; code?: string; group: string };
+  awayTeam: { name: string; code?: string; group: string };
   homeScore: number | null;
   awayScore: number | null;
+};
+
+type Group = {
+  name: string;
 };
 
 type PredictionRecord = {
@@ -53,16 +57,50 @@ type DashboardSummary = {
   points: number | null;
 };
 
+type MatchView = "all" | "today" | "upcoming" | "completed";
+
 const PAGE_SIZE = 20;
+const MATCH_VIEWS: Array<{ value: MatchView; label: string }> = [
+  { value: "all", label: "All" },
+  { value: "today", label: "Today" },
+  { value: "upcoming", label: "Upcoming" },
+  { value: "completed", label: "Completed" },
+];
 
 function parsePage(value: string | null): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : 1;
 }
 
+function parseView(value: string | null): MatchView {
+  return MATCH_VIEWS.some((view) => view.value === value) ? (value as MatchView) : "all";
+}
+
 function isMatchLocked(match: Match) {
   const hasResult = match.homeScore !== null && match.awayScore !== null;
   return !hasResult && new Date(match.date).getTime() <= Date.now();
+}
+
+function isMatchCompleted(match: Match) {
+  return match.homeScore !== null && match.awayScore !== null;
+}
+
+function isMatchToday(match: Match) {
+  const now = new Date();
+  const date = new Date(match.date);
+
+  return (
+    now.getFullYear() === date.getFullYear() &&
+    now.getMonth() === date.getMonth() &&
+    now.getDate() === date.getDate()
+  );
+}
+
+function matchesActiveView(match: Match, view: MatchView) {
+  if (view === "today") return isMatchToday(match);
+  if (view === "upcoming") return !isMatchCompleted(match) && new Date(match.date).getTime() > Date.now();
+  if (view === "completed") return isMatchCompleted(match);
+  return true;
 }
 
 function formatMatchTime(date: string) {
@@ -80,9 +118,11 @@ export default function Matches() {
   const isVerified = user?.emailVerified !== false;
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parsePage(searchParams.get("page"));
+  const activeView = parseView(searchParams.get("view"));
+  const activeGroup = (searchParams.get("group") ?? "").toUpperCase();
 
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
+  const [allMatches, setAllMatches] = useState<Match[]>([]);
+  const [groups, setGroups] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageState, setPageState] = useState<PageState | null>(null);
   const [predictions, setPredictions] = useState<Record<number, PredictionInput>>({});
@@ -96,16 +136,23 @@ export default function Matches() {
       setLoading(true);
       setPageState(null);
       try {
-        const [matchesRes, predictionsRes, summaryMatchesRes, leaderboardRes] = await Promise.all([
-          api.get("/matches", { params: { page, limit: PAGE_SIZE } }),
+        const [matchesRes, predictionsRes, summaryMatchesRes, leaderboardRes, groupsRes] = await Promise.all([
+          api.get("/matches", {
+            params: { page: 1, limit: 100, ...(activeGroup ? { group: activeGroup } : {}) },
+          }),
           // Fetch up to the server max so predictions cover every page of matches.
           api.get("/predictions/my", { params: { limit: 100 } }).catch(() => null),
           api.get("/matches", { params: { page: 1, limit: 100 } }).catch(() => null),
           api.get("/leaderboard", { params: { page: 1, limit: 100 } }).catch(() => null),
+          api.get<Group[]>("/groups").catch(() => null),
         ]);
 
-        setMatches(matchesRes.data.data);
-        setTotalPages(matchesRes.data.meta?.totalPages ?? 1);
+        const fetchedMatches: Match[] = matchesRes.data.data;
+        setAllMatches(fetchedMatches);
+        setGroups(
+          groupsRes?.data?.map((group) => group.name) ??
+            Array.from(new Set(fetchedMatches.map((match) => match.homeTeam.group))).sort(),
+        );
 
         const predictionRows: PredictionRecord[] = predictionsRes?.data?.data ?? [];
         if (predictionsRes?.data?.data) {
@@ -153,7 +200,7 @@ export default function Matches() {
         }
       } catch (err: unknown) {
         const axiosErr = err as { response?: { status?: number } };
-        setMatches([]);
+        setAllMatches([]);
         setSummary(null);
         setPageState(
           axiosErr.response
@@ -176,7 +223,11 @@ export default function Matches() {
     fetchData();
     // Scroll to top when changing pages for a cleaner transition
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [page, reloadKey]);
+  }, [activeGroup, reloadKey, user?.id]);
+
+  const filteredMatches = allMatches.filter((match) => matchesActiveView(match, activeView));
+  const totalPages = Math.max(1, Math.ceil(filteredMatches.length / PAGE_SIZE));
+  const matches = filteredMatches.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // If the server reports fewer pages than requested (e.g. deep-linked ?page=99),
   // clamp the URL to the last valid page.
@@ -189,11 +240,37 @@ export default function Matches() {
     }
   }, [loading, page, totalPages, searchParams, setSearchParams]);
 
-  const handlePageChange = (next: number) => {
+  const updateFilters = (updates: { page?: number; view?: MatchView; group?: string }) => {
     const params = new URLSearchParams(searchParams);
-    if (next <= 1) params.delete("page");
-    else params.set("page", String(next));
+
+    if (updates.page !== undefined) {
+      if (updates.page <= 1) params.delete("page");
+      else params.set("page", String(updates.page));
+    }
+
+    if (updates.view !== undefined) {
+      if (updates.view === "all") params.delete("view");
+      else params.set("view", updates.view);
+    }
+
+    if (updates.group !== undefined) {
+      if (!updates.group) params.delete("group");
+      else params.set("group", updates.group);
+    }
+
     setSearchParams(params);
+  };
+
+  const handlePageChange = (next: number) => {
+    updateFilters({ page: next });
+  };
+
+  const handleViewChange = (nextView: MatchView) => {
+    updateFilters({ view: nextView, page: 1 });
+  };
+
+  const handleGroupChange = (nextGroup: string) => {
+    updateFilters({ group: nextGroup, page: 1 });
   };
 
   const handleRetry = () => {
@@ -257,6 +334,8 @@ export default function Matches() {
       ? matches.find((match) => match.id === focusedMatchId) ?? null
       : null;
 
+  const hasActiveFilters = activeView !== "all" || Boolean(activeGroup);
+
   if (loading) return <Spinner />;
 
   return (
@@ -272,7 +351,7 @@ export default function Matches() {
           onAction={handleRetry}
           tone="error"
         />
-      ) : matches.length === 0 ? (
+      ) : allMatches.length === 0 ? (
         <StatePanel
           title="No matches scheduled yet"
           description="Once fixtures are published, you'll be able to make your picks here."
@@ -281,6 +360,19 @@ export default function Matches() {
         />
       ) : (
         <>
+          {!isVerified && (
+            <section className="mb-6 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-yellow-300 mb-2">
+                Verification Required
+              </p>
+              <h2 className="text-lg font-semibold">Verify your email to start saving predictions</h2>
+              <p className="mt-2 text-sm text-yellow-100/90">
+                You can browse the full group-stage schedule now, but predictions stay disabled until your
+                email address is verified.
+              </p>
+            </section>
+          )}
+
           <section className="card mb-6 overflow-hidden">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div className="max-w-2xl">
@@ -366,95 +458,218 @@ export default function Matches() {
                 )}
               </div>
             </div>
-
-            {!isVerified && (
-              <p className="mt-4 text-sm text-yellow-300">
-                Verify your email to start saving predictions and populate your personal dashboard.
-              </p>
-            )}
           </section>
 
-          <div className="space-y-3 stagger-children">
-            {matches.map((match) => {
-              const pred = predictions[match.id];
-              const hasResult = match.homeScore !== null && match.awayScore !== null;
-              const isLocked = isMatchLocked(match);
+          <section className="card mb-6">
+            <div className="flex flex-col gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-[var(--color-accent)] mb-2">
+                  Quick Navigation
+                </p>
+                <h2 className="text-lg font-semibold">Jump to the matches you care about</h2>
+                <p className="text-sm text-[var(--color-text-muted)] mt-1">
+                  Filter by match status or group without losing your place in the schedule.
+                </p>
+              </div>
 
-              let statusLabel: string | undefined;
-              let statusColor = "text-emerald-400";
-              if (isLocked) {
-                statusLabel = pred?.saved
-                  ? `Match locked — your prediction: ${pred.homeScore} – ${pred.awayScore}`
-                  : "Match locked";
-                statusColor = "text-[var(--color-text-muted)]";
-              } else if (!isVerified) {
-                statusLabel = "Verify your email to submit predictions";
-                statusColor = "text-yellow-300";
-              } else if (pred?.status === "error") {
-                statusLabel = pred.message;
-                statusColor = "text-red-400";
-              } else if (
-                pred?.status === "dirty" &&
-                pred.homeScore !== "" &&
-                pred.awayScore !== ""
-              ) {
-                statusLabel = `Unsaved changes — ${pred.homeScore} – ${pred.awayScore}`;
-                statusColor = "text-yellow-300";
-              } else if (pred?.status === "success" && !hasResult) {
-                statusLabel = `${pred.message} — ${pred.homeScore} – ${pred.awayScore}`;
-              } else if (pred?.saved && !hasResult) {
-                statusLabel = `Saved prediction: ${pred.homeScore} – ${pred.awayScore}`;
-              }
+              <div>
+                <p className="text-xs uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
+                  Match Status
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {MATCH_VIEWS.map((view) => {
+                    const isActive = activeView === view.value;
+                    return (
+                      <button
+                        key={view.value}
+                        type="button"
+                        onClick={() => handleViewChange(view.value)}
+                        aria-pressed={isActive}
+                        className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                          isActive
+                            ? "border-emerald-400 bg-emerald-500/15 text-white"
+                            : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-emerald-500/40 hover:text-white"
+                        }`}
+                      >
+                        {view.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-              return (
-                <MatchCard
-                  key={match.id}
-                  homeTeam={match.homeTeam.name}
-                  awayTeam={match.awayTeam.name}
-                  homeCode={match.homeTeam.code}
-                  awayCode={match.awayTeam.code}
-                  date={match.date}
-                  homeScore={match.homeScore}
-                  awayScore={match.awayScore}
-                  statusLabel={statusLabel}
-                  statusColor={statusColor}
-                >
-                  {!isLocked && isVerified && (
-                    <ScoreInput
-                      homeScore={pred?.homeScore || ""}
-                      awayScore={pred?.awayScore || ""}
-                      onChange={(field, value) => handleChange(match.id, field, value)}
-                      onSubmit={() => handleSubmit(match.id)}
-                      submitLabel={pred?.saved ? "Update" : "Submit"}
-                      submitAriaLabel={`${pred?.saved ? "Update" : "Submit"} prediction for ${match.homeTeam.name} versus ${match.awayTeam.name}`}
-                      submitting={submitting === match.id}
-                      variant={pred?.saved ? "saved" : "default"}
-                      homeLabel={`${match.homeTeam.name} predicted score`}
-                      awayLabel={`${match.awayTeam.name} predicted score`}
-                      idPrefix={`prediction-${match.id}`}
-                      onFocusCapture={() => setFocusedMatchId(match.id)}
-                      onBlurCapture={(event) => {
-                        const nextTarget = event.relatedTarget;
-                        if (
-                          nextTarget instanceof Node &&
-                          event.currentTarget.contains(nextTarget)
-                        ) {
-                          return;
-                        }
-                        setFocusedMatchId((current) => (current === match.id ? null : current));
-                      }}
-                    />
+              <div>
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <p className="text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
+                    Group Stage
+                  </p>
+                  {hasActiveFilters && (
+                    <button
+                      type="button"
+                      onClick={() => updateFilters({ group: "", view: "all", page: 1 })}
+                      className="text-xs font-medium text-[var(--color-accent)] hover:text-emerald-300"
+                    >
+                      Clear filters
+                    </button>
                   )}
-                </MatchCard>
-              );
-            })}
-          </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleGroupChange("")}
+                    aria-pressed={!activeGroup}
+                    className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                      !activeGroup
+                        ? "border-sky-400 bg-sky-500/15 text-white"
+                        : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-sky-500/40 hover:text-white"
+                    }`}
+                  >
+                    All groups
+                  </button>
+                  {groups.map((group) => {
+                    const isActive = activeGroup === group;
+                    return (
+                      <button
+                        key={group}
+                        type="button"
+                        onClick={() => handleGroupChange(group)}
+                        aria-pressed={isActive}
+                        className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                          isActive
+                            ? "border-sky-400 bg-sky-500/15 text-white"
+                            : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-sky-500/40 hover:text-white"
+                        }`}
+                      >
+                        Group {group}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </section>
 
-          <Pagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
+          {matches.length === 0 ? (
+            <StatePanel
+              title="No matches fit this view"
+              description={
+                activeGroup && activeView !== "all"
+                  ? `There are no ${activeView} matches in Group ${activeGroup} right now. Try another filter or clear both filters.`
+                  : activeGroup
+                    ? `There are no matches available in Group ${activeGroup} right now. Try another group or clear the filter.`
+                    : activeView === "today"
+                      ? "There are no matches scheduled for today. Try Upcoming or All to see more fixtures."
+                      : activeView === "completed"
+                        ? "No final scores have been posted yet. Check back after the first matches finish."
+                        : "There are no upcoming matches to predict right now. Try All to review the full schedule."
+              }
+              icon={activeView === "completed" ? "📋" : "🧭"}
+              actionLabel="Clear filters"
+              onAction={() => updateFilters({ group: "", view: "all", page: 1 })}
+              tone="empty"
+            />
+          ) : (
+            <>
+              <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-[var(--color-text-muted)]">
+                  Showing <span className="text-white font-medium">{matches.length}</span> of{" "}
+                  <span className="text-white font-medium">{filteredMatches.length}</span>{" "}
+                  {filteredMatches.length === 1 ? "match" : "matches"}
+                  {activeGroup ? ` in Group ${activeGroup}` : ""}
+                  {activeView !== "all" ? ` for ${activeView}` : ""}.
+                </p>
+                <p className="text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
+                  Page {page} of {totalPages}
+                </p>
+              </div>
+
+              <div className="space-y-3 stagger-children">
+                {matches.map((match) => {
+                  const pred = predictions[match.id];
+                  const hasResult = match.homeScore !== null && match.awayScore !== null;
+                  const isLocked = isMatchLocked(match);
+
+                  let statusLabel: string | undefined;
+                  let statusColor = "text-emerald-400";
+                  if (isLocked) {
+                    statusLabel = pred?.saved
+                      ? `Match locked — your prediction: ${pred.homeScore} – ${pred.awayScore}`
+                      : "Match locked";
+                    statusColor = "text-[var(--color-text-muted)]";
+                  } else if (!isVerified) {
+                    statusLabel = "Verification required";
+                    statusColor = "text-yellow-300";
+                  } else if (pred?.status === "error") {
+                    statusLabel = pred.message;
+                    statusColor = "text-red-400";
+                  } else if (
+                    pred?.status === "dirty" &&
+                    pred.homeScore !== "" &&
+                    pred.awayScore !== ""
+                  ) {
+                    statusLabel = `Unsaved changes — ${pred.homeScore} – ${pred.awayScore}`;
+                    statusColor = "text-yellow-300";
+                  } else if (pred?.status === "success" && !hasResult) {
+                    statusLabel = `${pred.message} — ${pred.homeScore} – ${pred.awayScore}`;
+                  } else if (pred?.saved && !hasResult) {
+                    statusLabel = `Saved prediction: ${pred.homeScore} – ${pred.awayScore}`;
+                  }
+
+                  const cardStatusLabel = `Group ${match.homeTeam.group}${
+                    statusLabel ? ` • ${statusLabel}` : ""
+                  }`;
+
+                  return (
+                    <MatchCard
+                      key={match.id}
+                      homeTeam={match.homeTeam.name}
+                      awayTeam={match.awayTeam.name}
+                      homeCode={match.homeTeam.code}
+                      awayCode={match.awayTeam.code}
+                      date={match.date}
+                      homeScore={match.homeScore}
+                      awayScore={match.awayScore}
+                      statusLabel={cardStatusLabel}
+                      statusColor={statusColor}
+                    >
+                      {!isLocked && isVerified && (
+                        <ScoreInput
+                          homeScore={pred?.homeScore || ""}
+                          awayScore={pred?.awayScore || ""}
+                          onChange={(field, value) => handleChange(match.id, field, value)}
+                          onSubmit={() => handleSubmit(match.id)}
+                          submitLabel={pred?.saved ? "Update" : "Submit"}
+                          submitAriaLabel={`${pred?.saved ? "Update" : "Submit"} prediction for ${match.homeTeam.name} versus ${match.awayTeam.name}`}
+                          submitting={submitting === match.id}
+                          variant={pred?.saved ? "saved" : "default"}
+                          homeLabel={`${match.homeTeam.name} predicted score`}
+                          awayLabel={`${match.awayTeam.name} predicted score`}
+                          idPrefix={`prediction-${match.id}`}
+                          onFocusCapture={() => setFocusedMatchId(match.id)}
+                          onBlurCapture={(event) => {
+                            const nextTarget = event.relatedTarget;
+                            if (
+                              nextTarget instanceof Node &&
+                              event.currentTarget.contains(nextTarget)
+                            ) {
+                              return;
+                            }
+                            setFocusedMatchId((current) => (current === match.id ? null : current));
+                          }}
+                        />
+                      )}
+                    </MatchCard>
+                  );
+                })}
+              </div>
+
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </>
+          )}
 
           {focusedMatch && (
             <div className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)]/95 px-4 py-3 shadow-2xl backdrop-blur sm:hidden">

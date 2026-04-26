@@ -40,14 +40,20 @@ describe("Matches", () => {
               {
                 id: 10,
                 date: "2099-06-01T15:00:00.000Z",
-                homeTeam: { name: "Argentina", code: "ar" },
-                awayTeam: { name: "Brazil", code: "br" },
+                homeTeam: { name: "Argentina", code: "ar", group: "A" },
+                awayTeam: { name: "Brazil", code: "br", group: "A" },
                 homeScore: null,
                 awayScore: null,
               },
             ],
             meta: { totalPages: 1, ...(config?.params?.limit ? { limit: config.params.limit } : {}) },
           },
+        });
+      }
+
+      if (url === "/groups") {
+        return Promise.resolve({
+          data: [{ name: "A" }],
         });
       }
 
@@ -84,7 +90,7 @@ describe("Matches", () => {
     });
 
     expect(
-      await screen.findByText("Prediction saved — 2 – 1"),
+      await screen.findByText(/Prediction saved — 2 – 1/),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", {
       name: "Update prediction for Argentina versus Brazil",
@@ -100,14 +106,20 @@ describe("Matches", () => {
               {
                 id: 10,
                 date: "2099-06-01T15:00:00.000Z",
-                homeTeam: { name: "Argentina", code: "ar" },
-                awayTeam: { name: "Brazil", code: "br" },
+                homeTeam: { name: "Argentina", code: "ar", group: "A" },
+                awayTeam: { name: "Brazil", code: "br", group: "A" },
                 homeScore: null,
                 awayScore: null,
               },
             ],
             meta: { totalPages: 1 },
           },
+        });
+      }
+
+      if (url === "/groups") {
+        return Promise.resolve({
+          data: [{ name: "A" }],
         });
       }
 
@@ -142,7 +154,7 @@ describe("Matches", () => {
     }));
 
     expect(
-      await screen.findByText("Predictions are locked after kickoff. Try again."),
+      await screen.findByText(/Predictions are locked after kickoff\. Try again\./),
     ).toBeInTheDocument();
   });
 
@@ -161,14 +173,20 @@ describe("Matches", () => {
               {
                 id: 11,
                 date: "2099-06-01T15:00:00.000Z",
-                homeTeam: { name: "Spain", code: "es" },
-                awayTeam: { name: "France", code: "fr" },
+                homeTeam: { name: "Spain", code: "es", group: "B" },
+                awayTeam: { name: "France", code: "fr", group: "B" },
                 homeScore: null,
                 awayScore: null,
               },
             ],
             meta: { totalPages: 1 },
           },
+        });
+      }
+
+      if (url === "/groups") {
+        return Promise.resolve({
+          data: [{ name: "B" }],
         });
       }
 
