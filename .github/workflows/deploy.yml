@@ -65,6 +65,8 @@ jobs:
     needs: [frontend-checks, backend-tests]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    env:
+      LAMBDA_ARTIFACT_KEY: lambda-artifacts/${{ github.sha }}.zip
     steps:
       - uses: actions/checkout@v4
 
@@ -94,12 +96,13 @@ jobs:
 
       - name: Upload to S3 & update Lambda
         run: |
-          aws s3 cp dist/lambda.zip s3://pitchpulse26-lambda-artifacts/lambda.zip
+          aws s3 cp dist/lambda.zip s3://pitchpulse26-lambda-artifacts/$LAMBDA_ARTIFACT_KEY
           aws lambda update-function-code \
             --function-name pitchpulse26-api \
             --s3-bucket pitchpulse26-lambda-artifacts \
-            --s3-key lambda.zip
+            --s3-key $LAMBDA_ARTIFACT_KEY
           aws lambda wait function-updated --function-name pitchpulse26-api
+          echo "Deployed artifact: $LAMBDA_ARTIFACT_KEY"
 
       - name: Post-deploy health check
         run: |

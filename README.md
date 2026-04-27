@@ -151,6 +151,16 @@ Recommended match data for manual QA:
 - at least 1 completed match with a final score
 - enough matches to trigger pagination
 
+## Deployment Rollback
+
+Production rollback is documented in [docs/runbooks/deployment-rollback.md](/Users/gerardeklu/PitchPulse26/docs/runbooks/deployment-rollback.md).
+
+Current rollback approach:
+
+- frontend rollback through Amplify deployment history or by reverting the bad `main` commit
+- backend rollback by redeploying the last known good Lambda artifact from S3
+- database rollback avoided by favoring backward-compatible Prisma migrations
+
 ## API Endpoints
 
 ### Public

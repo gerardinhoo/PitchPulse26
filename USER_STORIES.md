@@ -769,3 +769,199 @@
 - Common iPhone and Android viewport sizes are verified manually
 
 **Priority:** High | **Labels:** mobile, ux, frontend
+
+---
+
+## Epic 11: Production Readiness & Operations [TODO]
+
+### PP-045: Health Checks & Readiness Endpoint [TODO]
+**As a** platform engineer
+**I want** health and readiness endpoints
+**So that** I can verify the service is alive and its dependencies are working
+
+**Acceptance Criteria:**
+- API exposes `/api/health` for basic liveness
+- API exposes `/api/ready` for dependency readiness checks
+- Health responses are fast and structured JSON
+- Readiness fails clearly when the database is unavailable
+
+**Priority:** High | **Labels:** sre, backend, cloud
+
+---
+
+### PP-046: Structured Request Logging [TODO]
+**As a** developer or operator
+**I want** structured logs for requests and errors
+**So that** I can debug production issues quickly
+
+**Acceptance Criteria:**
+- Requests are logged in a structured format
+- Errors include route, method, status code, and request id
+- Sensitive values are excluded from logs
+- Logs are readable locally and in cloud logging tools
+
+**Priority:** High | **Labels:** devops, sre, backend
+
+---
+
+### PP-047: Request Correlation IDs [TODO]
+**As a** developer
+**I want** each request tagged with a correlation id
+**So that** I can trace a request across logs and failures
+
+**Acceptance Criteria:**
+- Every request gets a unique request id
+- Request id is included in logs
+- Request id is returned in response headers
+- Errors can be traced back to a single request id
+
+**Priority:** Medium | **Labels:** sre, observability, backend
+
+---
+
+### PP-048: Frontend Error Boundary [TODO]
+**As a** user
+**I want** the UI to recover gracefully from unexpected rendering failures
+**So that** the app does not crash into a blank screen
+
+**Acceptance Criteria:**
+- App includes a React error boundary
+- Rendering failures show a friendly fallback UI
+- Fallback UI includes a retry or navigation option
+- Errors are logged for debugging
+
+**Priority:** Medium | **Labels:** frontend, reliability, ux
+
+---
+
+### PP-049: Admin Audit Trail [TODO]
+**As an** operator
+**I want** admin match result changes to be auditable
+**So that** I can see who changed what and when
+
+**Acceptance Criteria:**
+- Admin result updates log admin id, match id, and timestamp
+- Audit trail captures old and new scores where possible
+- Audit entries are persisted or clearly queryable
+- Audit format is documented
+
+**Priority:** High | **Labels:** backend, security, ops
+
+---
+
+### PP-050: Deployment Rollback Runbook [DONE]
+**As an** operator
+**I want** a rollback procedure
+**So that** I can recover safely from bad deployments
+
+**Acceptance Criteria:**
+- Rollback steps exist for frontend and backend
+- Rollback triggers are documented
+- Validation steps after rollback are documented
+- Known migration risks are called out
+
+**Priority:** High | **Labels:** devops, cloud, documentation
+
+---
+
+### PP-051: Safe Database Migration Playbook [TODO]
+**As a** developer
+**I want** a documented migration strategy
+**So that** schema changes can be deployed safely without downtime surprises
+
+**Acceptance Criteria:**
+- Docs explain backward-compatible migration sequencing
+- Expand-and-contract approach is documented
+- Rollback considerations are included
+- Risky migration examples are called out
+
+**Priority:** High | **Labels:** database, devops, cloud
+
+---
+
+### PP-052: Load Test Baseline [TODO]
+**As a** platform engineer
+**I want** a repeatable load test baseline
+**So that** I can understand the app’s current limits before real traffic spikes
+
+**Acceptance Criteria:**
+- Load test covers matches, leaderboard, and prediction save flows
+- Baseline latency and error rates are documented
+- Bottlenecks and likely scaling risks are written down
+- Test can be rerun locally or in CI
+
+**Priority:** High | **Labels:** performance, sre, backend
+
+---
+
+### PP-053: Monitoring & Alerting Runbook [TODO]
+**As an** operator
+**I want** a monitoring checklist
+**So that** I know which signals to watch during failures
+
+**Acceptance Criteria:**
+- Key metrics are documented
+- Healthy vs unhealthy behavior is described
+- Troubleshooting steps exist for high latency and error spikes
+- Dashboard/alert ownership is documented
+
+**Priority:** Medium | **Labels:** monitoring, sre, cloud
+
+---
+
+### PP-054: Incident Response Playbook [TODO]
+**As an** engineer on call
+**I want** documented incident steps
+**So that** I can respond consistently under pressure
+
+**Acceptance Criteria:**
+- Playbooks exist for database failure, auth failure, and prediction-save failure
+- Each playbook includes detection, mitigation, validation, and follow-up
+- Playbooks are short and easy to use during incidents
+
+**Priority:** Medium | **Labels:** sre, operations, documentation
+
+---
+
+### PP-055: Architecture Decision Records [TODO]
+**As a** maintainer
+**I want** architecture decision records
+**So that** technical choices and tradeoffs are easy to explain later
+
+**Acceptance Criteria:**
+- ADR exists for serverless backend choice
+- ADR exists for Prisma/Postgres choice
+- ADR exists for kickoff lock enforcement on backend
+- ADR exists for leaderboard implementation tradeoffs
+
+**Priority:** Medium | **Labels:** architecture, documentation, swe
+
+---
+
+### PP-056: Local Development Onboarding Guide [TODO]
+**As a** new contributor
+**I want** a reliable onboarding guide
+**So that** I can run and test the app quickly
+
+**Acceptance Criteria:**
+- Setup steps are documented clearly
+- Required env vars are explained
+- Seed/test user guidance is included
+- Common local setup failures and fixes are documented
+
+**Priority:** Medium | **Labels:** documentation, developer-experience, swe
+
+---
+
+### PP-057: Cost & Scaling Notes [TODO]
+**As a** cloud engineer
+**I want** cost and scaling assumptions documented
+**So that** infrastructure decisions are grounded in realistic tradeoffs
+
+**Acceptance Criteria:**
+- Likely cost drivers are identified
+- Likely scaling bottlenecks are identified
+- Low-cost optimizations are suggested
+- Assumptions are clearly stated
+
+**Priority:** Medium | **Labels:** cloud, architecture, ops
