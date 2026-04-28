@@ -13,6 +13,7 @@ data "aws_iam_policy_document" "ci" {
     actions = ["s3:PutObject", "s3:GetObject"]
     resources = [
       "${aws_s3_bucket.lambda_artifacts.arn}/lambda.zip",
+      "${aws_s3_bucket.lambda_artifacts.arn}/lambda-artifacts/*",
     ]
   }
 
