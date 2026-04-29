@@ -222,7 +222,7 @@
 
 ---
 
-## Epic 5: Groups, Standings & Team Metadata
+## Epic 5: Groups, Standings & Team Metadata [DONE]
 
 ### PP-015: Group Standings [DONE]
 **As a** user
@@ -245,7 +245,7 @@
 
 ---
 
-### PP-016: Team Flags & Metadata
+### PP-016: Team Flags & Metadata [DONE]
 **As a** user
 **I want to** see team flags next to team names
 **So that** matches and standings are visually identifiable
@@ -394,7 +394,7 @@
 
 ## Epic 8: Testing [DONE]
 
-### PP-024: Backend Unit Tests
+### PP-024: Backend Unit Tests [DONE]
 **As a** developer
 **I want** unit tests for backend services
 **So that** I can refactor with confidence
@@ -410,7 +410,7 @@
 
 ---
 
-### PP-025: Backend Integration Tests
+### PP-025: Backend Integration Tests [DONE]
 **As a** developer
 **I want** API integration tests
 **So that** I can verify endpoints work end-to-end
@@ -427,7 +427,7 @@
 
 ---
 
-### PP-026: Frontend Component Tests
+### PP-026: Frontend Component Tests [DONE]
 **As a** developer
 **I want** tests for key UI components
 **So that** UI regressions are caught early
@@ -443,7 +443,7 @@
 
 ---
 
-## Epic 9: AWS Deployment & DevOps
+## Epic 9: AWS Deployment & DevOps [IN PROGRESS]
 
 ### PP-027: Database Migration to PostgreSQL [DONE]
 **As a** developer
@@ -528,7 +528,7 @@
 
 ---
 
-### PP-031A: GitHub Actions Test Gate[DONE]
+### PP-031A: GitHub Actions Test Gate [DONE]
 **As a** developer
 **I want** GitHub Actions to run the frontend and backend test suites on pull requests
 **So that** failing tests block merges before code reaches `main`
@@ -595,7 +595,7 @@
 
 ---
 
-### PP-034: Load Testing (Artillery)
+### PP-034: Load Testing (Artillery) [TODO]
 **As a** developer
 **I want** load test results documented
 **So that** I can prove the app handles traffic spikes
@@ -611,7 +611,7 @@
 
 ---
 
-### PP-035: Disaster Recovery (Pilot Light)
+### PP-035: Disaster Recovery (Pilot Light) [TODO]
 **As a** developer
 **I want** a documented DR strategy
 **So that** the app can be restored in a second AWS region
@@ -625,7 +625,7 @@
 
 **Priority:** Low | **Labels:** devops, reliability
 
-### PP-036: Custom Domain Setup (pitchpulse26.com) for Pitch Pulse 26  [Done]
+### PP-036A: Custom Domain Setup (pitchpulse26.com) for Pitch Pulse 26 [DONE]
 **As a** user
 **I want** to access the Pitch Pulse 2026 app using a custom domain (pitchpulse26.com),
 **So that** the application looks professional, trustworthy, and easy to remember.
@@ -642,7 +642,7 @@
 
 ---
 
-## Epic 10: Real-World UX Improvements [IN PROGRESS]
+## Epic 10: Real-World UX Improvements [DONE]
 
 ### PP-037: Auth Form Guidance & Recovery [DONE]
 **As a** user
@@ -660,7 +660,7 @@
 
 ---
 
-### PP-038: Match Filters & Quick Navigation [TODO]
+### PP-038: Match Filters & Quick Navigation [DONE]
 **As a** user
 **I want** to filter and jump through matches quickly
 **So that** I can find the games I care about without paging through long lists
@@ -772,7 +772,7 @@
 
 ---
 
-## Epic 11: Production Readiness & Operations [TODO]
+## Epic 11: Production Readiness & Operations [IN PROGRESS]
 
 ### PP-045: Health Checks & Readiness Endpoint [TODO]
 **As a** platform engineer
