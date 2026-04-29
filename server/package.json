@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "nodemon --exec tsx src/index.js",
+    "dev:docker": "nodemon -L --exec tsx src/index.js",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },

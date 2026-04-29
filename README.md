@@ -122,6 +122,47 @@ npm run dev
 
 The web app runs at `http://localhost:5173`. It reads `VITE_API_URL` (defaults to `http://localhost:5050/api`).
 
+## Dockerized Local Development
+
+The app can also run through Docker Compose while still using the shared Neon PostgreSQL database from `server/.env`.
+
+### Prerequisites
+
+- Docker Desktop or Docker Engine with Compose support
+- a populated `server/.env` file with a valid `DATABASE_URL`
+
+### Start the app
+
+```bash
+docker compose up --build
+```
+
+Available services:
+
+- frontend: `http://localhost:5173`
+- backend: `http://localhost:5050/api`
+
+### Stop the app
+
+```bash
+docker compose down
+```
+
+### Reinstall container dependencies
+
+If dependencies drift or containers behave oddly after package updates:
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
+### Notes
+
+- Docker Compose runs only the frontend and backend services
+- PostgreSQL is still provided by Neon, so no local database container is required
+- code changes are mounted into the containers for live reload during development
+
 ## Local Development Flow
 
 Run the backend in one terminal:
@@ -150,6 +191,7 @@ Recommended match data for manual QA:
 - at least 1 locked match (kickoff passed, no result yet)
 - at least 1 completed match with a final score
 - enough matches to trigger pagination
+- `docker compose up --build` should bring up the same app flow without local Node installs
 
 ## Deployment Rollback
 
@@ -327,6 +369,14 @@ npm test
 cd client
 npx tsc -b
 ```
+
+### Docker Compose
+
+```bash
+docker compose up --build
+```
+
+Use this when you want a containerized local environment that still points at the shared Neon database.
 
 ## Manual QA Suggestions
 

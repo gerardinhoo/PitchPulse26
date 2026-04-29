@@ -1,0 +1,38 @@
+services:
+  server:
+    build:
+      context: ./server
+    container_name: pitchpulse26-server
+    working_dir: /app
+    env_file:
+      - ./server/.env
+    environment:
+      PORT: 5050
+      CORS_ORIGIN: http://localhost:5173
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./server:/app
+      - pitchpulse26_server_node_modules:/app/node_modules
+    command: npm run dev:docker
+
+  client:
+    build:
+      context: ./client
+    container_name: pitchpulse26-client
+    working_dir: /app
+    environment:
+      VITE_API_URL: http://localhost:5050/api
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "5173:5173"
+    depends_on:
+      - server
+    volumes:
+      - ./client:/app
+      - pitchpulse26_client_node_modules:/app/node_modules
+    command: npm run dev:docker
+
+volumes:
+  pitchpulse26_server_node_modules:
+  pitchpulse26_client_node_modules:
