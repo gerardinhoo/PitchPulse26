@@ -28,7 +28,7 @@ export default function Home() {
           </h1>
           <p className="text-lg sm:text-xl text-[var(--color-text-muted)] mb-8 animate-slide-up" style={{ animationDelay: "100ms" }}>
             Predict the score for every World Cup 2026 group-stage match, climb the leaderboard,
-            and prove your football instincts against other fans.
+            and prove you know The Beautiful Game than everyone else.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 animate-slide-up" style={{ animationDelay: "200ms" }}>
             <Link
