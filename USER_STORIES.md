@@ -965,3 +965,20 @@
 - Assumptions are clearly stated
 
 **Priority:** Medium | **Labels:** cloud, architecture, ops
+
+---
+
+### PP-058: Dockerized Local Development with Compose [DONE]
+**As a** developer
+**I want** the app to run with Docker Compose
+**So that** onboarding and local setup are consistent across environments
+
+**Acceptance Criteria:**
+- Frontend runs in Docker
+- Backend runs in Docker
+- App can be started with `docker compose up`
+- Environment variable requirements are documented
+- Prisma-backed backend works correctly while connecting to Neon
+- README includes Docker setup and troubleshooting steps
+
+**Priority:** Medium | **Labels:** devops, developer-experience, docker
