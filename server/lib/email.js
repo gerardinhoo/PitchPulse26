@@ -68,6 +68,58 @@ function buildVerificationEmail({ to, displayName, verifyUrl }) {
   };
 }
 
+function buildPasswordResetEmail({ to, displayName, resetUrl }) {
+  const name = displayName?.trim() || "there";
+  const subject = "Reset your PitchPulse 26 password";
+
+  const text = [
+    `Hi ${name},`,
+    "",
+    "We received a request to reset your PitchPulse 26 password.",
+    "Use the link below to choose a new password:",
+    resetUrl,
+    "",
+    "This link expires in 1 hour. If you didn't request a password reset, you can ignore this message.",
+    "",
+    "— PitchPulse 26",
+  ].join("\n");
+
+  const safeName = escapeHtml(name);
+  const safeUrl = escapeHtml(resetUrl);
+  const html = `<!doctype html>
+<html>
+  <body style="font-family: -apple-system, Segoe UI, sans-serif; background:#0f1b0e; color:#f9fafb; padding:24px;">
+    <div style="max-width:520px; margin:0 auto; background:#111827; border:1px solid #374151; border-radius:12px; padding:24px;">
+      <h1 style="margin:0 0 12px; font-size:20px;">
+        <span style="color:#10b981;">Pitch</span>Pulse 26
+      </h1>
+      <p>Hi ${safeName},</p>
+      <p>We received a request to reset your password. Click the button below to choose a new one:</p>
+      <p style="text-align:center; margin:24px 0;">
+        <a href="${safeUrl}" style="background:#10b981; color:#ffffff; padding:12px 20px; border-radius:8px; text-decoration:none; font-weight:600;">Reset password</a>
+      </p>
+      <p style="font-size:12px; color:#9ca3af;">Or paste this link into your browser:</p>
+      <p style="font-size:12px; color:#9ca3af; word-break:break-all;">${safeUrl}</p>
+      <p style="font-size:12px; color:#9ca3af;">This link expires in 1 hour. If you didn't request a password reset, you can ignore this message.</p>
+    </div>
+  </body>
+</html>`;
+
+  return {
+    FromEmailAddress: EMAIL_FROM,
+    Destination: { ToAddresses: [to] },
+    Content: {
+      Simple: {
+        Subject: { Data: subject, Charset: "UTF-8" },
+        Body: {
+          Text: { Data: text, Charset: "UTF-8" },
+          Html: { Data: html, Charset: "UTF-8" },
+        },
+      },
+    },
+  };
+}
+
 /**
  * Sends a verification email. Throws on SES errors so callers can decide
  * whether to surface the failure or swallow it (registration should not
@@ -76,6 +128,13 @@ function buildVerificationEmail({ to, displayName, verifyUrl }) {
 export async function sendVerificationEmail({ to, displayName, verifyUrl }) {
   const command = new SendEmailCommand(
     buildVerificationEmail({ to, displayName, verifyUrl })
+  );
+  return sesClient.send(command);
+}
+
+export async function sendPasswordResetEmail({ to, displayName, resetUrl }) {
+  const command = new SendEmailCommand(
+    buildPasswordResetEmail({ to, displayName, resetUrl })
   );
   return sesClient.send(command);
 }

@@ -4,6 +4,7 @@ import request from "supertest";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const sendVerificationEmail = vi.fn().mockResolvedValue(undefined);
+const sendPasswordResetEmail = vi.fn().mockResolvedValue(undefined);
 
 const state = {
   users: [],
@@ -44,6 +45,7 @@ function resetState() {
   counters.userId = 1;
   counters.predictionId = 1;
   sendVerificationEmail.mockClear();
+  sendPasswordResetEmail.mockClear();
 }
 
 function clone(value) {
@@ -62,6 +64,14 @@ function findUserByUnique(where = {}) {
 
 function findMatchById(id) {
   return state.matches.find((match) => match.id === id) ?? null;
+}
+
+function buildOpenMatchRelations(match) {
+  return {
+    ...clone(match),
+    homeTeam: clone(match.homeTeam),
+    awayTeam: clone(match.awayTeam),
+  };
 }
 
 function buildPredictionWithRelations(prediction) {
@@ -171,6 +181,19 @@ const prisma = {
       const match = findMatchById(where.id);
       return match ? clone(match) : null;
     },
+    async findMany({ include, orderBy } = {}) {
+      const matches = [...state.matches];
+
+      if (orderBy?.date === "asc") {
+        matches.sort((a, b) => new Date(a.date) - new Date(b.date));
+      }
+
+      if (include?.homeTeam || include?.awayTeam) {
+        return matches.map(buildOpenMatchRelations);
+      }
+
+      return matches.map(clone);
+    },
     async update({ where, data }) {
       const match = findMatchById(where.id);
       if (!match) {
@@ -208,13 +231,29 @@ const prisma = {
       state.predictions.push(prediction);
       return clone(prediction);
     },
-    async findMany({ where, skip = 0, take } = {}) {
-      const filtered = state.predictions
-        .filter((prediction) => prediction.userId === where.userId)
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    async findMany({ where = {}, skip = 0, take, include, select, orderBy } = {}) {
+      let filtered = state.predictions;
+
+      if (where.userId !== undefined) {
+        filtered = filtered.filter((prediction) => prediction.userId === where.userId);
+      }
+
+      filtered = [...filtered];
+      if (orderBy?.createdAt === "desc") {
+        filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      }
+
       const paginated = filtered.slice(skip, take === undefined ? undefined : skip + take);
 
-      return paginated.map(buildPredictionWithRelations);
+      if (select?.matchId) {
+        return paginated.map((prediction) => ({ matchId: prediction.matchId }));
+      }
+
+      if (include?.match) {
+        return paginated.map(buildPredictionWithRelations);
+      }
+
+      return paginated.map(clone);
     },
     async count({ where } = {}) {
       return state.predictions.filter((prediction) => prediction.userId === where.userId)
@@ -224,7 +263,10 @@ const prisma = {
 };
 
 vi.mock("../../lib/prisma.js", () => ({ prisma }));
-vi.mock("../../lib/email.js", () => ({ sendVerificationEmail }));
+vi.mock("../../lib/email.js", () => ({
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+}));
 
 let app;
 
@@ -310,6 +352,73 @@ describe("backend integration tests", () => {
     });
   });
 
+  it("requests a password reset without leaking whether the email exists", async () => {
+    await createVerifiedUser({
+      email: "reset@example.com",
+      displayName: "Reset User",
+    });
+
+    const response = await request(app)
+      .post("/api/auth/forgot-password")
+      .send({ email: "reset@example.com" });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      message: "If an account exists for that email, a password reset link has been sent.",
+    });
+    expect(sendPasswordResetEmail).toHaveBeenCalledOnce();
+
+    const missingUserResponse = await request(app)
+      .post("/api/auth/forgot-password")
+      .send({ email: "unknown@example.com" });
+
+    expect(missingUserResponse.status).toBe(200);
+    expect(missingUserResponse.body).toEqual({
+      message: "If an account exists for that email, a password reset link has been sent.",
+    });
+  });
+
+  it("resets a password with a valid reset token", async () => {
+    const user = await createVerifiedUser({
+      email: "recover@example.com",
+      displayName: "Recover User",
+    });
+
+    await request(app)
+      .post("/api/auth/forgot-password")
+      .send({ email: "recover@example.com" });
+
+    const resetUrl = sendPasswordResetEmail.mock.calls[0][0].resetUrl;
+    const token = new URL(resetUrl).searchParams.get("token");
+
+    const resetResponse = await request(app)
+      .post("/api/auth/reset-password")
+      .send({
+        token,
+        password: "newpassword123",
+      });
+
+    expect(resetResponse.status).toBe(200);
+    expect(resetResponse.body).toEqual({ message: "Password reset successful" });
+
+    const oldLoginResponse = await request(app)
+      .post("/api/auth/login")
+      .send({
+        email: "recover@example.com",
+        password: user.plainPassword,
+      });
+    expect(oldLoginResponse.status).toBe(401);
+
+    const newLoginResponse = await request(app)
+      .post("/api/auth/login")
+      .send({
+        email: "recover@example.com",
+        password: "newpassword123",
+      });
+    expect(newLoginResponse.status).toBe(200);
+    expect(newLoginResponse.body.token).toEqual(expect.any(String));
+  });
+
   it("supports authenticated prediction create, update, and read flows", async () => {
     const user = await createVerifiedUser({
       email: "predictor@example.com",
@@ -378,6 +487,40 @@ describe("backend integration tests", () => {
         }),
       }),
     ]);
+  });
+
+  it("returns a lightweight prediction summary for the matches dashboard", async () => {
+    const user = await createVerifiedUser({
+      email: "summary@example.com",
+      displayName: "Summary User",
+    });
+
+    await prisma.prediction.upsert({
+      where: { userId_matchId: { userId: user.id, matchId: 100 } },
+      create: { userId: user.id, matchId: 100, homeScore: 2, awayScore: 1 },
+      update: {},
+    });
+
+    state.matches[0].homeScore = 2;
+    state.matches[0].awayScore = 1;
+
+    const response = await request(app)
+      .get("/api/predictions/summary")
+      .set("Authorization", `Bearer ${createToken(user)}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      predictedCount: 1,
+      remainingCount: 1,
+      lockedCount: 0,
+      rank: 1,
+      points: 3,
+      nextMatch: expect.objectContaining({
+        id: 101,
+        homeTeam: expect.objectContaining({ name: "Canada" }),
+        awayTeam: expect.objectContaining({ name: "Chile" }),
+      }),
+    });
   });
 
   it("rejects admin match updates for regular users and allows admins", async () => {

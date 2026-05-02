@@ -124,7 +124,10 @@ export default function Login() {
         </button>
 
         <p className="text-sm text-[var(--color-text-muted)] mt-3 text-center">
-          Forgot your password? Password recovery is coming soon.
+          Forgot your password?{" "}
+          <Link to="/forgot-password" className="text-[var(--color-accent)] hover:underline">
+            Reset it here
+          </Link>
         </p>
 
         <p className="text-sm text-[var(--color-text-muted)] mt-4 text-center">

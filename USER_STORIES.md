@@ -982,3 +982,36 @@
 - README includes Docker setup and troubleshooting steps
 
 **Priority:** Medium | **Labels:** devops, developer-experience, docker
+
+---
+
+### PP-059: Matches Page Performance Pass [DONE]
+**As a** returning user
+**I want** the matches experience to load and navigate more quickly
+**So that** browsing fixtures and saving predictions feels responsive instead of sluggish
+
+**Acceptance Criteria:**
+- Matches page removes redundant data requests during initial load
+- Filter and group changes do not trigger unnecessary schedule refetches
+- Dashboard summary data is derived with fewer network round trips
+- Tests cover the optimized loading behavior
+- Notes document the main bottleneck that was addressed and any remaining follow-up work
+
+**Priority:** High | **Labels:** performance, frontend, matches
+
+---
+
+### PP-060: Password Reset Flow [DONE]
+**As a** user who forgot my password
+**I want** a secure way to request a reset link and choose a new password
+**So that** I can recover access without creating a new account
+
+**Acceptance Criteria:**
+- Login page includes a real "Forgot password" entry point
+- User can request a reset email by entering their account email
+- Reset email contains a short-lived secure token and reset link
+- User can submit a new password from a dedicated reset page
+- Used or expired reset links fail safely with clear messaging
+- Tests cover request, token validation, and password update behavior
+
+**Priority:** High | **Labels:** auth, security, email, backend, frontend

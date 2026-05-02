@@ -17,21 +17,10 @@ type Match = {
   awayScore: number | null;
 };
 
-type Group = {
-  name: string;
-};
-
 type PredictionRecord = {
   matchId: number;
   homeScore: number;
   awayScore: number;
-};
-
-type LeaderboardEntry = {
-  rank: number;
-  userId: number;
-  displayName: string;
-  points: number;
 };
 
 type PredictionInput = {
@@ -136,22 +125,17 @@ export default function Matches() {
       setLoading(true);
       setPageState(null);
       try {
-        const [matchesRes, predictionsRes, summaryMatchesRes, leaderboardRes, groupsRes] = await Promise.all([
-          api.get("/matches", {
-            params: { page: 1, limit: 100, ...(activeGroup ? { group: activeGroup } : {}) },
-          }),
+        const [matchesRes, predictionsRes, summaryRes] = await Promise.all([
+          api.get("/matches", { params: { page: 1, limit: 100 } }),
           // Fetch up to the server max so predictions cover every page of matches.
-          api.get("/predictions/my", { params: { limit: 100 } }).catch(() => null),
-          api.get("/matches", { params: { page: 1, limit: 100 } }).catch(() => null),
-          api.get("/leaderboard", { params: { page: 1, limit: 100 } }).catch(() => null),
-          api.get<Group[]>("/groups").catch(() => null),
+          api.get("/predictions/my", { params: { limit: 100, includeMatch: false } }).catch(() => null),
+          api.get<DashboardSummary>("/predictions/summary").catch(() => null),
         ]);
 
         const fetchedMatches: Match[] = matchesRes.data.data;
         setAllMatches(fetchedMatches);
         setGroups(
-          groupsRes?.data?.map((group) => group.name) ??
-            Array.from(new Set(fetchedMatches.map((match) => match.homeTeam.group))).sort(),
+          Array.from(new Set(fetchedMatches.map((match) => match.homeTeam.group))).sort(),
         );
 
         const predictionRows: PredictionRecord[] = predictionsRes?.data?.data ?? [];
@@ -168,36 +152,7 @@ export default function Matches() {
           setPredictions(saved);
         }
 
-        if (summaryMatchesRes?.data?.data) {
-          const allMatches: Match[] = summaryMatchesRes.data.data;
-          const predictedIds = new Set(predictionRows.map((p) => p.matchId));
-          const playableMatches = allMatches.filter(
-            (match) => match.homeScore === null && match.awayScore === null,
-          );
-          const nextMatch =
-            playableMatches.find(
-              (match) =>
-                new Date(match.date).getTime() > Date.now() &&
-                !predictedIds.has(match.id),
-            ) ?? null;
-          const currentUserStanding = (leaderboardRes?.data?.data as LeaderboardEntry[] | undefined)
-            ?.find((entry) => entry.userId === user?.id);
-
-          setSummary({
-            predictedCount: predictedIds.size,
-            remainingCount: playableMatches.filter(
-              (match) =>
-                new Date(match.date).getTime() > Date.now() &&
-                !predictedIds.has(match.id),
-            ).length,
-            lockedCount: playableMatches.filter((match) => isMatchLocked(match)).length,
-            nextMatch,
-            rank: currentUserStanding?.rank ?? null,
-            points: currentUserStanding?.points ?? null,
-          });
-        } else {
-          setSummary(null);
-        }
+        setSummary(summaryRes?.data ?? null);
       } catch (err: unknown) {
         const axiosErr = err as { response?: { status?: number } };
         setAllMatches([]);
@@ -223,7 +178,7 @@ export default function Matches() {
     fetchData();
     // Scroll to top when changing pages for a cleaner transition
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [activeGroup, reloadKey, user?.id]);
+  }, [reloadKey]);
 
   const filteredMatches = allMatches.filter((match) => matchesActiveView(match, activeView));
   const totalPages = Math.max(1, Math.ceil(filteredMatches.length / PAGE_SIZE));

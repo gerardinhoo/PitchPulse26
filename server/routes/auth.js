@@ -9,13 +9,20 @@ import {
   registerSchema,
   loginSchema,
   verifyEmailSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from "../src/validators.js";
-import { sendVerificationEmail } from "../lib/email.js";
+import { sendPasswordResetEmail, sendVerificationEmail } from "../lib/email.js";
 import {
   signEmailVerificationToken,
   verifyEmailVerificationToken,
   buildVerifyUrl,
 } from "../lib/emailVerificationToken.js";
+import {
+  buildPasswordResetUrl,
+  signPasswordResetToken,
+  verifyPasswordResetToken,
+} from "../lib/passwordResetToken.js";
 
 const router = express.Router();
 
@@ -34,6 +41,19 @@ async function sendVerificationEmailSafe(user) {
     });
   } catch (err) {
     console.error("Failed to send verification email:", err?.message || err);
+  }
+}
+
+async function sendPasswordResetEmailSafe(user) {
+  try {
+    const token = signPasswordResetToken(user);
+    await sendPasswordResetEmail({
+      to: user.email,
+      displayName: user.displayName,
+      resetUrl: buildPasswordResetUrl(token),
+    });
+  } catch (err) {
+    console.error("Failed to send password reset email:", err?.message || err);
   }
 }
 
@@ -116,6 +136,71 @@ router.post("/resend-verification", authMiddleware, async (req, res) => {
 
   await sendVerificationEmailSafe(user);
   return res.json({ message: "Verification email sent" });
+});
+
+router.post("/forgot-password", validate(forgotPasswordSchema), async (req, res) => {
+  const { email } = req.body;
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+      displayName: true,
+      password: true,
+    },
+  });
+
+  if (user) {
+    await sendPasswordResetEmailSafe(user);
+  }
+
+  return res.json({
+    message: "If an account exists for that email, a password reset link has been sent.",
+  });
+});
+
+router.post("/reset-password", validate(resetPasswordSchema), async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    const decoded = jwt.decode(token);
+    const userId = decoded && typeof decoded === "object" ? decoded.userId : null;
+
+    if (typeof userId !== "number") {
+      return res.status(400).json({ error: "Invalid or expired reset link" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, password: true },
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: "Invalid or expired reset link" });
+    }
+
+    verifyPasswordResetToken(token, user.password);
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
+    });
+
+    return res.json({ message: "Password reset successful" });
+  } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      return res.status(400).json({ error: "Reset link has expired. Request a new one." });
+    }
+    if (
+      err.name === "JsonWebTokenError" ||
+      err.code === "INVALID_PURPOSE" ||
+      err.code === "STALE_TOKEN"
+    ) {
+      return res.status(400).json({ error: "Invalid or expired reset link" });
+    }
+    return res.status(500).json({ error: "Could not reset password" });
+  }
 });
 
 // LOGIN

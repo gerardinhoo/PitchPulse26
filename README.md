@@ -15,6 +15,7 @@ The current product scope is focused on World Cup 2026 group-stage matches.
 
 - Home page with product overview and scoring explainer
 - Email/password authentication with email verification
+- Password reset flow with email-based recovery links
 - Paginated match browsing with prediction entry and save/update feedback
 - Personal dashboard on the Matches page showing prediction progress and next action
 - Dynamic group standings and leaderboard views
@@ -60,6 +61,7 @@ PitchPulse26/
 
 - Email + password auth with JWT (1-day expiry), role-based access (`user` / `admin`)
 - Email verification flow with verified-user gating for predictions
+- Password reset request + secure reset link flow
 - Score predictions with one-per-user-per-match upsert, pre-filled on return
 - **Prediction lockout after kickoff** (API + UI) so users can't change picks mid-match
 - 12 group standings computed dynamically from results (MP / W / D / L / GF / GA / GD / Pts)
@@ -193,6 +195,24 @@ Recommended match data for manual QA:
 - enough matches to trigger pagination
 - `docker compose up --build` should bring up the same app flow without local Node installs
 
+## Performance Notes
+
+Recent performance work focused on the Matches page, which had become the heaviest user flow in the app.
+
+- Initial Matches load was reduced from several overlapping requests to a smaller, focused set
+- Group and status filters now work from already-loaded schedule data instead of refetching the match list
+- Dashboard summary data now comes from a lightweight dedicated endpoint instead of duplicate schedule and leaderboard requests
+
+Main bottleneck addressed:
+
+- redundant round trips on the Matches page, especially duplicate schedule fetches and oversized dashboard lookups
+
+Remaining follow-up ideas:
+
+- add a lighter current-user leaderboard/rank path if leaderboard computation becomes expensive
+- split the Matches page orchestration into smaller hooks/components for easier future tuning
+- profile backend latency against the live Neon database after the auth recovery work lands
+
 ## Deployment Rollback
 
 Production rollback is documented in [docs/runbooks/deployment-rollback.md](/Users/gerardeklu/PitchPulse26/docs/runbooks/deployment-rollback.md).
@@ -284,6 +304,8 @@ terraform apply
 | GET | `/api/auth/me` | Get current user profile (requires token) |
 | POST | `/api/auth/verify-email` | Verify email token |
 | POST | `/api/auth/resend-verification` | Resend verification email (requires auth) |
+| POST | `/api/auth/forgot-password` | Request a password reset link |
+| POST | `/api/auth/reset-password` | Set a new password with a valid reset token |
 
 ### Protected (requires JWT)
 
@@ -291,6 +313,7 @@ terraform apply
 |--------|----------|-------------|
 | POST | `/api/predictions` | Create or update a prediction |
 | GET | `/api/predictions/my` | List your predictions (`?page=1&limit=20`) |
+| GET | `/api/predictions/summary` | Get the Matches dashboard summary for the current user |
 
 ### Admin (requires JWT + admin role)
 

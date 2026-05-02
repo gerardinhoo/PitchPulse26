@@ -15,6 +15,15 @@ export const verifyEmailSchema = z.object({
   token: z.string().min(10, "token is required"),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email address"),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(10, "token is required"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
 export const predictionSchema = z.object({
   matchId: z.number().int().positive("matchId must be a positive integer"),
   homeScore: z.number().int().min(0, "homeScore must be >= 0"),

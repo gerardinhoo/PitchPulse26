@@ -51,9 +51,23 @@ describe("Matches", () => {
         });
       }
 
-      if (url === "/groups") {
+      if (url === "/predictions/summary") {
         return Promise.resolve({
-          data: [{ name: "A" }],
+          data: {
+            predictedCount: 0,
+            remainingCount: 1,
+            lockedCount: 0,
+            nextMatch: {
+              id: 10,
+              date: "2099-06-01T15:00:00.000Z",
+              homeTeam: { name: "Argentina", code: "ar", group: "A" },
+              awayTeam: { name: "Brazil", code: "br", group: "A" },
+              homeScore: null,
+              awayScore: null,
+            },
+            rank: null,
+            points: null,
+          },
         });
       }
 
@@ -117,9 +131,23 @@ describe("Matches", () => {
         });
       }
 
-      if (url === "/groups") {
+      if (url === "/predictions/summary") {
         return Promise.resolve({
-          data: [{ name: "A" }],
+          data: {
+            predictedCount: 0,
+            remainingCount: 1,
+            lockedCount: 0,
+            nextMatch: {
+              id: 10,
+              date: "2099-06-01T15:00:00.000Z",
+              homeTeam: { name: "Argentina", code: "ar", group: "A" },
+              awayTeam: { name: "Brazil", code: "br", group: "A" },
+              homeScore: null,
+              awayScore: null,
+            },
+            rank: null,
+            points: null,
+          },
         });
       }
 
@@ -184,9 +212,23 @@ describe("Matches", () => {
         });
       }
 
-      if (url === "/groups") {
+      if (url === "/predictions/summary") {
         return Promise.resolve({
-          data: [{ name: "B" }],
+          data: {
+            predictedCount: 0,
+            remainingCount: 1,
+            lockedCount: 0,
+            nextMatch: {
+              id: 11,
+              date: "2099-06-01T15:00:00.000Z",
+              homeTeam: { name: "Spain", code: "es", group: "B" },
+              awayTeam: { name: "France", code: "fr", group: "B" },
+              homeScore: null,
+              awayScore: null,
+            },
+            rank: null,
+            points: null,
+          },
         });
       }
 
