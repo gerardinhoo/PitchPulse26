@@ -11,7 +11,7 @@ export default function SponsorBanner() {
           rel="noopener noreferrer"
           className="font-semibold text-[var(--color-accent)] hover:underline"
         >
-          Your Brand Here
+           Coming Soon...
         </a>
       </div>
     </div>
