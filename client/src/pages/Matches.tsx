@@ -180,7 +180,11 @@ export default function Matches() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [reloadKey]);
 
-  const filteredMatches = allMatches.filter((match) => matchesActiveView(match, activeView));
+  const filteredMatches = allMatches.filter((match) => {
+    const matchesView = matchesActiveView(match, activeView);
+    const matchesGroup = !activeGroup || match.homeTeam.group === activeGroup;
+    return matchesView && matchesGroup;
+  });
   const totalPages = Math.max(1, Math.ceil(filteredMatches.length / PAGE_SIZE));
   const matches = filteredMatches.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
