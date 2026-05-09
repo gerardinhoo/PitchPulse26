@@ -8,6 +8,11 @@ const router = express.Router();
 router.get("/", async (req, res, next) => {
   try {
     const { page, limit } = paginationSchema.parse(req.query);
+    const currentUserIdRaw = req.query.currentUserId;
+    const currentUserId =
+      typeof currentUserIdRaw === "string" && /^\d+$/.test(currentUserIdRaw)
+        ? Number(currentUserIdRaw)
+        : null;
 
     // Only load predictions for matches that have results (avoids useless data)
     const users = await prisma.user.findMany({
@@ -28,10 +33,15 @@ router.get("/", async (req, res, next) => {
     // Paginate the sorted results
     const total = leaderboard.length;
     const paginated = leaderboard.slice((page - 1) * limit, page * limit);
+    const currentUser =
+      currentUserId === null
+        ? null
+        : leaderboard.find((entry) => entry.userId === currentUserId) ?? null;
 
     res.json({
       data: paginated,
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      currentUser,
     });
   } catch (error) {
     next(error);

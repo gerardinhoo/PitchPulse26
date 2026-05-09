@@ -25,7 +25,7 @@ export const calculatePoints = (prediction, match) => {
 };
 
 export function buildLeaderboard(users) {
-  return users
+  const entries = users
     .map((user) => {
       let totalPoints = 0;
       for (const pred of user.prediction) {
@@ -38,9 +38,26 @@ export function buildLeaderboard(users) {
         points: totalPoints,
       };
     })
-    .sort((a, b) => b.points - a.points)
-    .map((entry, index) => ({
-      rank: index + 1,
+    .sort((a, b) => b.points - a.points || a.userId - b.userId);
+
+  const tiesByPoints = new Map();
+  for (const entry of entries) {
+    tiesByPoints.set(entry.points, (tiesByPoints.get(entry.points) ?? 0) + 1);
+  }
+
+  let currentRank = 0;
+  let lastPoints = null;
+
+  return entries.map((entry, index) => {
+    if (lastPoints !== entry.points) {
+      currentRank = index + 1;
+      lastPoints = entry.points;
+    }
+
+    return {
+      rank: currentRank,
+      tiedCount: tiesByPoints.get(entry.points) ?? 1,
       ...entry,
-    }));
+    };
+  });
 }

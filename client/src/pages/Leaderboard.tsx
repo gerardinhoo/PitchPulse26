@@ -8,6 +8,7 @@ import StatePanel from "../components/StatePanel";
 
 type LeaderboardEntry = {
   rank: number;
+  tiedCount: number;
   userId: number;
   displayName: string;
   points: number;
@@ -22,8 +23,6 @@ const RANK_BG: Record<number, string> = {
 };
 
 const PAGE_SIZE = 20;
-const SUMMARY_LIMIT = 100;
-
 function parsePage(value: string | null): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : 1;
@@ -37,29 +36,12 @@ function getDisplayName(player: LeaderboardEntry) {
   return normalized;
 }
 
-function buildDisplayRanks(entries: LeaderboardEntry[]) {
-  const ranks = new Map<number, number>();
-  let currentRank = 0;
-  let lastPoints: number | null = null;
-
-  for (let index = 0; index < entries.length; index += 1) {
-    const entry = entries[index];
-    if (lastPoints !== entry.points) {
-      currentRank = index + 1;
-      lastPoints = entry.points;
-    }
-    ranks.set(entry.userId, currentRank);
-  }
-
-  return ranks;
-}
-
 export default function Leaderboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parsePage(searchParams.get("page"));
 
   const [leaders, setLeaders] = useState<LeaderboardEntry[]>([]);
-  const [allLeaders, setAllLeaders] = useState<LeaderboardEntry[]>([]);
+  const [currentUserEntry, setCurrentUserEntry] = useState<LeaderboardEntry | null>(null);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [errorState, setErrorState] = useState<{
@@ -75,21 +57,16 @@ export default function Leaderboard() {
       setLoading(true);
       setErrorState(null);
       try {
-        const [pageRes, summaryRes] = await Promise.all([
-          api.get("/leaderboard", {
-            params: { page, limit: PAGE_SIZE },
-          }),
-          api.get("/leaderboard", {
-            params: { page: 1, limit: SUMMARY_LIMIT },
-          }).catch(() => null),
-        ]);
+        const pageRes = await api.get("/leaderboard", {
+          params: { page, limit: PAGE_SIZE, currentUserId: user?.id },
+        });
         setLeaders(pageRes.data.data);
-        setAllLeaders(summaryRes?.data?.data ?? pageRes.data.data);
+        setCurrentUserEntry(pageRes.data.currentUser ?? null);
         setTotalPages(pageRes.data.meta?.totalPages ?? 1);
       } catch (err: unknown) {
         const axiosErr = err as { response?: { status?: number } };
         setLeaders([]);
-        setAllLeaders([]);
+        setCurrentUserEntry(null);
         setErrorState(
           axiosErr.response
             ? {
@@ -110,7 +87,7 @@ export default function Leaderboard() {
 
     fetchLeaderboard();
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [page, reloadKey]);
+  }, [page, reloadKey, user?.id]);
 
   // Clamp out-of-range ?page=N back to the last valid page.
   useEffect(() => {
@@ -132,9 +109,6 @@ export default function Leaderboard() {
   const handleRetry = () => {
     setReloadKey((current) => current + 1);
   };
-
-  const rankMap = buildDisplayRanks(allLeaders);
-  const currentUserEntry = allLeaders.find((player) => player.userId === user?.id) ?? null;
 
   if (loading) return <Spinner />;
 
@@ -188,7 +162,7 @@ export default function Leaderboard() {
                   {currentUserEntry ? (
                     <>
                       <p className="text-3xl font-bold mt-2 text-[var(--color-accent)]">
-                        #{rankMap.get(currentUserEntry.userId) ?? currentUserEntry.rank}
+                        #{currentUserEntry.rank}
                       </p>
                       <p className="mt-2 font-medium">{getDisplayName(currentUserEntry)}</p>
                       <p className="text-sm text-[var(--color-text-muted)] mt-2">
@@ -210,9 +184,9 @@ export default function Leaderboard() {
             <div className="space-y-2 stagger-children">
               {leaders.map((player) => {
                 const isCurrentUser = user?.id === player.userId;
-                const displayRank = rankMap.get(player.userId) ?? player.rank;
+                const displayRank = player.rank;
                 const isTop3 = displayRank <= 3;
-                const samePointsCount = allLeaders.filter((entry) => entry.points === player.points).length;
+                const samePointsCount = player.tiedCount;
 
                 return (
                   <div
