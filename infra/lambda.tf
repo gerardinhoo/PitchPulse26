@@ -64,7 +64,7 @@ resource "aws_lambda_function" "api" {
   handler       = "src/lambda.handler"
   runtime       = "nodejs22.x"
   timeout       = 30
-  memory_size   = 256
+  memory_size   = 1024
 
   s3_bucket        = aws_s3_bucket.lambda_artifacts.id
   s3_key           = aws_s3_object.lambda_zip.key
@@ -86,4 +86,34 @@ resource "aws_lambda_function" "api" {
     aws_iam_role_policy_attachment.lambda_basic,
     aws_cloudwatch_log_group.lambda,
   ]
+}
+
+# ── Keep-warm: ping Lambda every 5 minutes to avoid cold starts ──
+resource "aws_cloudwatch_event_rule" "keep_warm" {
+  name                = "${var.project_name}-keep-warm"
+  description         = "Pings the Lambda every 5 minutes to keep at least one container warm"
+  schedule_expression = "rate(5 minutes)"
+}
+
+resource "aws_cloudwatch_event_target" "keep_warm" {
+  rule = aws_cloudwatch_event_rule.keep_warm.name
+  arn  = aws_lambda_function.api.arn
+
+  input = jsonencode({
+    httpMethod            = "GET"
+    path                  = "/api/health"
+    requestContext        = { http = { method = "GET", path = "/api/health" } }
+    rawPath               = "/api/health"
+    isBase64Encoded       = false
+    headers               = {}
+    queryStringParameters = {}
+  })
+}
+
+resource "aws_lambda_permission" "allow_eventbridge" {
+  statement_id  = "AllowEventBridgeInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.api.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.keep_warm.arn
 }

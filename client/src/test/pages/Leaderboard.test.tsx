@@ -39,9 +39,10 @@ describe("Leaderboard", () => {
       return Promise.resolve({
         data: {
           data: [
-            { rank: 1, userId: 7, displayName: "Casey", points: 12 },
+            { rank: 1, tiedCount: 1, userId: 7, displayName: "Casey", points: 12 },
           ],
           meta: { totalPages: 1 },
+          currentUser: { rank: 1, tiedCount: 1, userId: 7, displayName: "Casey", points: 12 },
         },
       });
     });
@@ -61,5 +62,6 @@ describe("Leaderboard", () => {
     expect(await screen.findByText("Your Standing")).toBeInTheDocument();
     expect(screen.getAllByText("Casey")).toHaveLength(2);
     expect(screen.getByText("12 pts")).toBeInTheDocument();
+    expect(mockGet).toHaveBeenCalledTimes(2);
   });
 });

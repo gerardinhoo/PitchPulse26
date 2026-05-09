@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import trophyBg from "../assets/trophy-bg.jpg";
+import trophyBgDesktop from "../assets/trophy-bg-1600.webp";
+import trophyBgMobile from "../assets/trophy-bg-960.webp";
 
 export default function Home() {
   const { user } = useAuth();
@@ -12,11 +14,21 @@ export default function Home() {
         className="relative flex items-center justify-center text-center"
         style={{ minHeight: "calc(100vh - 3.5rem)" }}
       >
-        {/* Background image */}
-        <div
-          className="absolute inset-0 bg-cover bg-center pointer-events-none"
-          style={{ backgroundImage: `url(${trophyBg})` }}
-        />
+        <picture className="absolute inset-0 pointer-events-none">
+          <source
+            srcSet={`${trophyBgMobile} 960w, ${trophyBgDesktop} 1600w`}
+            sizes="100vw"
+            type="image/webp"
+          />
+          <img
+            src={trophyBg}
+            alt=""
+            aria-hidden="true"
+            className="h-full w-full object-cover"
+            loading="eager"
+            decoding="async"
+          />
+        </picture>
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-black/70 pointer-events-none" />
 

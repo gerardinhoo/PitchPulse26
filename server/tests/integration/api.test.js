@@ -1,4 +1,4 @@
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import request from "supertest";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -87,6 +87,29 @@ function buildPredictionWithRelations(prediction) {
         }
       : null,
   };
+}
+
+function calculatePredictionPoints(prediction, match) {
+  if (!match || match.homeScore === null || match.awayScore === null) {
+    return 0;
+  }
+
+  const predictedDiff = prediction.homeScore - prediction.awayScore;
+  const actualDiff = match.homeScore - match.awayScore;
+
+  if (prediction.homeScore === match.homeScore && prediction.awayScore === match.awayScore) {
+    return 3;
+  }
+
+  if (
+    (predictedDiff > 0 && actualDiff > 0) ||
+    (predictedDiff < 0 && actualDiff < 0) ||
+    (predictedDiff === 0 && actualDiff === 0)
+  ) {
+    return 1;
+  }
+
+  return 0;
 }
 
 function selectUser(user, select) {
@@ -259,6 +282,20 @@ const prisma = {
       return state.predictions.filter((prediction) => prediction.userId === where.userId)
         .length;
     },
+  },
+  async $queryRawUnsafe(_query, userPoints) {
+    const higherScoringUsers = state.users.filter((user) => {
+      const totalPoints = state.predictions
+        .filter((prediction) => prediction.userId === user.id)
+        .reduce((sum, prediction) => {
+          const match = findMatchById(prediction.matchId);
+          return sum + calculatePredictionPoints(prediction, match);
+        }, 0);
+
+      return totalPoints > userPoints;
+    });
+
+    return higherScoringUsers.map((user) => ({ userId: user.id }));
   },
 };
 
@@ -609,18 +646,21 @@ describe("backend integration tests", () => {
     expect(leaderboardResponse.body.data).toEqual([
       {
         rank: 1,
+        tiedCount: 1,
         userId: winner.id,
         displayName: "Winner",
         points: 3,
       },
       {
         rank: 2,
+        tiedCount: 1,
         userId: challenger.id,
         displayName: "Challenger",
         points: 1,
       },
       {
         rank: 3,
+        tiedCount: 1,
         userId: adminUser.id,
         displayName: "Player",
         points: 0,
