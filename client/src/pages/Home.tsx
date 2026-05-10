@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import trophyBg from "../assets/trophy-bg.jpg";
-import trophyBgDesktop from "../assets/trophy-bg-1600.webp";
-import trophyBgMobile from "../assets/trophy-bg-960.webp";
+import heroBgFallback from "../assets/custom-trophy-bg.jpg";
+import heroBgDesktop from "../assets/custom-trophy-bg-1600.webp";
+import heroBgMobile from "../assets/custom-trophy-bg-960.webp";
 
 export default function Home() {
   const { user } = useAuth();
@@ -16,21 +16,21 @@ export default function Home() {
       >
         <picture className="absolute inset-0 pointer-events-none">
           <source
-            srcSet={`${trophyBgMobile} 960w, ${trophyBgDesktop} 1600w`}
+            srcSet={`${heroBgMobile} 960w, ${heroBgDesktop} 1600w`}
             sizes="100vw"
             type="image/webp"
           />
           <img
-            src={trophyBg}
+            src={heroBgFallback}
             alt=""
             aria-hidden="true"
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover object-[42%_center] sm:object-center"
             loading="eager"
             decoding="async"
           />
         </picture>
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/70 pointer-events-none" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,5,4,0.78)_0%,rgba(3,5,4,0.58)_24%,rgba(3,5,4,0.72)_60%,rgba(3,5,4,0.9)_100%)] sm:bg-[radial-gradient(circle_at_center,rgba(8,12,10,0.22),rgba(3,5,4,0.88))] pointer-events-none" />
 
         {/* Content */}
         <div className="relative z-10 max-w-2xl px-6">
@@ -38,7 +38,10 @@ export default function Home() {
             Predict. Compete.{" "}
             <span className="text-[var(--color-accent)]">Win.</span>
           </h1>
-          <p className="text-lg sm:text-xl text-[var(--color-text-muted)] mb-8 animate-slide-up" style={{ animationDelay: "100ms" }}>
+          <p
+            className="mx-auto mb-8 max-w-xl animate-slide-up text-base leading-8 text-white/88 drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)] sm:text-lg sm:leading-8 sm:text-white/82 sm:drop-shadow-[0_2px_14px_rgba(0,0,0,0.35)]"
+            style={{ animationDelay: "100ms" }}
+          >
             Predict the score for every World Cup 2026 group-stage match, climb the leaderboard,
             and prove your football instincts against other fans.
           </p>
@@ -51,7 +54,7 @@ export default function Home() {
             </Link>
             <Link
               to="/leaderboard"
-              className="px-6 py-3 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] font-medium hover:text-white hover:border-white/30 transition-colors"
+              className="px-6 py-3 rounded-lg border border-white/20 bg-black/25 text-white/90 font-medium hover:bg-black/35 hover:text-white hover:border-white/35 transition-colors shadow-sm"
             >
               View Leaderboard
             </Link>
