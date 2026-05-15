@@ -10,6 +10,8 @@ import adminRoutes from "../routes/admin.js";
 import teamsRoutes from "../routes/teams.js";
 import matchesRoutes from "../routes/matches.js";
 import groupsRoutes from "../routes/groups.js";
+import { requestLogger } from "../middleware/requestLogger.js";
+import { logger } from "../lib/logger.js";
 
 const app = express();
 
@@ -32,6 +34,7 @@ const corsOptions = {
  
 // ── Security middleware ──
 app.use(helmet());
+app.use(requestLogger);
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "10kb" }));
 
@@ -58,15 +61,30 @@ app.get("/api/health", (req, res) => {
 // ── Global error handler ──
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  console.error("ERROR:", err?.stack || err);
-
   const status = err.status || 500;
   const message =
     process.env.NODE_ENV === "production"
       ? "Internal server error"
       : err.message || "Internal server error";
 
-  res.status(status).json({ error: message });
+  logger.error("http.request.failed", {
+    requestId: req.requestId ?? null,
+    correlationId: req.correlationId ?? null,
+    method: req.method,
+    path: req.originalUrl,
+    route: req.route?.path ?? null,
+    statusCode: status,
+    userId: req.user?.userId ?? null,
+    errorName: err?.name ?? "Error",
+    errorMessage: err?.message ?? "Unknown error",
+    stack: process.env.NODE_ENV === "production" ? undefined : err?.stack,
+  });
+
+  res.status(status).json({
+    error: message,
+    requestId: req.requestId,
+    correlationId: req.correlationId,
+  });
 });
 
 // Export app for Lambda handler
@@ -78,16 +96,16 @@ if (
   process.env.NODE_ENV !== "test"
 ) {
   const server = app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    logger.info("server.started", { port: PORT });
   });
 
   process.on("SIGTERM", () => {
-    console.log("SIGTERM received — shutting down");
+    logger.info("server.shutdown", { signal: "SIGTERM" });
     server.close(() => process.exit(0));
   });
 
   process.on("SIGINT", () => {
-    console.log("SIGINT received — shutting down");
+    logger.info("server.shutdown", { signal: "SIGINT" });
     server.close(() => process.exit(0));
   });
 }

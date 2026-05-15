@@ -23,6 +23,7 @@ import {
   signPasswordResetToken,
   verifyPasswordResetToken,
 } from "../lib/passwordResetToken.js";
+import { logger } from "../lib/logger.js";
 
 const router = express.Router();
 
@@ -40,7 +41,11 @@ async function sendVerificationEmailSafe(user) {
       verifyUrl: buildVerifyUrl(token),
     });
   } catch (err) {
-    console.error("Failed to send verification email:", err?.message || err);
+    logger.warn("auth.verification_email.failed", {
+      userId: user.id,
+      email: user.email,
+      errorMessage: err?.message ?? "Unknown error",
+    });
   }
 }
 
@@ -53,7 +58,11 @@ async function sendPasswordResetEmailSafe(user) {
       resetUrl: buildPasswordResetUrl(token),
     });
   } catch (err) {
-    console.error("Failed to send password reset email:", err?.message || err);
+    logger.warn("auth.password_reset_email.failed", {
+      userId: user.id,
+      email: user.email,
+      errorMessage: err?.message ?? "Unknown error",
+    });
   }
 }
 

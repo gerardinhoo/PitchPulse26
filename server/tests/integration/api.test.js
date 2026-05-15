@@ -347,6 +347,64 @@ describe("backend integration tests", () => {
 
   beforeEach(() => {
     resetState();
+    vi.restoreAllMocks();
+  });
+
+  it("adds a request id header and emits a structured request log", async () => {
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    const response = await request(app).get("/api/health");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["x-request-id"]).toEqual(expect.any(String));
+    expect(response.headers["x-correlation-id"]).toBe(response.headers["x-request-id"]);
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("\"event\":\"http.request.completed\""),
+    );
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining(`"requestId":"${response.headers["x-request-id"]}"`),
+    );
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining(`"correlationId":"${response.headers["x-correlation-id"]}"`),
+    );
+  });
+
+  it("returns a request id on failures and emits a structured error log", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const response = await request(app)
+      .get("/api/health")
+      .set("Origin", "https://malicious.example");
+
+    expect(response.status).toBe(500);
+    expect(response.body.requestId).toEqual(expect.any(String));
+    expect(response.body.correlationId).toBe(response.body.requestId);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("\"event\":\"http.request.failed\""),
+    );
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining(`"requestId":"${response.body.requestId}"`),
+    );
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining(`"correlationId":"${response.body.correlationId}"`),
+    );
+  });
+
+  it("reuses an incoming correlation id so a request can be traced end to end", async () => {
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const correlationId = "pitchpulse-correlation-123";
+
+    const response = await request(app)
+      .get("/api/health")
+      .set("x-correlation-id", correlationId);
+
+    expect(response.status).toBe(200);
+    expect(response.headers["x-correlation-id"]).toBe(correlationId);
+    expect(response.headers["x-request-id"]).toBe(correlationId);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining(`"correlationId":"${correlationId}"`),
+    );
   });
 
   it("supports the auth flow register -> login -> me", async () => {

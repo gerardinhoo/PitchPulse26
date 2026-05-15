@@ -789,7 +789,7 @@
 
 ---
 
-### PP-046: Structured Request Logging [TODO]
+### PP-046: Structured Request Logging [DONE]
 **As a** developer or operator
 **I want** structured logs for requests and errors
 **So that** I can debug production issues quickly
@@ -804,7 +804,7 @@
 
 ---
 
-### PP-047: Request Correlation IDs [TODO]
+### PP-047: Request Correlation IDs [DONE]
 **As a** developer
 **I want** each request tagged with a correlation id
 **So that** I can trace a request across logs and failures
