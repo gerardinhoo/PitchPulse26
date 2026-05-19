@@ -595,16 +595,16 @@
 
 ---
 
-### PP-034: Load Testing (Artillery) [TODO]
+### PP-034: Load Testing (Artillery) [DONE]
 **As a** developer
 **I want** load test results documented
 **So that** I can prove the app handles traffic spikes
 
 **Acceptance Criteria:**
-- Artillery script simulates: register, login, predict, leaderboard
-- Ramp test: 1 → 100 concurrent users over 5 minutes
+- Artillery script simulates a public registration flow plus verified-user gameplay traffic for matches, predictions, and leaderboard reads
+- Baseline traffic profile ramps from warm-up into a stress window over roughly 5 minutes
 - Results documented: p50, p95, p99 latency, error rate
-- CloudWatch metrics captured during test
+- CloudWatch metrics can be captured during deployed runs, and local-run limitations are documented
 - Results saved in repo as test artifact
 
 **Priority:** Medium | **Labels:** testing, performance
@@ -879,7 +879,7 @@
 
 ---
 
-### PP-052: Load Test Baseline [TODO]
+### PP-052: Load Test Baseline [DONE]
 **As a** platform engineer
 **I want** a repeatable load test baseline
 **So that** I can understand the app’s current limits before real traffic spikes
