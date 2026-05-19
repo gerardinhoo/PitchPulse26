@@ -1,0 +1,61 @@
+config:
+  target: "{{ $processEnvironment.TARGET_URL }}"
+  phases:
+    - duration: 60
+      arrivalRate: 1
+      rampTo: 5
+      name: Warm up
+    - duration: 120
+      arrivalRate: 5
+      rampTo: 20
+      name: Core traffic
+    - duration: 120
+      arrivalRate: 20
+      rampTo: 40
+      name: Stress window
+  processor: "./processor.cjs"
+  defaults:
+    headers:
+      Content-Type: application/json
+
+scenarios:
+  - name: Public registration flow
+    weight: 1
+    flow:
+      - function: "buildRegistrationUser"
+      - post:
+          url: "/auth/register"
+          json:
+            email: "{{ registrationEmail }}"
+            password: "{{ registrationPassword }}"
+            displayName: "{{ registrationDisplayName }}"
+          expect:
+            - statusCode: 201
+
+  - name: Verified user prediction flow
+    weight: 4
+    flow:
+      - function: "attachAuthHeader"
+      - get:
+          url: "/matches?page=1&limit=20"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          capture:
+            - json: "$.data[0].id"
+              as: "matchId"
+          expect:
+            - statusCode: 200
+      - post:
+          url: "/predictions"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            matchId: "{{ matchId }}"
+            homeScore: "{{ predictedHomeScore }}"
+            awayScore: "{{ predictedAwayScore }}"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/leaderboard?page=1&limit=20"
+          expect:
+            - statusCode: 200

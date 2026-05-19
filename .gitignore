@@ -2,6 +2,8 @@ node_modules/
 .env
 dist
 build
+tests/load/fixtures/*.csv
+!tests/load/fixtures/*.csv.example
 
 # Terraform
 infra/.terraform/
