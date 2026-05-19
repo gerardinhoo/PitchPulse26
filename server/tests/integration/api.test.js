@@ -473,6 +473,21 @@ describe("backend integration tests", () => {
     });
   });
 
+  it("builds password reset links from the requesting frontend origin when available", async () => {
+    await createVerifiedUser({
+      email: "origin-reset@example.com",
+      displayName: "Origin Reset User",
+    });
+
+    await request(app)
+      .post("/api/auth/forgot-password")
+      .set("Origin", "https://www.pitchpulse26.com")
+      .send({ email: "origin-reset@example.com" });
+
+    const resetUrl = sendPasswordResetEmail.mock.calls[0][0].resetUrl;
+    expect(resetUrl.startsWith("https://www.pitchpulse26.com/reset-password?token=")).toBe(true);
+  });
+
   it("resets a password with a valid reset token", async () => {
     const user = await createVerifiedUser({
       email: "recover@example.com",

@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma.js";
 import { authMiddleware } from "../middleware/auth.js";
-import { JWT_SECRET } from "../src/config.js";
+import { CORS_ORIGINS, JWT_SECRET } from "../src/config.js";
 import {
   validate,
   registerSchema,
@@ -27,18 +27,37 @@ import { logger } from "../lib/logger.js";
 
 const router = express.Router();
 
+function getTrustedAppUrl(req) {
+  const origin = req.get("origin")?.trim();
+  if (origin && CORS_ORIGINS.includes(origin)) {
+    return origin;
+  }
+
+  const referer = req.get("referer");
+  if (!referer) {
+    return null;
+  }
+
+  try {
+    const refererOrigin = new URL(referer).origin;
+    return CORS_ORIGINS.includes(refererOrigin) ? refererOrigin : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Fire-and-forget verification email. We log failures but never reject the
  * calling HTTP response because SES can be temporarily unavailable and the
  * user can always click "Resend" later.
  */
-async function sendVerificationEmailSafe(user) {
+async function sendVerificationEmailSafe(user, appUrl = null) {
   try {
     const token = signEmailVerificationToken(user.id);
     await sendVerificationEmail({
       to: user.email,
       displayName: user.displayName,
-      verifyUrl: buildVerifyUrl(token),
+      verifyUrl: buildVerifyUrl(token, appUrl ?? undefined),
     });
   } catch (err) {
     logger.warn("auth.verification_email.failed", {
@@ -49,13 +68,13 @@ async function sendVerificationEmailSafe(user) {
   }
 }
 
-async function sendPasswordResetEmailSafe(user) {
+async function sendPasswordResetEmailSafe(user, appUrl = null) {
   try {
     const token = signPasswordResetToken(user);
     await sendPasswordResetEmail({
       to: user.email,
       displayName: user.displayName,
-      resetUrl: buildPasswordResetUrl(token),
+      resetUrl: buildPasswordResetUrl(token, appUrl ?? undefined),
     });
   } catch (err) {
     logger.warn("auth.password_reset_email.failed", {
@@ -70,6 +89,7 @@ async function sendPasswordResetEmailSafe(user) {
 router.post("/register", validate(registerSchema), async (req, res, next) => {
   try {
     const { email, password, displayName } = req.body;
+    const appUrl = getTrustedAppUrl(req);
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -83,7 +103,7 @@ router.post("/register", validate(registerSchema), async (req, res, next) => {
 
     // Fire the verification email in the background so registration still
     // feels fast even if SES is slow/unavailable.
-    sendVerificationEmailSafe(user);
+    sendVerificationEmailSafe(user, appUrl);
 
     res.status(201).json({ message: "User created", userId: user.id });
   } catch (error) {
@@ -133,6 +153,7 @@ router.post("/verify-email", validate(verifyEmailSchema), async (req, res) => {
 
 // RESEND VERIFICATION (requires auth)
 router.post("/resend-verification", authMiddleware, async (req, res) => {
+  const appUrl = getTrustedAppUrl(req);
   const user = await prisma.user.findUnique({
     where: { id: req.user.userId },
     select: { id: true, email: true, displayName: true, emailVerified: true },
@@ -143,12 +164,13 @@ router.post("/resend-verification", authMiddleware, async (req, res) => {
     return res.status(400).json({ error: "Email already verified" });
   }
 
-  await sendVerificationEmailSafe(user);
+  await sendVerificationEmailSafe(user, appUrl);
   return res.json({ message: "Verification email sent" });
 });
 
 router.post("/forgot-password", validate(forgotPasswordSchema), async (req, res) => {
   const { email } = req.body;
+  const appUrl = getTrustedAppUrl(req);
 
   const user = await prisma.user.findUnique({
     where: { email },
@@ -161,7 +183,7 @@ router.post("/forgot-password", validate(forgotPasswordSchema), async (req, res)
   });
 
   if (user) {
-    await sendPasswordResetEmailSafe(user);
+    await sendPasswordResetEmailSafe(user, appUrl);
   }
 
   return res.json({

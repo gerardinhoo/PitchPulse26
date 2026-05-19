@@ -27,7 +27,7 @@ export function verifyEmailVerificationToken(token) {
   return decoded;
 }
 
-export function buildVerifyUrl(token) {
-  const base = APP_URL.replace(/\/$/, "");
+export function buildVerifyUrl(token, appUrl = APP_URL) {
+  const base = appUrl.replace(/\/$/, "");
   return `${base}/verify-email?token=${encodeURIComponent(token)}`;
 }

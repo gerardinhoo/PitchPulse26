@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "nodemon --exec tsx src/index.js",
     "dev:docker": "nodemon -L --exec tsx src/index.js",
+    "cleanup:load-test-users": "node scripts/cleanup-load-test-users.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
