@@ -1,5 +1,4 @@
 import Navbar from "./Navbar";
-import SponsorBanner from "./SponsorBanner";
 import Footer from "./Footer";
 import VerificationBanner from "./VerificationBanner";
 
@@ -18,7 +17,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       >
         {children}
       </main>
-      <SponsorBanner />
       <Footer />
     </div>
   );

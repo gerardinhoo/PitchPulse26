@@ -1015,3 +1015,19 @@
 - Tests cover request, token validation, and password update behavior
 
 **Priority:** High | **Labels:** auth, security, email, backend, frontend
+
+---
+
+### PP-061: Backend Gameplay Performance Bottleneck Pass [TODO]
+**As a** platform engineer
+**I want** to reduce latency in the verified-user gameplay flow
+**So that** matches, prediction saves, and leaderboard reads remain responsive under moderate concurrent traffic
+
+**Acceptance Criteria:**
+- The main backend bottleneck from the load-test baseline is identified and documented
+- At least one high-impact optimization is implemented for the verified-user flow, such as query reduction, response shaping, caching, or leaderboard computation improvement
+- A follow-up load test is run against the same scenario used in the baseline
+- The post-change results show a measurable improvement in either p95 latency, timeout rate, or both for gameplay traffic
+- Remaining performance risks and next follow-up work are documented
+
+**Priority:** High | **Labels:** performance, backend, database, sre

@@ -43,7 +43,7 @@ export function verifyPasswordResetToken(token, passwordHash) {
   return decoded;
 }
 
-export function buildPasswordResetUrl(token) {
-  const base = APP_URL.replace(/\/$/, "");
+export function buildPasswordResetUrl(token, appUrl = APP_URL) {
+  const base = appUrl.replace(/\/$/, "");
   return `${base}/reset-password?token=${encodeURIComponent(token)}`;
 }
