@@ -68,20 +68,29 @@ async function sendVerificationEmailSafe(user, appUrl = null) {
   }
 }
 
-async function sendPasswordResetEmailSafe(user, appUrl = null) {
+async function sendPasswordResetEmailSafe(user, { appUrl = null, origin = null, requestId = null, correlationId = null } = {}) {
   try {
     const token = signPasswordResetToken(user);
+    const resetUrl = buildPasswordResetUrl(token, appUrl ?? undefined);
     await sendPasswordResetEmail({
       to: user.email,
       displayName: user.displayName,
-      resetUrl: buildPasswordResetUrl(token, appUrl ?? undefined),
+      resetUrl,
     });
+    return true;
   } catch (err) {
     logger.warn("auth.password_reset_email.failed", {
       userId: user.id,
       email: user.email,
+      appUrl,
+      origin,
+      requestId,
+      correlationId,
+      errorName: err?.name ?? "Error",
+      errorCode: err?.code ?? err?.Code ?? null,
       errorMessage: err?.message ?? "Unknown error",
     });
+    return false;
   }
 }
 
@@ -171,6 +180,7 @@ router.post("/resend-verification", authMiddleware, async (req, res) => {
 router.post("/forgot-password", validate(forgotPasswordSchema), async (req, res) => {
   const { email } = req.body;
   const appUrl = getTrustedAppUrl(req);
+  const requestOrigin = req.get("origin")?.trim() ?? null;
 
   const user = await prisma.user.findUnique({
     where: { email },
@@ -183,7 +193,12 @@ router.post("/forgot-password", validate(forgotPasswordSchema), async (req, res)
   });
 
   if (user) {
-    await sendPasswordResetEmailSafe(user, appUrl);
+    await sendPasswordResetEmailSafe(user, {
+      appUrl,
+      origin: requestOrigin,
+      requestId: req.requestId ?? null,
+      correlationId: req.correlationId ?? null,
+    });
   }
 
   return res.json({

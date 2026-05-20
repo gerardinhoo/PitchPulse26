@@ -94,6 +94,19 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      - name: Update Lambda configuration
+        env:
+          LAMBDA_DATABASE_URL: ${{ secrets.LAMBDA_DATABASE_URL }}
+          LAMBDA_JWT_SECRET: ${{ secrets.LAMBDA_JWT_SECRET }}
+          LAMBDA_CORS_ORIGIN: ${{ vars.LAMBDA_CORS_ORIGIN }}
+          LAMBDA_APP_URL: ${{ vars.LAMBDA_APP_URL }}
+          LAMBDA_EMAIL_FROM: ${{ vars.LAMBDA_EMAIL_FROM }}
+        run: |
+          aws lambda update-function-configuration \
+            --function-name pitchpulse26-api \
+            --environment "Variables={DATABASE_URL=$LAMBDA_DATABASE_URL,JWT_SECRET=$LAMBDA_JWT_SECRET,CORS_ORIGIN=$LAMBDA_CORS_ORIGIN,APP_URL=$LAMBDA_APP_URL,EMAIL_FROM=$LAMBDA_EMAIL_FROM,AWS_REGION=us-east-1}"
+          aws lambda wait function-updated --function-name pitchpulse26-api
+
       - name: Upload to S3 & update Lambda
         run: |
           aws s3 cp dist/lambda.zip s3://pitchpulse26-lambda-artifacts/$LAMBDA_ARTIFACT_KEY

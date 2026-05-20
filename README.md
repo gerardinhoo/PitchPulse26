@@ -219,6 +219,22 @@ Production rollback is documented in [docs/runbooks/deployment-rollback.md](/Use
 
 Current rollback approach:
 
+## Production Email Reset Notes
+
+The Lambda deploy workflow now updates function environment variables as part of deployment. Configure these before relying on production password reset emails:
+
+- GitHub secret: `LAMBDA_DATABASE_URL`
+- GitHub secret: `LAMBDA_JWT_SECRET`
+- GitHub variable: `LAMBDA_CORS_ORIGIN`
+- GitHub variable: `LAMBDA_APP_URL`
+- GitHub variable: `LAMBDA_EMAIL_FROM`
+
+Why this matters:
+
+- the backend builds password reset links from `APP_URL` or a trusted frontend origin
+- SES sending depends on the deployed Lambda having the correct `EMAIL_FROM` and region configuration
+- updating Lambda code alone does not update its environment variables, so production can drift from local behavior if config changes are only made in local `.env`
+
 - frontend rollback through Amplify deployment history or by reverting the bad `main` commit
 - backend rollback by redeploying the last known good Lambda artifact from S3
 - database rollback avoided by favoring backward-compatible Prisma migrations
