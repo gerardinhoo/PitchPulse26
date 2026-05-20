@@ -479,13 +479,15 @@ describe("backend integration tests", () => {
       displayName: "Origin Reset User",
     });
 
+    const allowedOrigin = process.env.CORS_ORIGIN;
+
     await request(app)
       .post("/api/auth/forgot-password")
-      .set("Origin", "https://www.pitchpulse26.com")
+      .set("Origin", allowedOrigin)
       .send({ email: "origin-reset@example.com" });
 
     const resetUrl = sendPasswordResetEmail.mock.calls[0][0].resetUrl;
-    expect(resetUrl.startsWith("https://www.pitchpulse26.com/reset-password?token=")).toBe(true);
+    expect(resetUrl.startsWith(`${allowedOrigin}/reset-password?token=`)).toBe(true);
   });
 
   it("resets a password with a valid reset token", async () => {
