@@ -115,11 +115,12 @@ describe("Auth pages", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send reset link" }));
 
     expect(await screen.findByRole("status")).toHaveTextContent(
-      "If an account exists for that email, a password reset link has been sent.",
+      "If an account exists for user@example.com, we'll send a reset link.",
     );
     expect(api.post).toHaveBeenCalledWith("/auth/forgot-password", {
       email: "user@example.com",
     });
+    expect(screen.getByRole("button", { name: "Send another link" })).toBeInTheDocument();
   });
 
   it("submits a reset-password request from the reset page", async () => {
