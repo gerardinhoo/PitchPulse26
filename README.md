@@ -225,6 +225,7 @@ The Lambda deploy workflow now updates function environment variables as part of
 
 - GitHub secret: `LAMBDA_DATABASE_URL`
 - GitHub secret: `LAMBDA_JWT_SECRET`
+- GitHub variable: `ENABLE_LAMBDA_CONFIG_UPDATE`
 - GitHub variable: `LAMBDA_CORS_ORIGIN`
 - GitHub variable: `LAMBDA_APP_URL`
 - GitHub variable: `LAMBDA_EMAIL_FROM`
@@ -234,6 +235,7 @@ Why this matters:
 - the backend builds password reset links from `APP_URL` or a trusted frontend origin
 - SES sending depends on the deployed Lambda having the correct `EMAIL_FROM` and region configuration
 - updating Lambda code alone does not update its environment variables, so production can drift from local behavior if config changes are only made in local `.env`
+- keep `ENABLE_LAMBDA_CONFIG_UPDATE` unset (or not `true`) until the CI IAM user is granted `lambda:UpdateFunctionConfiguration`
 
 - frontend rollback through Amplify deployment history or by reverting the bad `main` commit
 - backend rollback by redeploying the last known good Lambda artifact from S3
