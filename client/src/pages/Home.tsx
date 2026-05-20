@@ -134,7 +134,7 @@ export default function Home() {
             >
               <p className="animate-slide-up text-left text-[1.0625rem] leading-7 text-white/95 drop-shadow-[0_4px_14px_rgba(0,0,0,0.55)] sm:text-center sm:text-lg sm:leading-8 sm:text-white/90 sm:drop-shadow-[0_6px_18px_rgba(0,0,0,0.42)]">
                 A free World Cup prediction game for football fans. Make predictions, compete with
-                friends, climb the leaderboard, and help unlock small community prizes as the
+                friends, climb the leaderboard, and unlock small community rewards as the
                 challenge grows.
               </p>
               <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 animate-slide-up" style={{ animationDelay: "200ms" }}>
