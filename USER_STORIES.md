@@ -819,7 +819,7 @@
 
 ---
 
-### PP-048: Frontend Error Boundary [TODO]
+### PP-048: Frontend Error Boundary [DONE]
 **As a** user
 **I want** the UI to recover gracefully from unexpected rendering failures
 **So that** the app does not crash into a blank screen
