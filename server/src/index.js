@@ -12,6 +12,7 @@ import matchesRoutes from "../routes/matches.js";
 import groupsRoutes from "../routes/groups.js";
 import { requestLogger } from "../middleware/requestLogger.js";
 import { logger } from "../lib/logger.js";
+import { prisma } from "../lib/prisma.js";
 
 const app = express();
 
@@ -55,7 +56,42 @@ app.use("/api/matches", matchesRoutes);
 app.use("/api/groups", groupsRoutes);
 
 app.get("/api/health", (req, res) => {
-  res.json({ status: "OK" });
+  res.json({
+    status: "ok",
+    service: "pitchpulse26-api",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.get("/api/ready", async (req, res) => {
+  try {
+    await prisma.$queryRawUnsafe("SELECT 1");
+
+    return res.json({
+      status: "ready",
+      service: "pitchpulse26-api",
+      dependencies: {
+        database: "ok",
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    logger.warn("readiness.failed", {
+      requestId: req.requestId ?? null,
+      correlationId: req.correlationId ?? null,
+      errorName: err?.name ?? "Error",
+      errorMessage: err?.message ?? "Unknown error",
+    });
+
+    return res.status(503).json({
+      status: "not_ready",
+      service: "pitchpulse26-api",
+      dependencies: {
+        database: "unavailable",
+      },
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 // ── Global error handler ──

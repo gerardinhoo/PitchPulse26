@@ -370,6 +370,47 @@ describe("backend integration tests", () => {
     );
   });
 
+  it("returns a structured liveness response", async () => {
+    const response = await request(app).get("/api/health");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      status: "ok",
+      service: "pitchpulse26-api",
+      timestamp: expect.any(String),
+    });
+  });
+
+  it("returns readiness details when the database check succeeds", async () => {
+    const response = await request(app).get("/api/ready");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      status: "ready",
+      service: "pitchpulse26-api",
+      dependencies: {
+        database: "ok",
+      },
+      timestamp: expect.any(String),
+    });
+  });
+
+  it("returns 503 readiness when the database is unavailable", async () => {
+    vi.spyOn(prisma, "$queryRawUnsafe").mockRejectedValueOnce(new Error("database unavailable"));
+
+    const response = await request(app).get("/api/ready");
+
+    expect(response.status).toBe(503);
+    expect(response.body).toEqual({
+      status: "not_ready",
+      service: "pitchpulse26-api",
+      dependencies: {
+        database: "unavailable",
+      },
+      timestamp: expect.any(String),
+    });
+  });
+
   it("returns a request id on failures and emits a structured error log", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 

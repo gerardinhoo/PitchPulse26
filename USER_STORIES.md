@@ -562,7 +562,7 @@
 
 ---
 
-### PP-032A: Exposed Secret Rotation [TODO]
+### PP-032A: Exposed Secret Rotation [DONE]
 **As a** developer
 **I want** exposed credentials rotated across infrastructure and CI
 **So that** leaked secrets can no longer be used against the application or deployment pipeline
@@ -774,7 +774,7 @@
 
 ## Epic 11: Production Readiness & Operations [IN PROGRESS]
 
-### PP-045: Health Checks & Readiness Endpoint [TODO]
+### PP-045: Health Checks & Readiness Endpoint [DONE]
 **As a** platform engineer
 **I want** health and readiness endpoints
 **So that** I can verify the service is alive and its dependencies are working
