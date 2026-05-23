@@ -7,6 +7,8 @@ const NAV_LINKS = [
 ];
 
 export default function Footer() {
+  const year = new Date().getFullYear();
+
   return (
     <footer className="border-t border-[var(--color-border)] bg-[var(--color-card)] mt-auto">
       <div className="max-w-5xl mx-auto px-4 py-10">
@@ -17,7 +19,7 @@ export default function Footer() {
               <span className="text-[var(--color-accent)]">Pitch</span>Pulse 26
             </p>
             <p className="text-[var(--color-text-muted)] mt-1">
-              Predict. Compete. Win.
+              World Cup predictions for football fans.
             </p>
           </div>
 
@@ -67,10 +69,10 @@ export default function Footer() {
             </div>
           </div>
 
-        {/* Copyright */}
-        <p className="text-center text-xs text-[var(--color-text-muted)] mt-6">
-          &copy; {new Date().getFullYear()} PitchPulse
-        </p>
+        <div className="mt-6 flex flex-col items-center justify-center gap-1 text-center text-xs text-[var(--color-text-muted)]">
+          <p>Powered by PitchPulse 26</p>
+          <p>&copy; {year} PitchPulse 26. All rights reserved.</p>
+        </div>
       </div>
     </footer>
   );
