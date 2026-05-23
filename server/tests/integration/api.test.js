@@ -10,6 +10,7 @@ const state = {
   users: [],
   matches: [],
   predictions: [],
+  adminAuditLogs: [],
 };
 
 const counters = {
@@ -42,6 +43,7 @@ function resetState() {
     },
   ];
   state.predictions = [];
+  state.adminAuditLogs = [];
   counters.userId = 1;
   counters.predictionId = 1;
   sendVerificationEmail.mockClear();
@@ -156,6 +158,31 @@ function selectUser(user, select) {
 }
 
 const prisma = {
+  adminAuditLog: {
+    async create({ data }) {
+      const auditLog = {
+        id: state.adminAuditLogs.length + 1,
+        createdAt: new Date().toISOString(),
+        ...clone(data),
+      };
+
+      state.adminAuditLogs.push(auditLog);
+      return clone(auditLog);
+    },
+    async findMany({ where, orderBy } = {}) {
+      let logs = [...state.adminAuditLogs];
+
+      if (where?.matchId !== undefined) {
+        logs = logs.filter((entry) => entry.matchId === where.matchId);
+      }
+
+      if (orderBy?.createdAt === "desc") {
+        logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      }
+
+      return logs.map(clone);
+    },
+  },
   user: {
     async create({ data }) {
       if (state.users.some((user) => user.email === data.email)) {
@@ -200,9 +227,24 @@ const prisma = {
     },
   },
   match: {
-    async findUnique({ where }) {
+    async findUnique({ where, select } = {}) {
       const match = findMatchById(where.id);
-      return match ? clone(match) : null;
+      if (!match) {
+        return null;
+      }
+
+      if (!select) {
+        return clone(match);
+      }
+
+      const result = {};
+      for (const [key, value] of Object.entries(select)) {
+        if (value) {
+          result[key] = clone(match[key]);
+        }
+      }
+
+      return result;
     },
     async findMany({ include, orderBy } = {}) {
       const matches = [...state.matches];
@@ -677,6 +719,7 @@ describe("backend integration tests", () => {
   });
 
   it("rejects admin match updates for regular users and allows admins", async () => {
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const regularUser = await createVerifiedUser({
       email: "user@example.com",
       role: "user",
@@ -711,6 +754,20 @@ describe("backend integration tests", () => {
       homeScore: 2,
       awayScore: 1,
     });
+
+    expect(state.adminAuditLogs).toHaveLength(1);
+    expect(state.adminAuditLogs[0]).toMatchObject({
+      adminUserId: adminUser.id,
+      matchId: 100,
+      action: "match.result.updated",
+      oldHomeScore: null,
+      oldAwayScore: null,
+      newHomeScore: 2,
+      newAwayScore: 1,
+    });
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("\"event\":\"admin.match_result.updated\""),
+    );
   });
 
   it("computes leaderboard scoring after results are set", async () => {
