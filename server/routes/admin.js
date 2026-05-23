@@ -2,6 +2,7 @@ import express from "express";
 import { prisma } from "../lib/prisma.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { validate, matchResultSchema } from "../src/validators.js";
+import { logger } from "../lib/logger.js";
 
 const router = express.Router();
 
@@ -27,17 +28,52 @@ router.patch(
       }
 
       const { homeScore, awayScore } = req.body;
+      const existingMatch = await prisma.match.findUnique({
+        where: { id: matchId },
+        select: {
+          id: true,
+          homeScore: true,
+          awayScore: true,
+        },
+      });
+
+      if (!existingMatch) {
+        return res.status(404).json({ error: "Match not found" });
+      }
 
       const updatedMatch = await prisma.match.update({
         where: { id: matchId },
         data: { homeScore, awayScore },
       });
 
+      const auditLog = await prisma.adminAuditLog.create({
+        data: {
+          adminUserId: req.user.userId,
+          matchId,
+          action: "match.result.updated",
+          oldHomeScore: existingMatch.homeScore,
+          oldAwayScore: existingMatch.awayScore,
+          newHomeScore: homeScore,
+          newAwayScore: awayScore,
+          requestId: req.requestId ?? null,
+          correlationId: req.correlationId ?? null,
+        },
+      });
+
+      logger.info("admin.match_result.updated", {
+        auditLogId: auditLog.id,
+        adminUserId: req.user.userId,
+        matchId,
+        oldHomeScore: existingMatch.homeScore,
+        oldAwayScore: existingMatch.awayScore,
+        newHomeScore: homeScore,
+        newAwayScore: awayScore,
+        requestId: req.requestId ?? null,
+        correlationId: req.correlationId ?? null,
+      });
+
       res.json(updatedMatch);
     } catch (error) {
-      if (error.code === "P2025") {
-        return res.status(404).json({ error: "Match not found" });
-      }
       next(error);
     }
   }

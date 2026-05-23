@@ -213,6 +213,29 @@ Remaining follow-up ideas:
 - split the Matches page orchestration into smaller hooks/components for easier future tuning
 - profile backend latency against the live Neon database after the auth recovery work lands
 
+## Admin Audit Trail
+
+Admin match result changes are persisted in the `AdminAuditLog` table.
+
+Each audit entry records:
+
+- `adminUserId`
+- `matchId`
+- `action`
+- `oldHomeScore`
+- `oldAwayScore`
+- `newHomeScore`
+- `newAwayScore`
+- `requestId`
+- `correlationId`
+- `createdAt`
+
+Current audit event name:
+
+- `match.result.updated`
+
+This makes result changes queryable in the database and traceable in structured logs for fairness and operational review.
+
 ## Deployment Rollback
 
 Production rollback is documented in [docs/runbooks/deployment-rollback.md](/Users/gerardeklu/PitchPulse26/docs/runbooks/deployment-rollback.md).

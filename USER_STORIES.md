@@ -1031,3 +1031,19 @@
 - Remaining performance risks and next follow-up work are documented
 
 **Priority:** High | **Labels:** performance, backend, database, sre
+
+---
+
+### PP-062: SES-Gated End-to-End Validation Pass [TODO]
+**As a** platform operator
+**I want** to rerun blocked email-dependent and admin-sensitive flows once SES is available
+**So that** I can confirm the production experience works end to end after the current AWS delay
+
+**Acceptance Criteria:**
+- Password reset email flow is tested end to end in production or production-like conditions
+- Email verification flow is tested end to end with a newly registered user
+- Verified-user prediction flow is confirmed after successful email verification
+- Admin result update flow is manually tested and a matching `AdminAuditLog` entry is confirmed
+- Findings from the validation pass are documented, including any follow-up fixes needed
+
+**Priority:** Medium | **Labels:** qa, auth, ops, aws
