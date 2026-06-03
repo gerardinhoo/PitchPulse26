@@ -18,8 +18,11 @@ export const EMAIL_FROM = process.env.EMAIL_FROM || "no-reply@pitchpulse26.com";
 // Falls back to CORS_ORIGIN for local dev where the two match.
 export const APP_URL = process.env.APP_URL || CORS_ORIGIN;
 
+export function isEmailVerificationRequired() {
+  return process.env.REQUIRE_EMAIL_VERIFICATION !== "false";
+}
+
 if (!JWT_SECRET) {
   throw new Error("JWT_SECRET environment variable is required");
 }
-
 

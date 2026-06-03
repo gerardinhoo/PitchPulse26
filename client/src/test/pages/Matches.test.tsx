@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Matches from "../../pages/Matches";
 
 const { mockGet, mockPost } = vi.hoisted(() => ({
@@ -29,6 +29,10 @@ describe("Matches", () => {
       "scrollTo",
       vi.fn<[ScrollToOptions | number | undefined, number | undefined], void>(),
     );
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("shows inline success feedback after saving a prediction", async () => {
@@ -250,5 +254,69 @@ describe("Matches", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
 
     expect(await screen.findByLabelText("Spain predicted score")).toBeInTheDocument();
+  });
+
+  it("does not show the verification gate when verification is temporarily disabled", async () => {
+    vi.stubEnv("VITE_REQUIRE_EMAIL_VERIFICATION", "false");
+
+    mockGet.mockImplementation((url: string) => {
+      if (url === "/matches") {
+        return Promise.resolve({
+          data: {
+            data: [
+              {
+                id: 12,
+                date: "2099-06-01T15:00:00.000Z",
+                homeTeam: { name: "Mexico", code: "mx", group: "C" },
+                awayTeam: { name: "Japan", code: "jp", group: "C" },
+                homeScore: null,
+                awayScore: null,
+              },
+            ],
+            meta: { totalPages: 1 },
+          },
+        });
+      }
+
+      if (url === "/predictions/summary") {
+        return Promise.resolve({
+          data: {
+            predictedCount: 0,
+            remainingCount: 1,
+            lockedCount: 0,
+            nextMatch: {
+              id: 12,
+              date: "2099-06-01T15:00:00.000Z",
+              homeTeam: { name: "Mexico", code: "mx", group: "C" },
+              awayTeam: { name: "Japan", code: "jp", group: "C" },
+              homeScore: null,
+              awayScore: null,
+            },
+            rank: null,
+            points: null,
+          },
+        });
+      }
+
+      return Promise.resolve({
+        data: {
+          data: [],
+          meta: { totalPages: 1 },
+        },
+      });
+    });
+
+    render(
+      <MemoryRouter>
+        <Matches />
+      </MemoryRouter>,
+    );
+
+    expect(
+      await screen.findByRole("button", {
+        name: "Submit prediction for Mexico versus Japan",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Verification Required")).not.toBeInTheDocument();
   });
 });

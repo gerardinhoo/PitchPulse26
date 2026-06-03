@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { isEmailVerificationRequired } from "../config";
 
 export default function Register() {
   const { register, login } = useAuth();
   const navigate = useNavigate();
+  const verificationRequired = isEmailVerificationRequired();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -66,7 +68,9 @@ export default function Register() {
         <h2 className="text-2xl font-bold mb-1">Create account</h2>
         <p className="text-sm text-[var(--color-text-muted)] mb-6">Join the prediction game</p>
         <p className="text-sm text-[var(--color-text-muted)] mb-4 bg-white/5 rounded-md px-3 py-2">
-          We&apos;ll ask you to verify your email before you can submit predictions.
+          {verificationRequired
+            ? "We'll ask you to verify your email before you can submit predictions."
+            : "Create your account now and start making predictions right away."}
         </p>
 
         {error && (

@@ -390,6 +390,7 @@ describe("backend integration tests", () => {
   beforeEach(() => {
     resetState();
     vi.restoreAllMocks();
+    delete process.env.REQUIRE_EMAIL_VERIFICATION;
   });
 
   it("adds a request id header and emits a structured request log", async () => {
@@ -527,6 +528,70 @@ describe("backend integration tests", () => {
       displayName: "New User",
       role: "user",
       emailVerified: false,
+    });
+  });
+
+  it("auto-verifies new users when email verification is disabled", async () => {
+    process.env.REQUIRE_EMAIL_VERIFICATION = "false";
+
+    const registerResponse = await request(app)
+      .post("/api/auth/register")
+      .send({
+        email: "faststart@example.com",
+        password: "password123",
+        displayName: "Fast Start",
+      });
+
+    expect(registerResponse.status).toBe(201);
+    expect(sendVerificationEmail).not.toHaveBeenCalled();
+
+    const loginResponse = await request(app)
+      .post("/api/auth/login")
+      .send({
+        email: "faststart@example.com",
+        password: "password123",
+      });
+
+    expect(loginResponse.status).toBe(200);
+
+    const meResponse = await request(app)
+      .get("/api/auth/me")
+      .set("Authorization", `Bearer ${loginResponse.body.token}`);
+
+    expect(meResponse.status).toBe(200);
+    expect(meResponse.body).toEqual({
+      id: 1,
+      email: "faststart@example.com",
+      displayName: "Fast Start",
+      role: "user",
+      emailVerified: true,
+    });
+  });
+
+  it("allows existing unverified users to submit predictions when verification is disabled", async () => {
+    process.env.REQUIRE_EMAIL_VERIFICATION = "false";
+
+    const user = await createVerifiedUser({
+      email: "unverified@example.com",
+      emailVerified: false,
+      emailVerifiedAt: null,
+    });
+
+    const response = await request(app)
+      .post("/api/predictions")
+      .set("Authorization", `Bearer ${createToken(user)}`)
+      .send({
+        matchId: 100,
+        homeScore: 2,
+        awayScore: 1,
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      userId: user.id,
+      matchId: 100,
+      homeScore: 2,
+      awayScore: 1,
     });
   });
 
