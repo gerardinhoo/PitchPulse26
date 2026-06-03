@@ -159,11 +159,8 @@ export async function sendVerificationEmail({ to, displayName, verifyUrl }) {
 }
 
 export async function sendPasswordResetEmail({ to, displayName, resetUrl }) {
-  const command = new SendEmailCommand(
-    buildSesEmail({
-      to,
-      ...buildPasswordResetEmailContent({ displayName, resetUrl }),
-    }),
-  );
-  return sesClient.send(command);
+  return sendResendEmail({
+    to,
+    ...buildPasswordResetEmailContent({ displayName, resetUrl }),
+  });
 }

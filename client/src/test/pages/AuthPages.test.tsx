@@ -6,12 +6,15 @@ import ForgotPassword from "../../pages/ForgotPassword";
 import Login from "../../pages/Login";
 import Register from "../../pages/Register";
 import ResetPassword from "../../pages/ResetPassword";
+import VerifyEmail from "../../pages/VerifyEmail";
 
 const { mockLogin, mockRegister, mockPost } = vi.hoisted(() => ({
   mockLogin: vi.fn(),
   mockRegister: vi.fn(),
   mockPost: vi.fn(),
 }));
+
+const mockRefreshMe = vi.fn();
 
 vi.mock("../../api/axios", () => ({
   default: {
@@ -23,6 +26,8 @@ vi.mock("../../hooks/useAuth", () => ({
   useAuth: () => ({
     login: mockLogin,
     register: mockRegister,
+    refreshMe: mockRefreshMe,
+    token: null,
   }),
 }));
 
@@ -31,6 +36,7 @@ describe("Auth pages", () => {
     mockLogin.mockReset();
     mockRegister.mockReset();
     mockPost.mockReset();
+    mockRefreshMe.mockReset();
     vi.stubEnv("VITE_REQUIRE_EMAIL_VERIFICATION", "true");
   });
 
@@ -62,6 +68,17 @@ describe("Auth pages", () => {
       "href",
       "/forgot-password",
     );
+  });
+
+  it("prefills the login email and shows a verification success notice", () => {
+    render(
+      <MemoryRouter initialEntries={["/login?verified=1&email=user%40example.com"]}>
+        <Login />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent("Email verified. Sign in to continue.");
+    expect(screen.getByLabelText("Email address")).toHaveValue("user@example.com");
   });
 
   it("shows server validation details during registration failures", async () => {
@@ -151,5 +168,30 @@ describe("Auth pages", () => {
       token: "reset-token-12345",
       password: "newpassword123",
     });
+  });
+
+  it("routes verified users back to sign in with their email prefilled", async () => {
+    mockPost.mockResolvedValueOnce({
+      data: {
+        message: "Email verified",
+        user: { email: "verified@example.com" },
+      },
+    });
+    mockRefreshMe.mockResolvedValueOnce(undefined);
+
+    render(
+      <MemoryRouter initialEntries={["/verify-email?token=verify-token-12345"]}>
+        <VerifyEmail />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("Email verified")).toBeInTheDocument();
+    expect(api.post).toHaveBeenCalledWith("/auth/verify-email", {
+      token: "verify-token-12345",
+    });
+    expect(screen.getByRole("link", { name: "Continue to sign in" })).toHaveAttribute(
+      "href",
+      "/login?verified=1&email=verified%40example.com",
+    );
   });
 });
