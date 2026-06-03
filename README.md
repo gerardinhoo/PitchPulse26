@@ -251,7 +251,7 @@ Current rollback approach:
 
 ## Production Email Notes
 
-Email verification now uses Resend, while password reset can remain on the existing AWS SES path until you migrate that flow too.
+Email verification and password reset now use Resend.
 
 For Resend verification email delivery, configure:
 

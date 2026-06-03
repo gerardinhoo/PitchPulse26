@@ -1,15 +1,22 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialEmail = searchParams.get("email") ?? "";
+  const verifiedNotice = searchParams.get("verified") === "1";
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const successMessage = useMemo(
+    () => (verifiedNotice ? "Email verified. Sign in to continue." : ""),
+    [verifiedNotice],
+  );
 
   const emailValid = /\S+@\S+\.\S+/.test(email.trim());
   const formValid = emailValid && password.trim().length > 0;
@@ -48,6 +55,15 @@ export default function Login() {
       <form onSubmit={handleSubmit} className="card w-full max-w-sm p-8" noValidate>
         <h2 className="text-2xl font-bold mb-1">Welcome back</h2>
         <p className="text-sm text-[var(--color-text-muted)] mb-6">Sign in to your account</p>
+
+        {successMessage && (
+          <p
+            role="status"
+            className="text-emerald-300 text-sm mb-3 bg-emerald-400/10 rounded-md px-3 py-2"
+          >
+            {successMessage}
+          </p>
+        )}
 
         {error && (
           <p
