@@ -98,9 +98,12 @@ JWT_SECRET=your-secret-key-here
 CORS_ORIGIN=http://localhost:5173
 DATABASE_URL=postgresql://USER:PASS@<neon-host>/neondb?sslmode=require
 REQUIRE_EMAIL_VERIFICATION=true
+EMAIL_FROM=no-reply@updates.pitchpulse26.com
+RESEND_API_KEY=re_xxxxxxxxx
 ```
 
 Set `REQUIRE_EMAIL_VERIFICATION=false` if you need a temporary pre-tournament fallback that lets users register and submit predictions without email verification while transactional email delivery is unavailable.
+Email verification is sent through Resend. Before it will work in any environment, add and verify a sending domain in Resend and create an API key for the app.
 
 Apply migrations and seed:
 
@@ -245,6 +248,17 @@ This makes result changes queryable in the database and traceable in structured 
 Production rollback is documented in [docs/runbooks/deployment-rollback.md](/Users/gerardeklu/PitchPulse26/docs/runbooks/deployment-rollback.md).
 
 Current rollback approach:
+
+## Production Email Notes
+
+Email verification now uses Resend, while password reset can remain on the existing AWS SES path until you migrate that flow too.
+
+For Resend verification email delivery, configure:
+
+- server env / Lambda env: `RESEND_API_KEY`
+- server env / Lambda env: `EMAIL_FROM`
+
+Resend requires a verified sending domain before mail will deliver.
 
 ## Production Email Reset Notes
 

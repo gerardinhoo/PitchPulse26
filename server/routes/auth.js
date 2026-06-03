@@ -48,7 +48,7 @@ function getTrustedAppUrl(req) {
 
 /**
  * Fire-and-forget verification email. We log failures but never reject the
- * calling HTTP response because SES can be temporarily unavailable and the
+ * calling HTTP response because the email provider can be temporarily unavailable and the
  * user can always click "Resend" later.
  */
 async function sendVerificationEmailSafe(user, appUrl = null) {
@@ -128,7 +128,7 @@ router.post("/register", validate(registerSchema), async (req, res, next) => {
 
     if (verificationRequired) {
       // Fire the verification email in the background so registration still
-      // feels fast even if SES is slow/unavailable.
+      // feels fast even if the provider is slow/unavailable.
       sendVerificationEmailSafe(user, appUrl);
     }
 

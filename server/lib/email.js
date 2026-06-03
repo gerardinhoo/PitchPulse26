@@ -1,5 +1,5 @@
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
-import { AWS_REGION, EMAIL_FROM } from "../src/config.js";
+import { AWS_REGION, EMAIL_FROM, RESEND_API_KEY } from "../src/config.js";
 
 const sesClient = new SESv2Client({ region: AWS_REGION });
 
@@ -17,7 +17,7 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
-function buildVerificationEmail({ to, displayName, verifyUrl }) {
+function buildVerificationEmailContent({ displayName, verifyUrl }) {
   const name = displayName?.trim() || "there";
   const subject = "Verify your PitchPulse 26 email";
 
@@ -53,22 +53,10 @@ function buildVerificationEmail({ to, displayName, verifyUrl }) {
   </body>
 </html>`;
 
-  return {
-    FromEmailAddress: EMAIL_FROM,
-    Destination: { ToAddresses: [to] },
-    Content: {
-      Simple: {
-        Subject: { Data: subject, Charset: "UTF-8" },
-        Body: {
-          Text: { Data: text, Charset: "UTF-8" },
-          Html: { Data: html, Charset: "UTF-8" },
-        },
-      },
-    },
-  };
+  return { subject, text, html };
 }
 
-function buildPasswordResetEmail({ to, displayName, resetUrl }) {
+function buildPasswordResetEmailContent({ displayName, resetUrl }) {
   const name = displayName?.trim() || "there";
   const subject = "Reset your PitchPulse 26 password";
 
@@ -105,6 +93,10 @@ function buildPasswordResetEmail({ to, displayName, resetUrl }) {
   </body>
 </html>`;
 
+  return { subject, text, html };
+}
+
+function buildSesEmail({ to, subject, text, html }) {
   return {
     FromEmailAddress: EMAIL_FROM,
     Destination: { ToAddresses: [to] },
@@ -120,21 +112,58 @@ function buildPasswordResetEmail({ to, displayName, resetUrl }) {
   };
 }
 
+async function sendResendEmail({ to, subject, text, html }) {
+  if (!RESEND_API_KEY) {
+    const err = new Error("RESEND_API_KEY environment variable is required");
+    err.code = "RESEND_API_KEY_MISSING";
+    throw err;
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: EMAIL_FROM,
+      to: [to],
+      subject,
+      text,
+      html,
+    }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const err = new Error(payload?.message || payload?.error || "Resend email request failed");
+    err.code = payload?.name || payload?.error || `RESEND_${response.status}`;
+    err.status = response.status;
+    err.details = payload;
+    throw err;
+  }
+
+  return payload;
+}
+
 /**
- * Sends a verification email. Throws on SES errors so callers can decide
- * whether to surface the failure or swallow it (registration should not
- * fail just because SES is down — we fall back to the resend flow).
+ * Sends a verification email through Resend. Throws on provider errors so
+ * callers can decide whether to surface the failure or swallow it.
  */
 export async function sendVerificationEmail({ to, displayName, verifyUrl }) {
-  const command = new SendEmailCommand(
-    buildVerificationEmail({ to, displayName, verifyUrl })
-  );
-  return sesClient.send(command);
+  return sendResendEmail({
+    to,
+    ...buildVerificationEmailContent({ displayName, verifyUrl }),
+  });
 }
 
 export async function sendPasswordResetEmail({ to, displayName, resetUrl }) {
   const command = new SendEmailCommand(
-    buildPasswordResetEmail({ to, displayName, resetUrl })
+    buildSesEmail({
+      to,
+      ...buildPasswordResetEmailContent({ displayName, resetUrl }),
+    }),
   );
   return sesClient.send(command);
 }
