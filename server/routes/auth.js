@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma.js";
 import { authMiddleware } from "../middleware/auth.js";
-import { CORS_ORIGINS, JWT_SECRET } from "../src/config.js";
+import { CORS_ORIGINS, JWT_SECRET, isEmailVerificationRequired } from "../src/config.js";
 import {
   validate,
   registerSchema,
@@ -94,11 +94,25 @@ async function sendPasswordResetEmailSafe(user, { appUrl = null, origin = null, 
   }
 }
 
+async function autoVerifyUserWhenOptional(user) {
+  if (isEmailVerificationRequired() || user.emailVerified) {
+    return user;
+  }
+
+  const verifiedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: { emailVerified: true, emailVerifiedAt: new Date() },
+  });
+
+  return verifiedUser;
+}
+
 // REGISTER
 router.post("/register", validate(registerSchema), async (req, res, next) => {
   try {
     const { email, password, displayName } = req.body;
     const appUrl = getTrustedAppUrl(req);
+    const verificationRequired = isEmailVerificationRequired();
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -107,12 +121,16 @@ router.post("/register", validate(registerSchema), async (req, res, next) => {
         email,
         password: hashedPassword,
         displayName,
+        emailVerified: verificationRequired ? false : true,
+        emailVerifiedAt: verificationRequired ? null : new Date(),
       },
     });
 
-    // Fire the verification email in the background so registration still
-    // feels fast even if SES is slow/unavailable.
-    sendVerificationEmailSafe(user, appUrl);
+    if (verificationRequired) {
+      // Fire the verification email in the background so registration still
+      // feels fast even if SES is slow/unavailable.
+      sendVerificationEmailSafe(user, appUrl);
+    }
 
     res.status(201).json({ message: "User created", userId: user.id });
   } catch (error) {
@@ -162,6 +180,10 @@ router.post("/verify-email", validate(verifyEmailSchema), async (req, res) => {
 
 // RESEND VERIFICATION (requires auth)
 router.post("/resend-verification", authMiddleware, async (req, res) => {
+  if (!isEmailVerificationRequired()) {
+    return res.json({ message: "Email verification is currently optional." });
+  }
+
   const appUrl = getTrustedAppUrl(req);
   const user = await prisma.user.findUnique({
     where: { id: req.user.userId },
@@ -268,8 +290,10 @@ router.post("/login", validate(loginSchema), async (req, res, next) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
+    const activeUser = await autoVerifyUserWhenOptional(user);
+
     const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
+      { userId: activeUser.id, email: activeUser.email, role: activeUser.role },
       JWT_SECRET,
       { expiresIn: "1d" }
     );
@@ -293,7 +317,19 @@ router.get("/me", authMiddleware, async (req, res, next) => {
         emailVerified: true,
       },
     });
-    res.json(user);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const activeUser = await autoVerifyUserWhenOptional(user);
+    res.json({
+      id: activeUser.id,
+      email: activeUser.email,
+      displayName: activeUser.displayName,
+      role: activeUser.role,
+      emailVerified: activeUser.emailVerified,
+    });
   } catch (error) {
     next(error);
   }

@@ -97,7 +97,10 @@ PORT=5050
 JWT_SECRET=your-secret-key-here
 CORS_ORIGIN=http://localhost:5173
 DATABASE_URL=postgresql://USER:PASS@<neon-host>/neondb?sslmode=require
+REQUIRE_EMAIL_VERIFICATION=true
 ```
+
+Set `REQUIRE_EMAIL_VERIFICATION=false` if you need a temporary pre-tournament fallback that lets users register and submit predictions without email verification while transactional email delivery is unavailable.
 
 Apply migrations and seed:
 
@@ -123,6 +126,7 @@ npm run dev
 ```
 
 The web app runs at `http://localhost:5173`. It reads `VITE_API_URL` (defaults to `http://localhost:5050/api`).
+To keep the frontend copy aligned with the backend fallback, you can also set `VITE_REQUIRE_EMAIL_VERIFICATION=false` in the client environment when verification is temporarily optional.
 
 ## Dockerized Local Development
 

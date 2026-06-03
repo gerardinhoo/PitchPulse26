@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import api from "../../api/axios";
 import ForgotPassword from "../../pages/ForgotPassword";
 import Login from "../../pages/Login";
@@ -31,6 +31,11 @@ describe("Auth pages", () => {
     mockLogin.mockReset();
     mockRegister.mockReset();
     mockPost.mockReset();
+    vi.stubEnv("VITE_REQUIRE_EMAIL_VERIFICATION", "true");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("shows a network-specific login message when the server is unreachable", async () => {

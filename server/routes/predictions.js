@@ -1,6 +1,7 @@
 import express from "express";
 import { prisma } from "../lib/prisma.js";
 import { authMiddleware } from "../middleware/auth.js";
+import { isEmailVerificationRequired } from "../src/config.js";
 import { validate, predictionSchema, paginationSchema } from "../src/validators.js";
 import { calculatePoints } from "../src/services/leaderboard.js";
 
@@ -20,7 +21,7 @@ router.post("/", authMiddleware, validate(predictionSchema), async (req, res, ne
     if (!user) {
       return res.status(401).json({ error: "User not found" });
     }
-    if (!user.emailVerified) {
+    if (isEmailVerificationRequired() && !user.emailVerified) {
       return res.status(403).json({ error: "Please verify your email before submitting predictions" });
     }
 

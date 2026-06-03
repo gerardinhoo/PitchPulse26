@@ -1,14 +1,16 @@
 import { useState } from "react";
 import api from "../api/axios";
 import { useAuth } from "../hooks/useAuth";
+import { isEmailVerificationRequired } from "../config";
 
 export default function VerificationBanner() {
   const { user } = useAuth();
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [error, setError] = useState<string>("");
   const [dismissed, setDismissed] = useState(false);
+  const verificationRequired = isEmailVerificationRequired();
 
-  if (!user || user.emailVerified || dismissed) return null;
+  if (!verificationRequired || !user || user.emailVerified || dismissed) return null;
 
   const resend = async () => {
     setStatus("sending");

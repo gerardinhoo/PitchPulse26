@@ -7,6 +7,7 @@ import Pagination from "../components/Pagination";
 import ScoreInput from "../components/ScoreInput";
 import Spinner from "../components/Spinner";
 import StatePanel from "../components/StatePanel";
+import { isEmailVerificationRequired } from "../config";
 
 type Match = {
   id: number;
@@ -104,7 +105,8 @@ function formatMatchTime(date: string) {
 
 export default function Matches() {
   const { user } = useAuth();
-  const isVerified = user?.emailVerified !== false;
+  const verificationRequired = isEmailVerificationRequired();
+  const isVerified = !verificationRequired || user?.emailVerified !== false;
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parsePage(searchParams.get("page"));
   const activeView = parseView(searchParams.get("view"));
@@ -319,7 +321,7 @@ export default function Matches() {
         />
       ) : (
         <>
-          {!isVerified && (
+          {verificationRequired && !isVerified && (
             <section className="mb-6 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-4">
               <p className="text-xs uppercase tracking-[0.2em] text-yellow-300 mb-2">
                 Verification Required
