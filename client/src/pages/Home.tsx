@@ -98,6 +98,7 @@ export default function Home() {
   const [allMatches, setAllMatches] = useState<Match[]>([]);
   const [leaders, setLeaders] = useState<LeaderboardEntry[]>([]);
   const [kickoffIso, setKickoffIso] = useState<string | null>(null);
+  const [currentTimeMs, setCurrentTimeMs] = useState(0);
   const [countdownParts, setCountdownParts] = useState(() => formatCountdownParts(0));
 
   useEffect(() => {
@@ -138,7 +139,9 @@ export default function Home() {
     }
 
     const updateCountdown = () => {
-      const distanceMs = new Date(kickoffIso).getTime() - Date.now();
+      const now = Date.now();
+      const distanceMs = new Date(kickoffIso).getTime() - now;
+      setCurrentTimeMs(now);
       setCountdownParts(formatCountdownParts(distanceMs));
     };
 
@@ -154,10 +157,10 @@ export default function Home() {
     () =>
       allMatches
         .filter((match) => match.homeScore === null && match.awayScore === null)
-        .filter((match) => new Date(match.date).getTime() > Date.now())
+        .filter((match) => new Date(match.date).getTime() > currentTimeMs)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .slice(0, 3),
-    [allMatches],
+    [allMatches, currentTimeMs],
   );
 
   const activityItems = useMemo<ActivityItem[]>(() => {
@@ -196,7 +199,7 @@ export default function Home() {
     }
 
     return items.slice(0, 4);
-  }, [leaders, upcomingMatches, user?.displayName]);
+  }, [leaders, upcomingMatches, user]);
 
   return (
     <div className="animate-fade-in -mx-4 -mt-8">
