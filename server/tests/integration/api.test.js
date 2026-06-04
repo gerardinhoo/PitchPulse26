@@ -5,6 +5,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const sendVerificationEmail = vi.fn().mockResolvedValue(undefined);
 const sendPasswordResetEmail = vi.fn().mockResolvedValue(undefined);
+const sendMatchReminderEmail = vi.fn().mockResolvedValue(undefined);
 
 const state = {
   users: [],
@@ -48,6 +49,7 @@ function resetState() {
   counters.predictionId = 1;
   sendVerificationEmail.mockClear();
   sendPasswordResetEmail.mockClear();
+  sendMatchReminderEmail.mockClear();
 }
 
 function clone(value) {
@@ -199,6 +201,7 @@ const prisma = {
         role: data.role ?? "user",
         emailVerified: data.emailVerified ?? false,
         emailVerifiedAt: data.emailVerifiedAt ?? null,
+        emailNotifications: data.emailNotifications ?? true,
       };
 
       state.users.push(user);
@@ -345,6 +348,7 @@ vi.mock("../../lib/prisma.js", () => ({ prisma }));
 vi.mock("../../lib/email.js", () => ({
   sendVerificationEmail,
   sendPasswordResetEmail,
+  sendMatchReminderEmail,
 }));
 
 let app;
@@ -360,6 +364,7 @@ async function createVerifiedUser(overrides = {}) {
     role: overrides.role ?? "user",
     emailVerified: overrides.emailVerified ?? true,
     emailVerifiedAt: overrides.emailVerifiedAt ?? new Date().toISOString(),
+    emailNotifications: overrides.emailNotifications ?? true,
   };
 
   state.users.push(user);

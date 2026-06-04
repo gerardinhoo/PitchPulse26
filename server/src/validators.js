@@ -24,6 +24,15 @@ export const resetPasswordSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
+export const reminderUnsubscribeSchema = z.object({
+  token: z.string().min(10, "token is required"),
+});
+
+export const reminderRunSchema = z.object({
+  targetDate: z.string().datetime().optional(),
+  dryRun: z.boolean().optional(),
+});
+
 export const predictionSchema = z.object({
   matchId: z.number().int().positive("matchId must be a positive integer"),
   homeScore: z.number().int().min(0, "homeScore must be >= 0"),
