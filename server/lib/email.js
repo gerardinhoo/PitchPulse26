@@ -164,3 +164,91 @@ export async function sendPasswordResetEmail({ to, displayName, resetUrl }) {
     ...buildPasswordResetEmailContent({ displayName, resetUrl }),
   });
 }
+
+function formatReminderKickoff(date) {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "UTC",
+    timeZoneName: "short",
+  }).format(new Date(date));
+}
+
+function buildMatchReminderEmailContent({ displayName, matches, matchesUrl, unsubscribeUrl }) {
+  const name = displayName?.trim() || "there";
+  const subject = "Your PitchPulse 26 match reminder";
+
+  const lines = matches.map(
+    (match) =>
+      `- ${match.homeTeam.name} vs ${match.awayTeam.name} — ${formatReminderKickoff(match.date)}`,
+  );
+
+  const text = [
+    `Hi ${name},`,
+    "",
+    "These matches are coming up tomorrow. Make your predictions before kickoff:",
+    ...lines,
+    "",
+    `Open matches: ${matchesUrl}`,
+    "",
+    `Unsubscribe from reminder emails: ${unsubscribeUrl}`,
+    "",
+    "— PitchPulse 26",
+  ].join("\n");
+
+  const safeName = escapeHtml(name);
+  const safeMatchesUrl = escapeHtml(matchesUrl);
+  const safeUnsubscribeUrl = escapeHtml(unsubscribeUrl);
+  const matchItems = matches
+    .map((match) => {
+      const home = escapeHtml(match.homeTeam.name);
+      const away = escapeHtml(match.awayTeam.name);
+      const kickoff = escapeHtml(formatReminderKickoff(match.date));
+      return `<li style="margin-bottom:8px;"><strong>${home}</strong> vs <strong>${away}</strong><br /><span style="color:#9ca3af;">${kickoff}</span></li>`;
+    })
+    .join("");
+
+  const html = `<!doctype html>
+<html>
+  <body style="font-family: -apple-system, Segoe UI, sans-serif; background:#0f1b0e; color:#f9fafb; padding:24px;">
+    <div style="max-width:520px; margin:0 auto; background:#111827; border:1px solid #374151; border-radius:12px; padding:24px;">
+      <h1 style="margin:0 0 12px; font-size:20px;">
+        <span style="color:#10b981;">Pitch</span>Pulse 26
+      </h1>
+      <p>Hi ${safeName},</p>
+      <p>These matches are coming up tomorrow. Make your predictions before kickoff:</p>
+      <ul style="padding-left:20px;">${matchItems}</ul>
+      <p style="text-align:center; margin:24px 0;">
+        <a href="${safeMatchesUrl}" style="background:#10b981; color:#ffffff; padding:12px 20px; border-radius:8px; text-decoration:none; font-weight:600;">Open matches</a>
+      </p>
+      <p style="font-size:12px; color:#9ca3af;">
+        Don&apos;t want these reminders?
+        <a href="${safeUnsubscribeUrl}" style="color:#9ca3af;">Unsubscribe here</a>.
+      </p>
+    </div>
+  </body>
+</html>`;
+
+  return { subject, text, html };
+}
+
+export async function sendMatchReminderEmail({
+  to,
+  displayName,
+  matches,
+  matchesUrl,
+  unsubscribeUrl,
+}) {
+  return sendResendEmail({
+    to,
+    ...buildMatchReminderEmailContent({
+      displayName,
+      matches,
+      matchesUrl,
+      unsubscribeUrl,
+    }),
+  });
+}
