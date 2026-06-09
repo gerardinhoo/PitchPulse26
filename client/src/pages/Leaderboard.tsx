@@ -195,7 +195,7 @@ export default function Leaderboard() {
 
             {allTiedAtZero && (
               <div className="mb-4 rounded-xl border border-white/10 bg-white/4 px-4 py-3 text-sm text-[var(--color-text-muted)]">
-                Everyone is currently tied until scored matches begin. The list order below is just a temporary preview.
+                Leaderboard goes live after the opening matches.
               </div>
             )}
 

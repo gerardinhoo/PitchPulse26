@@ -66,10 +66,10 @@ export default function Register() {
     <div className="flex items-center justify-center min-h-[50vh] py-10 animate-fade-in">
       <form onSubmit={handleSubmit} className="card w-full max-w-sm p-8" noValidate>
         <h2 className="text-2xl font-bold mb-1">Create account</h2>
-        <p className="text-sm text-[var(--color-text-muted)] mb-6">Join the prediction game</p>
+        <p className="text-sm text-[var(--color-text-muted)] mb-6">Join the World Cup challenge</p>
         <p className="text-sm text-[var(--color-text-muted)] mb-4 bg-white/5 rounded-md px-3 py-2">
           {verificationRequired
-            ? "We'll ask you to verify your email before you can submit predictions."
+            ? "Verify your email to start making predictions."
             : "Create your account now and start making predictions right away."}
         </p>
 
@@ -159,7 +159,7 @@ export default function Register() {
             required
           />
           <p id="register-password-help" className="text-xs text-[var(--color-text-muted)] mt-1">
-            Use 8 or more characters so your account is ready for sign-in.
+            Use at least 8 characters.
           </p>
           {passwordError && (
             <p id="register-password-error" className="text-sm text-red-300 mt-1" role="alert">
@@ -174,7 +174,7 @@ export default function Register() {
           aria-describedby={error ? "register-form-error" : undefined}
           className="w-full bg-[var(--color-accent)] text-white py-2.5 rounded-lg font-medium hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-50"
         >
-          {submitting ? "Creating account..." : "Sign Up"}
+          {submitting ? "Creating account..." : "Create Account"}
         </button>
 
         <p className="text-sm text-[var(--color-text-muted)] mt-4 text-center">
