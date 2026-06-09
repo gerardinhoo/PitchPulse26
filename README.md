@@ -47,7 +47,7 @@ PitchPulse26/
 │   │   └── prisma.js         # Prisma client + Neon WebSocket config
 │   └── prisma/
 │       ├── schema.prisma     # PostgreSQL schema
-│       └── seed.js           # Seed data (48 teams, 16 stadiums, 24 matches)
+│       └── seed.js           # Seed data (48 teams, 16 stadiums, 72 group-stage matches)
 ├── client/
 │   └── src/
 │       ├── pages/            # Home, Login, Register, Matches, Leaderboard, Groups, Admin
@@ -110,6 +110,20 @@ Apply migrations and seed:
 ```bash
 npx prisma migrate deploy
 npx tsx prisma/seed.js
+```
+
+If you already have a live database that only contains the first 24 opening-round fixtures, backfill the remaining group-stage matches without wiping users or predictions:
+
+```bash
+npm run backfill:group-stage -- --dry-run
+npm run backfill:group-stage
+```
+
+If you later need to correct those fixtures to a verified official schedule, fill in [server/prisma/officialGroupStageFixtures.js](/Users/gerardeklu/PitchPulse26/server/prisma/officialGroupStageFixtures.js) with the official UTC kickoff times and venues, then run:
+
+```bash
+npm run sync:official-group-stage -- --dry-run
+npm run sync:official-group-stage
 ```
 
 Start the dev server:

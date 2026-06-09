@@ -10,6 +10,8 @@
   "scripts": {
     "dev": "nodemon --exec tsx src/index.js",
     "dev:docker": "nodemon -L --exec tsx src/index.js",
+    "backfill:group-stage": "node prisma/backfill-group-stage-matches.js",
+    "sync:official-group-stage": "node prisma/sync-official-group-stage-fixtures.js",
     "cleanup:load-test-users": "node scripts/cleanup-load-test-users.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"

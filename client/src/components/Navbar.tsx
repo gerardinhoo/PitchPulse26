@@ -6,7 +6,8 @@ const NAV_LINKS = [
   { to: "/", label: "Home" },
   { to: "/matches", label: "Matches" },
   { to: "/leaderboard", label: "Leaderboard" },
-  { to: "/groups", label: "Groups" }
+  { to: "/groups", label: "Groups" },
+  { to: "/rules", label: "Rules" },
 ];
 
 export default function Navbar() {

@@ -110,6 +110,10 @@ export default function Leaderboard() {
     setReloadKey((current) => current + 1);
   };
 
+  const everyoneTied =
+    leaders.length > 1 && leaders.every((entry) => entry.points === leaders[0].points);
+  const allTiedAtZero = everyoneTied && leaders[0]?.points === 0;
+
   if (loading) return <Spinner />;
 
   return (
@@ -161,12 +165,20 @@ export default function Leaderboard() {
                   </p>
                   {currentUserEntry ? (
                     <>
-                      <p className="text-3xl font-bold mt-2 text-[var(--color-accent)]">
-                        #{currentUserEntry.rank}
-                      </p>
+                      {currentUserEntry.tiedCount > 1 ? (
+                        <p className="text-2xl font-bold mt-2 text-[var(--color-accent)]">
+                          Currently tied with {currentUserEntry.tiedCount - 1} other
+                          {currentUserEntry.tiedCount === 2 ? "" : "s"}
+                        </p>
+                      ) : (
+                        <p className="text-3xl font-bold mt-2 text-[var(--color-accent)]">
+                          #{currentUserEntry.rank}
+                        </p>
+                      )}
                       <p className="mt-2 font-medium">{getDisplayName(currentUserEntry)}</p>
                       <p className="text-sm text-[var(--color-text-muted)] mt-2">
                         {currentUserEntry.points} point{currentUserEntry.points === 1 ? "" : "s"} from scored matches.
+                        {allTiedAtZero ? " Everyone is level until the first scored matches are posted." : ""}
                       </p>
                     </>
                   ) : (
@@ -181,11 +193,18 @@ export default function Leaderboard() {
               </div>
             </section>
 
+            {allTiedAtZero && (
+              <div className="mb-4 rounded-xl border border-white/10 bg-white/4 px-4 py-3 text-sm text-[var(--color-text-muted)]">
+                Everyone is currently tied until scored matches begin. The list order below is just a temporary preview.
+              </div>
+            )}
+
             <div className="space-y-2 stagger-children">
-              {leaders.map((player) => {
+              {leaders.map((player, index) => {
                 const isCurrentUser = user?.id === player.userId;
                 const displayRank = player.rank;
-                const isTop3 = displayRank <= 3;
+                const listPosition = index + 1;
+                const isTop3 = !allTiedAtZero && displayRank <= 3;
                 const samePointsCount = player.tiedCount;
 
                 return (
@@ -201,7 +220,7 @@ export default function Leaderboard() {
                   >
                     <div className="flex items-center gap-3">
                       <span className="font-bold text-lg w-8 text-center">
-                        {RANK_LABELS[displayRank] || `#${displayRank}`}
+                        {allTiedAtZero ? `#${listPosition}` : RANK_LABELS[displayRank] || `#${displayRank}`}
                       </span>
                       <span className="font-medium">
                         {getDisplayName(player)}
@@ -221,7 +240,9 @@ export default function Leaderboard() {
                         {player.points} pts
                       </p>
                       <p className="text-xs text-[var(--color-text-muted)]">
-                        {samePointsCount > 1 ? `Shared rank with ${samePointsCount - 1} other${samePointsCount === 2 ? "" : "s"}` : "Solo position"}
+                        {samePointsCount > 1
+                          ? `Shared rank with ${samePointsCount - 1} other${samePointsCount === 2 ? "" : "s"}`
+                          : "Solo position"}
                       </p>
                     </div>
                   </div>

@@ -8,6 +8,7 @@ import ScoreInput from "../components/ScoreInput";
 import Spinner from "../components/Spinner";
 import StatePanel from "../components/StatePanel";
 import { isEmailVerificationRequired } from "../config";
+import { formatMatchDateTime } from "../utils/dateTime";
 
 type Match = {
   id: number;
@@ -91,16 +92,6 @@ function matchesActiveView(match: Match, view: MatchView) {
   if (view === "upcoming") return !isMatchCompleted(match) && new Date(match.date).getTime() > Date.now();
   if (view === "completed") return isMatchCompleted(match);
   return true;
-}
-
-function formatMatchTime(date: string) {
-  return new Date(date).toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 export default function Matches() {
@@ -375,7 +366,7 @@ export default function Matches() {
                       {summary.nextMatch.homeTeam.name} vs {summary.nextMatch.awayTeam.name}
                     </p>
                     <p className="text-sm text-[var(--color-text-muted)] mt-1">
-                      {formatMatchTime(summary.nextMatch.date)}
+                      {formatMatchDateTime(summary.nextMatch.date)}
                     </p>
                     <p className="text-sm mt-3 text-[var(--color-text-muted)]">
                       Scroll down to add your scoreline before kickoff.
