@@ -1,4 +1,5 @@
 import Flag from "./Flag";
+import { formatMatchDateTime } from "../utils/dateTime";
 
 type Props = {
   homeTeam: string;
@@ -37,13 +38,7 @@ export default function MatchCard({
           <Flag code={awayCode} size={16} /> {awayTeam}
         </p>
         <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-          {new Date(date).toLocaleDateString("en-US", {
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
+          {formatMatchDateTime(date)}
         </p>
         {statusLabel && (
           <p aria-live="polite" className={`text-xs mt-1 ${statusColor}`}>{statusLabel}</p>

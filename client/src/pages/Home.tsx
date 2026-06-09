@@ -5,6 +5,7 @@ import Flag from "../components/Flag";
 import { useAuth } from "../hooks/useAuth";
 import heroBgDesktop from "../assets/custom-trophy-bg-1600.webp";
 import heroBgFallback from "../assets/custom-trophy-bg.jpg";
+import { formatMatchDateTime } from "../utils/dateTime";
 
 type Match = {
   id: number;
@@ -57,23 +58,7 @@ function formatKickoffLabel(isoDate: string | null) {
     return null;
   }
 
-  return new Intl.DateTimeFormat(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(isoDate));
-}
-
-function formatMatchDate(isoDate: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(isoDate));
+  return formatMatchDateTime(isoDate);
 }
 
 function getDisplayName(entry: LeaderboardEntry) {
@@ -186,7 +171,7 @@ export default function Home() {
       items.push({
         id: "next-match",
         label: `⚽ ${upcomingMatches[0].homeTeam.name} vs ${upcomingMatches[0].awayTeam.name} is next up`,
-        detail: `${formatMatchDate(upcomingMatches[0].date)} is the next prediction deadline.`,
+        detail: `${formatMatchDateTime(upcomingMatches[0].date)} is the next prediction deadline.`,
       });
     }
 
@@ -399,7 +384,7 @@ export default function Home() {
                           <PreviewTeam name={match.awayTeam.name} code={match.awayTeam.code} />
                         </p>
                         <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                          {formatMatchDate(match.date)}
+                          {formatMatchDateTime(match.date)}
                         </p>
                       </div>
                       <Link

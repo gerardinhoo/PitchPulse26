@@ -15,6 +15,7 @@ const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const AdminResults = lazy(() => import("./pages/AdminResults"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const GroupsPage = lazy(() => import("./pages/GroupsPage"));
+const Rules = lazy(() => import("./pages/Rules"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const UnsubscribeReminders = lazy(() => import("./pages/UnsubscribeReminders"));
@@ -35,6 +36,7 @@ export default function App() {
                 <Route path="/verify-email" element={<VerifyEmail />} />
                 <Route path="/unsubscribe-reminders" element={<UnsubscribeReminders />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/rules" element={<Rules />} />
                 <Route path="/groups" element={<GroupsPage />} />
                 <Route path="/groups/:groupId" element={<GroupsPage />} />
                 <Route

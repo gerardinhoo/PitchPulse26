@@ -4,6 +4,7 @@ const NAV_LINKS = [
   { to: "/", label: "Home" },
   { to: "/matches", label: "Matches" },
   { to: "/leaderboard", label: "Leaderboard" },
+  { to: "/rules", label: "Rules" },
 ];
 
 export default function Footer() {

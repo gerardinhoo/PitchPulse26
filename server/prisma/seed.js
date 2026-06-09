@@ -3,6 +3,7 @@ import { PrismaClient } from "../src/generated/prisma/client.ts";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { neonConfig } from "@neondatabase/serverless";
 import ws from "ws";
+import { buildGroupStageFixtures } from "./groupStageFixtures.js";
 
 if (!neonConfig.webSocketConstructor) {
   neonConfig.webSocketConstructor = ws;
@@ -136,41 +137,9 @@ async function main() {
   const teams = await prisma.team.findMany();
   const stadiums = await prisma.stadium.findMany();
 
-  // ⚽ Seed Group Stage Matches (Matchday 1 — June 11–17)
-  // Using individual create() calls so @updatedAt auto-populates (createMany doesn't trigger it in SQLite)
-  const matchData = [
-    // June 11
-    { home: "Mexico", away: "South Africa", venue: "Estadio Azteca", date: "2026-06-11T19:00:00Z" },
-    { home: "South Korea", away: "Czech Republic", venue: "Estadio Akron", date: "2026-06-12T02:00:00Z" },
-    // June 12
-    { home: "Canada", away: "Bosnia and Herzegovina", venue: "BMO Field", date: "2026-06-12T19:00:00Z" },
-    { home: "USA", away: "Paraguay", venue: "SoFi Stadium", date: "2026-06-13T01:00:00Z" },
-    // June 13
-    { home: "Qatar", away: "Switzerland", venue: "Levi's Stadium", date: "2026-06-13T19:00:00Z" },
-    { home: "Brazil", away: "Morocco", venue: "MetLife Stadium", date: "2026-06-13T22:00:00Z" },
-    { home: "Haiti", away: "Scotland", venue: "Gillette Stadium", date: "2026-06-14T01:00:00Z" },
-    { home: "Australia", away: "Türkiye", venue: "BC Place", date: "2026-06-13T22:00:00Z" },
-    // June 14
-    { home: "Germany", away: "Curaçao", venue: "NRG Stadium", date: "2026-06-14T17:00:00Z" },
-    { home: "Netherlands", away: "Japan", venue: "AT&T Stadium", date: "2026-06-14T20:00:00Z" },
-    { home: "Ivory Coast", away: "Ecuador", venue: "Lincoln Financial Field", date: "2026-06-14T23:00:00Z" },
-    { home: "Sweden", away: "Tunisia", venue: "Estadio BBVA", date: "2026-06-15T02:00:00Z" },
-    // June 15
-    { home: "Spain", away: "Cape Verde", venue: "Mercedes-Benz Stadium", date: "2026-06-15T16:00:00Z" },
-    { home: "Belgium", away: "Egypt", venue: "Lumen Field", date: "2026-06-15T19:00:00Z" },
-    { home: "Saudi Arabia", away: "Uruguay", venue: "Hard Rock Stadium", date: "2026-06-15T22:00:00Z" },
-    { home: "Iran", away: "New Zealand", venue: "SoFi Stadium", date: "2026-06-16T01:00:00Z" },
-    // June 16
-    { home: "France", away: "Senegal", venue: "MetLife Stadium", date: "2026-06-16T19:00:00Z" },
-    { home: "Iraq", away: "Norway", venue: "Gillette Stadium", date: "2026-06-16T22:00:00Z" },
-    { home: "Argentina", away: "Algeria", venue: "Arrowhead Stadium", date: "2026-06-17T01:00:00Z" },
-    { home: "Austria", away: "Jordan", venue: "Levi's Stadium", date: "2026-06-17T04:00:00Z" },
-    // June 17
-    { home: "Portugal", away: "DR Congo", venue: "NRG Stadium", date: "2026-06-17T17:00:00Z" },
-    { home: "England", away: "Croatia", venue: "AT&T Stadium", date: "2026-06-17T20:00:00Z" },
-    { home: "Ghana", away: "Panama", venue: "BMO Field", date: "2026-06-17T23:00:00Z" },
-    { home: "Uzbekistan", away: "Colombia", venue: "Estadio Azteca", date: "2026-06-18T02:00:00Z" },
-  ];
+  // ⚽ Seed full group stage schedule (72 matches across 3 matchdays)
+  // Using individual create() calls so @updatedAt auto-populates.
+  const matchData = buildGroupStageFixtures();
 
   for (const m of matchData) {
     await prisma.match.create({
@@ -183,7 +152,7 @@ async function main() {
     });
   }
 
-  console.log("✅ 24 group stage matches seeded (Matchday 1)");
+  console.log(`✅ ${matchData.length} group stage matches seeded (Matchdays 1–3)`);
 }
 
 main()
