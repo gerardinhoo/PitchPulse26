@@ -108,13 +108,13 @@ describe("Auth pages", () => {
     fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "secret123" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Sign Up" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create Account" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Email is invalid. Password must be at least 8 characters",
     );
     expect(
-      screen.getByText(/verify your email before you can submit predictions/i),
+      screen.getByText(/verify your email to start making predictions/i),
     ).toBeInTheDocument();
   });
 

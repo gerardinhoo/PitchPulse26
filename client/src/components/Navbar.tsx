@@ -129,7 +129,7 @@ export default function Navbar() {
                 to="/register"
                 className="hidden sm:inline-flex text-sm px-3 py-1.5 rounded-md bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)] transition-colors"
               >
-                Sign Up
+                Create Account
               </Link>
             </>
           )}
@@ -229,7 +229,7 @@ export default function Navbar() {
                 onClick={() => setMenuOpen(false)}
                 className="block px-3 py-2 rounded-md text-sm font-medium text-center bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)] transition-colors"
               >
-                Sign Up
+                Create Account
               </Link>
             </>
           )}

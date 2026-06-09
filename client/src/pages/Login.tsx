@@ -149,7 +149,7 @@ export default function Login() {
         <p className="text-sm text-[var(--color-text-muted)] mt-4 text-center">
           No account?{" "}
           <Link to="/register" className="text-[var(--color-accent)] hover:underline">
-            Sign up
+            Create account
           </Link>
         </p>
       </form>
