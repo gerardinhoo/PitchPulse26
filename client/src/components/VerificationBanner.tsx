@@ -32,12 +32,17 @@ export default function VerificationBanner() {
     >
       <div className="max-w-5xl mx-auto px-4 py-2 flex items-center justify-between gap-3 text-sm">
         <span className="flex-1 min-w-0">
-          <span className="font-medium">Verify your email</span>
+          <span className="font-medium">Check your inbox!</span>
           <span className="hidden sm:inline text-yellow-100/80">
             {" "}
-            — we sent a link to <span className="font-mono">{user.email}</span>. You can browse, but you can't submit predictions until it's verified.
+            We sent a verification link to <span className="font-mono">{user.email}</span>.
           </span>
-          <span className="ml-2 text-yellow-100/80">Check spam or promotions if it doesn't show up.</span>
+          <span className="block text-yellow-100/80 mt-1">
+            You can explore PitchPulse 26 for now, but you'll need to verify your email before submitting predictions.
+          </span>
+          <span className="block text-yellow-100/80 mt-1">
+            If you don't see the email within a few minutes, check your spam or promotions folder.
+          </span>
           {status === "sent" && (
             <span className="ml-2 text-emerald-300">Email sent.</span>
           )}
