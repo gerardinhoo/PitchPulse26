@@ -33,8 +33,7 @@ export default function VerificationBanner() {
       <div className="max-w-5xl mx-auto px-4 py-2 flex items-center justify-between gap-3 text-sm">
         <span className="flex-1 min-w-0">
           <span className="font-medium">Check your inbox!</span>
-          <span className="hidden sm:inline text-yellow-100/80">
-            {" "}
+          <span className="block text-yellow-100/80 mt-1">
             We sent a verification link to <span className="font-mono">{user.email}</span>.
           </span>
           <span className="block text-yellow-100/80 mt-1">
@@ -47,7 +46,7 @@ export default function VerificationBanner() {
             <span className="ml-2 text-emerald-300">Email sent.</span>
           )}
           {status === "error" && (
-            <span className="ml-2 text-red-300">{error}</span>
+            <span className="block mt-1 text-red-300">{error}</span>
           )}
         </span>
         <div className="flex items-center gap-2 shrink-0">
