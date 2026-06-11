@@ -37,6 +37,7 @@ export default function VerificationBanner() {
             {" "}
             — we sent a link to <span className="font-mono">{user.email}</span>. You can browse, but you can't submit predictions until it's verified.
           </span>
+          <span className="ml-2 text-yellow-100/80">Check spam or promotions if it doesn't show up.</span>
           {status === "sent" && (
             <span className="ml-2 text-emerald-300">Email sent.</span>
           )}

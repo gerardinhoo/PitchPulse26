@@ -72,6 +72,11 @@ export default function Register() {
             ? "Verify your email to start making predictions."
             : "Create your account now and start making predictions right away."}
         </p>
+        {verificationRequired && (
+          <p className="text-xs text-[var(--color-text-muted)] mb-4">
+            If you don't see the verification email, check spam or promotions.
+          </p>
+        )}
 
         {error && (
           <p
