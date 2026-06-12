@@ -17,6 +17,10 @@ import { prisma } from "../lib/prisma.js";
 
 const app = express();
 
+// API Gateway forwards client IP information, so Express should trust the
+// first proxy hop for rate limiting and request IP handling.
+app.set("trust proxy", 1);
+
 const corsOptions = {
   origin(origin, callback) {
     // Allow same-origin/server-to-server requests with no Origin header.
