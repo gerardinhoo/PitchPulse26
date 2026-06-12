@@ -29,38 +29,6 @@ type ActivityItem = {
   detail: string;
 };
 
-function formatCountdownParts(distanceMs: number) {
-  if (distanceMs <= 0) {
-    return [
-      { label: "Days", value: "00" },
-      { label: "Hours", value: "00" },
-      { label: "Minutes", value: "00" },
-      { label: "Seconds", value: "00" },
-    ];
-  }
-
-  const totalSeconds = Math.floor(distanceMs / 1000);
-  const days = Math.floor(totalSeconds / 86400);
-  const hours = Math.floor((totalSeconds % 86400) / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  return [
-    { label: "Days", value: String(days).padStart(2, "0") },
-    { label: "Hours", value: String(hours).padStart(2, "0") },
-    { label: "Minutes", value: String(minutes).padStart(2, "0") },
-    { label: "Seconds", value: String(seconds).padStart(2, "0") },
-  ];
-}
-
-function formatKickoffLabel(isoDate: string | null) {
-  if (!isoDate) {
-    return null;
-  }
-
-  return formatMatchDateTime(isoDate);
-}
-
 function getDisplayName(entry: LeaderboardEntry) {
   const name = entry.displayName?.trim();
   if (!name || name.toLowerCase() === "anonymous") {
@@ -82,9 +50,7 @@ export default function Home() {
   const { user } = useAuth();
   const [allMatches, setAllMatches] = useState<Match[]>([]);
   const [leaders, setLeaders] = useState<LeaderboardEntry[]>([]);
-  const [kickoffIso, setKickoffIso] = useState<string | null>(null);
-  const [currentTimeMs, setCurrentTimeMs] = useState(0);
-  const [countdownParts, setCountdownParts] = useState(() => formatCountdownParts(0));
+  const [currentTimeMs, setCurrentTimeMs] = useState(() => Date.now());
 
   useEffect(() => {
     let cancelled = false;
@@ -105,7 +71,6 @@ export default function Home() {
 
         setAllMatches(fetchedMatches);
         setLeaders(fetchedLeaders);
-        setKickoffIso(fetchedMatches[0]?.date ?? null);
       } catch {
         // Keep the homepage resilient even if one of the preview endpoints is unavailable.
       }
@@ -119,24 +84,12 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!kickoffIso) {
-      return undefined;
-    }
-
-    const updateCountdown = () => {
-      const now = Date.now();
-      const distanceMs = new Date(kickoffIso).getTime() - now;
-      setCurrentTimeMs(now);
-      setCountdownParts(formatCountdownParts(distanceMs));
-    };
-
-    updateCountdown();
-    const intervalId = window.setInterval(updateCountdown, 1000);
+    const intervalId = window.setInterval(() => {
+      setCurrentTimeMs(Date.now());
+    }, 60_000);
 
     return () => window.clearInterval(intervalId);
-  }, [kickoffIso]);
-
-  const kickoffLabel = formatKickoffLabel(kickoffIso);
+  }, []);
 
   const upcomingMatches = useMemo(
     () =>
@@ -147,6 +100,16 @@ export default function Home() {
         .slice(0, 3),
     [allMatches, currentTimeMs],
   );
+
+  const latestCompletedMatch = useMemo(
+    () =>
+      allMatches
+        .filter((match) => match.homeScore !== null && match.awayScore !== null)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0] ?? null,
+    [allMatches],
+  );
+
+  const nextKickoffMatch = upcomingMatches[0] ?? null;
 
   const activityItems = useMemo<ActivityItem[]>(() => {
     const items: ActivityItem[] = [];
@@ -246,28 +209,57 @@ export default function Home() {
             </div>
           </div>
 
-          {kickoffLabel && (
+          {(latestCompletedMatch || nextKickoffMatch) && (
             <div
               className="mt-6 mx-auto max-w-3xl animate-slide-up rounded-2xl border border-white/12 bg-[rgba(7,11,10,0.62)] p-4 shadow-[0_20px_60px_rgba(0,0,0,0.34)] backdrop-blur-sm sm:mt-8 sm:p-5"
               style={{ animationDelay: "260ms" }}
             >
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/80 sm:text-xs sm:tracking-[0.24em]">
-                Countdown to Opening Kickoff
+                Today at PitchPulse 26
               </p>
-              <p className="mt-2 text-sm text-white/70">{kickoffLabel}</p>
-              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {countdownParts.map((part) => (
-                  <div
-                    key={part.label}
-                    className="rounded-xl border border-white/10 bg-white/5 px-2.5 py-3 text-center sm:px-3 sm:py-3"
-                  >
-                    <div className="text-lg font-bold text-white sm:text-2xl">{part.value}</div>
-                    <div className="mt-1 text-[10px] uppercase tracking-[0.14em] text-white/55 sm:text-[11px] sm:tracking-[0.18em]">
-                      {part.label}
-                    </div>
-                  </div>
-                ))}
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-left">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-200/75 sm:text-[11px]">
+                    Latest Result
+                  </p>
+                  {latestCompletedMatch ? (
+                    <>
+                      <p className="mt-2 text-base font-semibold text-white sm:text-lg">
+                        {latestCompletedMatch.homeTeam.name} {latestCompletedMatch.homeScore}–{latestCompletedMatch.awayScore}{" "}
+                        {latestCompletedMatch.awayTeam.name}
+                      </p>
+                      <p className="mt-1 text-sm text-white/65">
+                        Final in Group {latestCompletedMatch.homeTeam.group}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="mt-2 text-sm text-white/65">No final score yet.</p>
+                  )}
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-left">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-sky-200/75 sm:text-[11px]">
+                    Next Kickoff
+                  </p>
+                  {nextKickoffMatch ? (
+                    <>
+                      <p className="mt-2 text-base font-semibold text-white sm:text-lg">
+                        {nextKickoffMatch.homeTeam.name} vs {nextKickoffMatch.awayTeam.name}
+                      </p>
+                      <p className="mt-1 text-sm text-white/65">
+                        {formatMatchDateTime(nextKickoffMatch.date)}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="mt-2 text-sm text-white/65">All current fixtures have kicked off.</p>
+                  )}
+                </div>
               </div>
+              <Link
+                to="/matches"
+                className="mt-4 inline-flex items-center justify-center rounded-lg bg-[var(--color-accent)] px-5 py-2.5 font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
+              >
+                Open Matches
+              </Link>
             </div>
           )}
         </div>
