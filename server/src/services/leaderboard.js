@@ -48,9 +48,9 @@ export function buildLeaderboard(users) {
   let currentRank = 0;
   let lastPoints = null;
 
-  return entries.map((entry, index) => {
+  return entries.map((entry) => {
     if (lastPoints !== entry.points) {
-      currentRank = index + 1;
+      currentRank += 1;
       lastPoints = entry.points;
     }
 
