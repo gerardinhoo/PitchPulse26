@@ -274,6 +274,29 @@ For Resend verification email delivery, configure:
 
 Resend requires a verified sending domain before mail will deliver.
 
+## Automated Match Reminders
+
+Match reminders can be triggered automatically through GitHub Actions using:
+
+- [.github/workflows/reminders.yml](/Users/gerardeklu/PitchPulse26/.github/workflows/reminders.yml)
+
+The workflow calls the existing protected backend route:
+
+- `POST /api/reminders/run-next-day`
+
+Required GitHub configuration:
+
+- repository variable: `ENABLE_MATCH_REMINDERS=true`
+- repository variable: `REMINDER_API_URL`
+  - example: `https://fqblsiujfj.execute-api.us-east-1.amazonaws.com/api`
+- repository secret: `REMINDER_JOB_SECRET`
+
+Notes:
+
+- the scheduled workflow runs at `13:00 UTC` daily, which is `9:00 AM` Eastern during June daylight saving time
+- `workflow_dispatch` supports manual dry runs and optional `target_date` overrides for testing
+- users can unsubscribe using the link already embedded in reminder emails
+
 ## Production Email Reset Notes
 
 The Lambda deploy workflow now updates function environment variables as part of deployment. Configure these before relying on production password reset emails:

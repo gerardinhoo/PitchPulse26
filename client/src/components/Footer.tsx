@@ -66,6 +66,18 @@ export default function Footer() {
                 </span>
               </a>
 
+              <p className="text-[var(--color-text-muted)] text-xs">
+                Need help or have feedback?{" "}
+                <a
+                  href="https://instagram.com/pitchpulse26"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[var(--color-accent)] hover:underline"
+                >
+                  DM @pitchpulse26
+                </a>
+              </p>
+
               {/* Credits */}
               <p className="text-[var(--color-text-muted)] text-xs">
                 Built by Gerard Eklu

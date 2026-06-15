@@ -1,0 +1,56 @@
+name: Match Reminders
+
+on:
+  schedule:
+    # 9:00 AM Eastern during June daylight saving time.
+    - cron: "0 13 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run without sending emails"
+        required: false
+        default: "false"
+      target_date:
+        description: "Optional ISO date anchor for testing (for example 2026-06-15T12:00:00.000Z)"
+        required: false
+        default: ""
+
+jobs:
+  send-reminders:
+    name: Run next-day reminder job
+    if: vars.ENABLE_MATCH_REMINDERS == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate reminder configuration
+        env:
+          REMINDER_API_URL: ${{ vars.REMINDER_API_URL }}
+          REMINDER_JOB_SECRET: ${{ secrets.REMINDER_JOB_SECRET }}
+        run: |
+          test -n "$REMINDER_API_URL" || (echo "Missing repository variable REMINDER_API_URL" && exit 1)
+          test -n "$REMINDER_JOB_SECRET" || (echo "Missing repository secret REMINDER_JOB_SECRET" && exit 1)
+
+      - name: Call reminder endpoint
+        env:
+          REMINDER_API_URL: ${{ vars.REMINDER_API_URL }}
+          REMINDER_JOB_SECRET: ${{ secrets.REMINDER_JOB_SECRET }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          TARGET_DATE: ${{ github.event.inputs.target_date || '' }}
+        run: |
+          BODY='{"dryRun":false}'
+
+          if [ "$DRY_RUN" = "true" ] && [ -n "$TARGET_DATE" ]; then
+            BODY="{\"dryRun\":true,\"targetDate\":\"$TARGET_DATE\"}"
+          elif [ "$DRY_RUN" = "true" ]; then
+            BODY='{"dryRun":true}'
+          elif [ -n "$TARGET_DATE" ]; then
+            BODY="{\"dryRun\":false,\"targetDate\":\"$TARGET_DATE\"}"
+          fi
+
+          echo "POST $REMINDER_API_URL/reminders/run-next-day"
+          echo "Payload: $BODY"
+
+          curl --fail-with-body \
+            -X POST "$REMINDER_API_URL/reminders/run-next-day" \
+            -H "Content-Type: application/json" \
+            -H "x-reminder-job-secret: $REMINDER_JOB_SECRET" \
+            -d "$BODY"
