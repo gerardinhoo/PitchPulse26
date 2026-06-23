@@ -50,6 +50,7 @@ export default function Leaderboard() {
     icon: string;
   } | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "shared" | "error">("idle");
   const { user } = useAuth();
 
   useEffect(() => {
@@ -113,6 +114,30 @@ export default function Leaderboard() {
   const everyoneTied =
     leaders.length > 1 && leaders.every((entry) => entry.points === leaders[0].points);
   const allTiedAtZero = everyoneTied && leaders[0]?.points === 0;
+  const leader = leaders[0] ?? null;
+
+  const shareCardCopy = leader
+    ? `PitchPulse 26 Leaderboard\n${getDisplayName(leader)} is leading with ${leader.points} pts.\n${currentUserEntry ? `I'm ${currentUserEntry.tiedCount > 1 ? `tied with ${currentUserEntry.tiedCount - 1} others` : `ranked #${currentUserEntry.rank}`} on the table.` : "The race is live after every final score."}\nhttps://pitchpulse26.com/leaderboard`
+    : `PitchPulse 26 Leaderboard\nThe World Cup challenge is live.\nhttps://pitchpulse26.com/leaderboard`;
+
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "PitchPulse 26 Leaderboard",
+          text: shareCardCopy,
+          url: "https://pitchpulse26.com/leaderboard",
+        });
+        setShareStatus("shared");
+        return;
+      }
+
+      await navigator.clipboard.writeText(shareCardCopy);
+      setShareStatus("copied");
+    } catch {
+      setShareStatus("error");
+    }
+  };
 
   if (loading) return <Spinner />;
 
@@ -191,6 +216,68 @@ export default function Leaderboard() {
                   )}
                 </div>
               </div>
+            </section>
+
+            <section className="mb-6 rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(15,23,42,0.96))] px-5 py-5 shadow-[0_18px_40px_rgba(0,0,0,0.16)]">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div className="max-w-2xl">
+                  <p className="text-xs uppercase tracking-[0.2em] text-emerald-200/80 mb-2">
+                    Share the Table
+                  </p>
+                  <h2 className="text-2xl font-bold">Make your leaderboard screenshot-worthy</h2>
+                  <p className="mt-2 text-sm text-white/75">
+                    This card is built to look good in a screenshot. Share your standing and keep the football banter going.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="inline-flex items-center justify-center rounded-lg bg-[var(--color-accent)] px-5 py-2.5 font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
+                >
+                  Share leaderboard
+                </button>
+              </div>
+
+              <div className="mt-5 rounded-2xl border border-white/10 bg-[rgba(7,12,14,0.5)] p-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.18em] text-emerald-300/80">
+                      PitchPulse 26
+                    </p>
+                    <h3 className="mt-2 text-xl font-bold">
+                      {leader
+                        ? `${getDisplayName(leader)} leads the World Cup challenge`
+                        : "The World Cup challenge is live"}
+                    </h3>
+                    <p className="mt-2 text-sm text-white/75">
+                      {leader
+                        ? `${leader.points} point${leader.points === 1 ? "" : "s"} on the board after the latest finals.`
+                        : "Final scores will keep reshaping the table every matchday."}
+                    </p>
+                  </div>
+                  {currentUserEntry && (
+                    <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left sm:min-w-[14rem]">
+                      <p className="text-xs uppercase tracking-wider text-white/60">Your spot</p>
+                      <p className="mt-1 text-2xl font-bold text-[var(--color-accent)]">
+                        {currentUserEntry.tiedCount > 1
+                          ? `Tied #${currentUserEntry.rank}`
+                          : `#${currentUserEntry.rank}`}
+                      </p>
+                      <p className="mt-1 text-sm text-white/75">
+                        {currentUserEntry.points} point{currentUserEntry.points === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {shareStatus !== "idle" && (
+                <p className="mt-3 text-sm text-white/70">
+                  {shareStatus === "shared" && "Share sheet opened."}
+                  {shareStatus === "copied" && "Leaderboard copy saved to your clipboard."}
+                  {shareStatus === "error" && "Could not share right now. Try taking a screenshot instead."}
+                </p>
+              )}
             </section>
 
             {allTiedAtZero && (

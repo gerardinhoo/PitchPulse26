@@ -51,13 +51,15 @@ export default function Home() {
   const [allMatches, setAllMatches] = useState<Match[]>([]);
   const [leaders, setLeaders] = useState<LeaderboardEntry[]>([]);
   const [currentTimeMs, setCurrentTimeMs] = useState(() => Date.now());
+  const [matchesLoaded, setMatchesLoaded] = useState(false);
+  const [leadersLoaded, setLeadersLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadHomeData() {
       try {
-        const [matchesResponse, leaderboardResponse] = await Promise.all([
+        const [matchesResult, leaderboardResult] = await Promise.allSettled([
           api.get("/matches", { params: { page: 1, limit: 100 } }),
           api.get("/leaderboard", { params: { page: 1, limit: 5 } }),
         ]);
@@ -66,13 +68,22 @@ export default function Home() {
           return;
         }
 
-        const fetchedMatches: Match[] = matchesResponse.data?.data ?? [];
-        const fetchedLeaders: LeaderboardEntry[] = leaderboardResponse.data?.data ?? [];
+        if (matchesResult.status === "fulfilled") {
+          const fetchedMatches: Match[] = matchesResult.value.data?.data ?? [];
+          setAllMatches(fetchedMatches);
+        }
 
-        setAllMatches(fetchedMatches);
-        setLeaders(fetchedLeaders);
+        if (leaderboardResult.status === "fulfilled") {
+          const fetchedLeaders: LeaderboardEntry[] = leaderboardResult.value.data?.data ?? [];
+          setLeaders(fetchedLeaders);
+        }
       } catch {
         // Keep the homepage resilient even if one of the preview endpoints is unavailable.
+      } finally {
+        if (!cancelled) {
+          setMatchesLoaded(true);
+          setLeadersLoaded(true);
+        }
       }
     }
 
@@ -209,13 +220,16 @@ export default function Home() {
             </div>
           </div>
 
-          {(latestCompletedMatch || nextKickoffMatch) && (
+          {(matchesLoaded || latestCompletedMatch || nextKickoffMatch) && (
             <div
               className="mt-6 mx-auto max-w-3xl animate-slide-up rounded-2xl border border-white/12 bg-[rgba(7,11,10,0.62)] p-4 shadow-[0_20px_60px_rgba(0,0,0,0.34)] backdrop-blur-sm sm:mt-8 sm:p-5"
               style={{ animationDelay: "260ms" }}
             >
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/80 sm:text-xs sm:tracking-[0.24em]">
                 Today at PitchPulse 26
+              </p>
+              <p className="mt-2 text-sm text-white/65">
+                Stay on top of the latest final score and the next kickoff that needs attention.
               </p>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-left">
@@ -232,6 +246,8 @@ export default function Home() {
                         Final in Group {latestCompletedMatch.homeTeam.group}
                       </p>
                     </>
+                  ) : !matchesLoaded ? (
+                    <p className="mt-2 text-sm text-white/65">Loading the latest result…</p>
                   ) : (
                     <p className="mt-2 text-sm text-white/65">No final score yet.</p>
                   )}
@@ -249,6 +265,8 @@ export default function Home() {
                         {formatMatchDateTime(nextKickoffMatch.date)}
                       </p>
                     </>
+                  ) : !matchesLoaded ? (
+                    <p className="mt-2 text-sm text-white/65">Loading the next kickoff…</p>
                   ) : (
                     <p className="mt-2 text-sm text-white/65">All current fixtures have kicked off.</p>
                   )}
@@ -436,6 +454,10 @@ export default function Home() {
                       </p>
                     </div>
                   ))}
+                </div>
+              ) : !leadersLoaded ? (
+                <div className="mt-6 rounded-2xl border border-white/10 bg-white/4 p-5 text-sm text-[var(--color-text-muted)]">
+                  Loading the latest leaderboard snapshot…
                 </div>
               ) : (
                 <div className="mt-6 rounded-2xl border border-white/10 bg-white/4 p-5 text-sm text-[var(--color-text-muted)]">
