@@ -33,6 +33,10 @@ export const reminderRunSchema = z.object({
   dryRun: z.boolean().optional(),
 });
 
+export const notificationPreferencesSchema = z.object({
+  emailNotifications: z.boolean(),
+});
+
 export const predictionSchema = z.object({
   matchId: z.number().int().positive("matchId must be a positive integer"),
   homeScore: z.number().int().min(0, "homeScore must be >= 0"),
