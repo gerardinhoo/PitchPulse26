@@ -124,7 +124,7 @@ function calculatePredictionPoints(prediction: PredictionRecord, match: Match) {
 }
 
 export default function Matches() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const verificationRequired = isEmailVerificationRequired();
   const isVerified = !verificationRequired || user?.emailVerified !== false;
   const [searchParams, setSearchParams] = useSearchParams();
@@ -143,6 +143,8 @@ export default function Matches() {
   const [reloadKey, setReloadKey] = useState(0);
   const [focusedMatchId, setFocusedMatchId] = useState<number | null>(null);
   const [picksView, setPicksView] = useState<PicksView>("all");
+  const [updatingReminders, setUpdatingReminders] = useState(false);
+  const [reminderMessage, setReminderMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -243,6 +245,10 @@ export default function Matches() {
         ? upcomingPredictionHistory
         : [...completedPredictionHistory, ...upcomingPredictionHistory];
   const picksPreview = filteredPicks.slice(0, 6);
+  const completedPointsTotal = completedPredictionHistory.reduce((sum, prediction) => {
+    const points = calculatePredictionPoints(prediction, prediction.match!);
+    return sum + (points ?? 0);
+  }, 0);
 
   // If the server reports fewer pages than requested (e.g. deep-linked ?page=99),
   // clamp the URL to the last valid page.
@@ -290,6 +296,38 @@ export default function Matches() {
 
   const handleRetry = () => {
     setReloadKey((current) => current + 1);
+  };
+
+  const handleReminderToggle = async () => {
+    if (!user) return;
+
+    const nextValue = !(user.emailNotifications ?? true);
+    setUpdatingReminders(true);
+    setReminderMessage(null);
+
+    try {
+      const response = await api.patch("/auth/preferences", {
+        emailNotifications: nextValue,
+      });
+
+      setUser((current) =>
+        current
+          ? {
+              ...current,
+              emailNotifications: response.data.emailNotifications,
+            }
+          : current,
+      );
+      setReminderMessage(
+        response.data.emailNotifications
+          ? "Match reminders are on."
+          : "Match reminders are off.",
+      );
+    } catch {
+      setReminderMessage("We couldn't update reminder preferences. Try again.");
+    } finally {
+      setUpdatingReminders(false);
+    }
   };
 
   const handleChange = (matchId: number, field: "homeScore" | "awayScore", value: string) => {
@@ -473,6 +511,41 @@ export default function Matches() {
                 )}
               </div>
             </div>
+
+            <div className="mt-5 rounded-xl border border-[var(--color-border)] bg-white/4 px-4 py-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
+                    Match reminders
+                  </p>
+                  <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+                    Get an email before the next day&apos;s fixtures if you still have predictions left to make.
+                  </p>
+                </div>
+
+                <div className="flex flex-col items-start gap-2 lg:items-end">
+                  <button
+                    type="button"
+                    onClick={handleReminderToggle}
+                    disabled={updatingReminders}
+                    className={`rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
+                      user?.emailNotifications ?? true
+                        ? "border-emerald-400 bg-emerald-500/15 text-white hover:bg-emerald-500/20"
+                        : "border-[var(--color-border)] bg-white/5 text-[var(--color-text-muted)] hover:text-white"
+                    } ${updatingReminders ? "cursor-wait opacity-70" : ""}`}
+                  >
+                    {updatingReminders
+                      ? "Saving…"
+                      : user?.emailNotifications ?? true
+                        ? "Email reminders: On"
+                        : "Email reminders: Off"}
+                  </button>
+                  {reminderMessage && (
+                    <p className="text-xs text-[var(--color-text-muted)]">{reminderMessage}</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </section>
 
           <section className="mb-6 rounded-2xl border border-emerald-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.14),rgba(6,10,9,0.94))] px-5 py-5 shadow-[0_14px_34px_rgba(0,0,0,0.12)]">
@@ -549,6 +622,14 @@ export default function Matches() {
                       </button>
                     );
                   })}
+                </div>
+
+                <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3">
+                  <p className="text-xs uppercase tracking-wider text-emerald-300">Points earned so far</p>
+                  <p className="mt-1 text-2xl font-bold">{completedPointsTotal}</p>
+                  <p className="mt-1 text-sm text-white/70">
+                    From {completedPredictionHistory.length} completed prediction{completedPredictionHistory.length === 1 ? "" : "s"}.
+                  </p>
                 </div>
 
                 <div className="mt-4 space-y-3">

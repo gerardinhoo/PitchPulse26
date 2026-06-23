@@ -8,6 +8,7 @@ type User = {
   displayName?: string;
   role?: string;
   emailVerified?: boolean;
+  emailNotifications?: boolean;
 };
 
 type LoginPayload = {
@@ -29,6 +30,7 @@ export type AuthContextType = {
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => void;
   refreshMe: () => Promise<void>;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -88,10 +90,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register,
       logout,
       refreshMe,
+      setUser,
     }),
     [user, token, loading, login, register, logout, refreshMe]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-

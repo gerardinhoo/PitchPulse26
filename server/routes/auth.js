@@ -11,6 +11,7 @@ import {
   verifyEmailSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  notificationPreferencesSchema,
 } from "../src/validators.js";
 import { sendPasswordResetEmail, sendVerificationEmail } from "../lib/email.js";
 import {
@@ -315,6 +316,7 @@ router.get("/me", authMiddleware, async (req, res, next) => {
         displayName: true,
         role: true,
         emailVerified: true,
+        emailNotifications: true,
       },
     });
 
@@ -329,7 +331,31 @@ router.get("/me", authMiddleware, async (req, res, next) => {
       displayName: activeUser.displayName,
       role: activeUser.role,
       emailVerified: activeUser.emailVerified,
+      emailNotifications: activeUser.emailNotifications,
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/preferences", authMiddleware, validate(notificationPreferencesSchema), async (req, res, next) => {
+  try {
+    const { emailNotifications } = req.body;
+
+    const user = await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { emailNotifications },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        role: true,
+        emailVerified: true,
+        emailNotifications: true,
+      },
+    });
+
+    res.json(user);
   } catch (error) {
     next(error);
   }
