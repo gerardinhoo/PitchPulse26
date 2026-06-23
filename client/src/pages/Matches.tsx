@@ -180,6 +180,17 @@ export default function Matches() {
   });
   const totalPages = Math.max(1, Math.ceil(filteredMatches.length / PAGE_SIZE));
   const matches = filteredMatches.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const todaysMatches = allMatches.filter((match) => isMatchToday(match));
+  const todaysOpenMatches = todaysMatches.filter(
+    (match) => !isMatchCompleted(match) && !isMatchLocked(match),
+  );
+  const todaysRemainingCount = todaysOpenMatches.filter((match) => {
+    const pred = predictions[match.id];
+    return !(pred?.saved && pred.homeScore !== "" && pred.awayScore !== "");
+  }).length;
+  const todaysNextKickoff =
+    todaysOpenMatches.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0] ??
+    null;
 
   // If the server reports fewer pages than requested (e.g. deep-linked ?page=99),
   // clamp the URL to the last valid page.
@@ -408,6 +419,46 @@ export default function Matches() {
                     </p>
                   </>
                 )}
+              </div>
+            </div>
+          </section>
+
+          <section className="mb-6 rounded-2xl border border-emerald-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.14),rgba(6,10,9,0.94))] px-5 py-5 shadow-[0_14px_34px_rgba(0,0,0,0.12)]">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-2xl">
+                <p className="text-xs uppercase tracking-[0.2em] text-emerald-200/80 mb-2">
+                  Don&apos;t Miss Today
+                </p>
+                <h2 className="text-xl font-semibold">Today&apos;s World Cup window is live</h2>
+                <p className="mt-2 text-sm text-white/75">
+                  Stay ahead of kickoff, lock in today&apos;s open picks, and keep climbing the leaderboard.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:max-w-2xl">
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs uppercase tracking-wider text-emerald-300">Today&apos;s matches</p>
+                  <p className="mt-1 text-2xl font-bold">{todaysMatches.length}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs uppercase tracking-wider text-sky-300">Still open</p>
+                  <p className="mt-1 text-2xl font-bold">{todaysRemainingCount}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs uppercase tracking-wider text-amber-300">Next deadline</p>
+                  {todaysNextKickoff ? (
+                    <>
+                      <p className="mt-1 text-sm font-semibold leading-snug">
+                        {todaysNextKickoff.homeTeam.name} vs {todaysNextKickoff.awayTeam.name}
+                      </p>
+                      <p className="mt-1 text-xs text-white/70">
+                        {formatMatchDateTime(todaysNextKickoff.date)}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="mt-1 text-sm text-white/70">All today&apos;s matches are locked or complete.</p>
+                  )}
+                </div>
               </div>
             </div>
           </section>

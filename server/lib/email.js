@@ -36,19 +36,19 @@ function buildVerificationEmailContent({ displayName, verifyUrl }) {
   const safeUrl = escapeHtml(verifyUrl);
   const html = `<!doctype html>
 <html>
-  <body style="font-family: -apple-system, Segoe UI, sans-serif; background:#0f1b0e; color:#f9fafb; padding:24px;">
+  <body style="margin:0; font-family:-apple-system, Segoe UI, sans-serif; background:#0f1b0e; color:#f9fafb; padding:24px;">
     <div style="max-width:520px; margin:0 auto; background:#111827; border:1px solid #374151; border-radius:12px; padding:24px;">
-      <h1 style="margin:0 0 12px; font-size:20px;">
+      <h1 style="margin:0 0 12px; font-size:20px; color:#f9fafb;">
         <span style="color:#10b981;">Pitch</span>Pulse 26
       </h1>
-      <p>Hi ${safeName},</p>
-      <p>Welcome to PitchPulse 26. Click the button below to verify your email and start submitting predictions:</p>
+      <p style="margin:0 0 12px; color:#f9fafb;">Hi ${safeName},</p>
+      <p style="margin:0 0 12px; color:#e5e7eb;">Welcome to PitchPulse 26. Click the button below to verify your email and start submitting predictions:</p>
       <p style="text-align:center; margin:24px 0;">
         <a href="${safeUrl}" style="background:#10b981; color:#ffffff; padding:12px 20px; border-radius:8px; text-decoration:none; font-weight:600;">Verify email</a>
       </p>
-      <p style="font-size:12px; color:#9ca3af;">Or paste this link into your browser:</p>
+      <p style="font-size:12px; color:#9ca3af; margin:0 0 8px;">Or paste this link into your browser:</p>
       <p style="font-size:12px; color:#9ca3af; word-break:break-all;">${safeUrl}</p>
-      <p style="font-size:12px; color:#9ca3af;">This link expires in 24 hours. If you didn't create this account, you can ignore this message.</p>
+      <p style="font-size:12px; color:#9ca3af; margin:16px 0 0;">This link expires in 24 hours. If you didn't create this account, you can ignore this message.</p>
     </div>
   </body>
 </html>`;
@@ -76,19 +76,19 @@ function buildPasswordResetEmailContent({ displayName, resetUrl }) {
   const safeUrl = escapeHtml(resetUrl);
   const html = `<!doctype html>
 <html>
-  <body style="font-family: -apple-system, Segoe UI, sans-serif; background:#0f1b0e; color:#f9fafb; padding:24px;">
+  <body style="margin:0; font-family:-apple-system, Segoe UI, sans-serif; background:#0f1b0e; color:#f9fafb; padding:24px;">
     <div style="max-width:520px; margin:0 auto; background:#111827; border:1px solid #374151; border-radius:12px; padding:24px;">
-      <h1 style="margin:0 0 12px; font-size:20px;">
+      <h1 style="margin:0 0 12px; font-size:20px; color:#f9fafb;">
         <span style="color:#10b981;">Pitch</span>Pulse 26
       </h1>
-      <p>Hi ${safeName},</p>
-      <p>We received a request to reset your password. Click the button below to choose a new one:</p>
+      <p style="margin:0 0 12px; color:#f9fafb;">Hi ${safeName},</p>
+      <p style="margin:0 0 12px; color:#e5e7eb;">We received a request to reset your password. Click the button below to choose a new one:</p>
       <p style="text-align:center; margin:24px 0;">
         <a href="${safeUrl}" style="background:#10b981; color:#ffffff; padding:12px 20px; border-radius:8px; text-decoration:none; font-weight:600;">Reset password</a>
       </p>
-      <p style="font-size:12px; color:#9ca3af;">Or paste this link into your browser:</p>
+      <p style="font-size:12px; color:#9ca3af; margin:0 0 8px;">Or paste this link into your browser:</p>
       <p style="font-size:12px; color:#9ca3af; word-break:break-all;">${safeUrl}</p>
-      <p style="font-size:12px; color:#9ca3af;">This link expires in 1 hour. If you didn't request a password reset, you can ignore this message.</p>
+      <p style="font-size:12px; color:#9ca3af; margin:16px 0 0;">This link expires in 1 hour. If you didn't request a password reset, you can ignore this message.</p>
     </div>
   </body>
 </html>`;
@@ -192,6 +192,8 @@ function buildMatchReminderEmailContent({ displayName, matches, matchesUrl, unsu
     "These matches are coming up tomorrow. Make your predictions before kickoff:",
     ...lines,
     "",
+    "All kickoff times below are shown in UTC.",
+    "",
     `Open matches: ${matchesUrl}`,
     "",
     `Unsubscribe from reminder emails: ${unsubscribeUrl}`,
@@ -207,24 +209,25 @@ function buildMatchReminderEmailContent({ displayName, matches, matchesUrl, unsu
       const home = escapeHtml(match.homeTeam.name);
       const away = escapeHtml(match.awayTeam.name);
       const kickoff = escapeHtml(formatReminderKickoff(match.date));
-      return `<li style="margin-bottom:8px;"><strong>${home}</strong> vs <strong>${away}</strong><br /><span style="color:#9ca3af;">${kickoff}</span></li>`;
+      return `<li style="margin-bottom:12px; color:#f9fafb;"><strong style="color:#f9fafb;">${home}</strong> vs <strong style="color:#f9fafb;">${away}</strong><br /><span style="color:#cbd5e1;">${kickoff}</span></li>`;
     })
     .join("");
 
   const html = `<!doctype html>
 <html>
-  <body style="font-family: -apple-system, Segoe UI, sans-serif; background:#0f1b0e; color:#f9fafb; padding:24px;">
+  <body style="margin:0; font-family:-apple-system, Segoe UI, sans-serif; background:#0f1b0e; color:#f9fafb; padding:24px;">
     <div style="max-width:520px; margin:0 auto; background:#111827; border:1px solid #374151; border-radius:12px; padding:24px;">
-      <h1 style="margin:0 0 12px; font-size:20px;">
+      <h1 style="margin:0 0 12px; font-size:20px; color:#f9fafb;">
         <span style="color:#10b981;">Pitch</span>Pulse 26
       </h1>
-      <p>Hi ${safeName},</p>
-      <p>These matches are coming up tomorrow. Make your predictions before kickoff:</p>
-      <ul style="padding-left:20px;">${matchItems}</ul>
+      <p style="margin:0 0 12px; color:#f9fafb;">Hi ${safeName},</p>
+      <p style="margin:0 0 12px; color:#e5e7eb;">These matches are coming up tomorrow. Make your predictions before kickoff:</p>
+      <ul style="padding-left:20px; margin:0 0 16px;">${matchItems}</ul>
+      <p style="margin:0 0 12px; font-size:12px; color:#9ca3af;">All kickoff times shown below are in UTC.</p>
       <p style="text-align:center; margin:24px 0;">
         <a href="${safeMatchesUrl}" style="background:#10b981; color:#ffffff; padding:12px 20px; border-radius:8px; text-decoration:none; font-weight:600;">Open matches</a>
       </p>
-      <p style="font-size:12px; color:#9ca3af;">
+      <p style="font-size:12px; color:#9ca3af; margin:0;">
         Don&apos;t want these reminders?
         <a href="${safeUnsubscribeUrl}" style="color:#9ca3af;">Unsubscribe here</a>.
       </p>

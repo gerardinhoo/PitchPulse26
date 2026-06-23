@@ -13,7 +13,8 @@ export const CORS_ORIGIN = CORS_ORIGINS[0] || "http://localhost:5173";
 
 // Email / SES
 export const AWS_REGION = process.env.AWS_REGION || "us-east-1";
-export const EMAIL_FROM = process.env.EMAIL_FROM || "no-reply@pitchpulse26.com";
+export const EMAIL_FROM =
+  process.env.EMAIL_FROM || "PitchPulse 26 <no-reply@pitchpulse26.com>";
 export const RESEND_API_KEY = process.env.RESEND_API_KEY || null;
 export const REMINDER_JOB_SECRET = process.env.REMINDER_JOB_SECRET || null;
 // Public URL of the frontend, used to build verification links.
