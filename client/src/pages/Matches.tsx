@@ -20,9 +20,13 @@ type Match = {
 };
 
 type PredictionRecord = {
+  id: number;
   matchId: number;
   homeScore: number;
   awayScore: number;
+  createdAt?: string;
+  updatedAt?: string;
+  match?: Match;
 };
 
 type PredictionInput = {
@@ -49,6 +53,7 @@ type DashboardSummary = {
 };
 
 type MatchView = "all" | "today" | "upcoming" | "completed";
+type PicksView = "all" | "completed" | "saved";
 
 const PAGE_SIZE = 20;
 const MATCH_VIEWS: Array<{ value: MatchView; label: string }> = [
@@ -94,6 +99,30 @@ function matchesActiveView(match: Match, view: MatchView) {
   return true;
 }
 
+function calculatePredictionPoints(prediction: PredictionRecord, match: Match) {
+  if (match.homeScore === null || match.awayScore === null) return null;
+
+  if (
+    prediction.homeScore === match.homeScore &&
+    prediction.awayScore === match.awayScore
+  ) {
+    return 3;
+  }
+
+  const predictedDiff = prediction.homeScore - prediction.awayScore;
+  const actualDiff = match.homeScore - match.awayScore;
+
+  if (
+    (predictedDiff > 0 && actualDiff > 0) ||
+    (predictedDiff < 0 && actualDiff < 0) ||
+    (predictedDiff === 0 && actualDiff === 0)
+  ) {
+    return 1;
+  }
+
+  return 0;
+}
+
 export default function Matches() {
   const { user } = useAuth();
   const verificationRequired = isEmailVerificationRequired();
@@ -108,10 +137,12 @@ export default function Matches() {
   const [loading, setLoading] = useState(true);
   const [pageState, setPageState] = useState<PageState | null>(null);
   const [predictions, setPredictions] = useState<Record<number, PredictionInput>>({});
+  const [predictionHistory, setPredictionHistory] = useState<PredictionRecord[]>([]);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [submitting, setSubmitting] = useState<number | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [focusedMatchId, setFocusedMatchId] = useState<number | null>(null);
+  const [picksView, setPicksView] = useState<PicksView>("all");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -120,8 +151,8 @@ export default function Matches() {
       try {
         const [matchesRes, predictionsRes, summaryRes] = await Promise.all([
           api.get("/matches", { params: { page: 1, limit: 100 } }),
-          // Fetch up to the server max so predictions cover every page of matches.
-          api.get("/predictions/my", { params: { limit: 100, includeMatch: false } }).catch(() => null),
+          // Fetch up to the server max so predictions cover every page of matches and history stays available.
+          api.get("/predictions/my", { params: { limit: 100, includeMatch: true } }).catch(() => null),
           api.get<DashboardSummary>("/predictions/summary").catch(() => null),
         ]);
 
@@ -132,6 +163,7 @@ export default function Matches() {
         );
 
         const predictionRows: PredictionRecord[] = predictionsRes?.data?.data ?? [];
+        setPredictionHistory(predictionRows);
         if (predictionsRes?.data?.data) {
           const saved: Record<number, PredictionInput> = {};
           for (const p of predictionRows) {
@@ -149,6 +181,7 @@ export default function Matches() {
       } catch (err: unknown) {
         const axiosErr = err as { response?: { status?: number } };
         setAllMatches([]);
+        setPredictionHistory([]);
         setSummary(null);
         setPageState(
           axiosErr.response
@@ -191,6 +224,25 @@ export default function Matches() {
   const todaysNextKickoff =
     todaysOpenMatches.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0] ??
     null;
+  const completedPredictionHistory = predictionHistory
+    .filter((prediction) => prediction.match && isMatchCompleted(prediction.match))
+    .sort(
+      (a, b) =>
+        new Date(b.match!.date).getTime() - new Date(a.match!.date).getTime(),
+    );
+  const upcomingPredictionHistory = predictionHistory
+    .filter((prediction) => prediction.match && !isMatchCompleted(prediction.match))
+    .sort(
+      (a, b) =>
+        new Date(a.match!.date).getTime() - new Date(b.match!.date).getTime(),
+    );
+  const filteredPicks =
+    picksView === "completed"
+      ? completedPredictionHistory
+      : picksView === "saved"
+        ? upcomingPredictionHistory
+        : [...completedPredictionHistory, ...upcomingPredictionHistory];
+  const picksPreview = filteredPicks.slice(0, 6);
 
   // If the server reports fewer pages than requested (e.g. deep-linked ?page=99),
   // clamp the URL to the last valid page.
@@ -458,6 +510,192 @@ export default function Matches() {
                   ) : (
                     <p className="mt-1 text-sm text-white/70">All today&apos;s matches are locked or complete.</p>
                   )}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="card mb-6">
+            <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[1.15fr_0.85fr]">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-[var(--color-accent)] mb-2">
+                  Your Picks
+                </p>
+                <h2 className="text-lg font-semibold">See how your predictions are landing</h2>
+                <p className="text-sm text-[var(--color-text-muted)] mt-1">
+                  Review completed picks, points earned, and the upcoming matches you&apos;ve already locked in.
+                </p>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {[
+                    { value: "all", label: "All picks" },
+                    { value: "completed", label: "Completed" },
+                    { value: "saved", label: "Saved ahead" },
+                  ].map((option) => {
+                    const isActive = picksView === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setPicksView(option.value as PicksView)}
+                        aria-pressed={isActive}
+                        className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                          isActive
+                            ? "border-emerald-400 bg-emerald-500/15 text-white"
+                            : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-emerald-500/40 hover:text-white"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {picksPreview.length > 0 ? (
+                    picksPreview.map((prediction) => {
+                      const match = prediction.match!;
+                      const completed = isMatchCompleted(match);
+                      const points = completed ? calculatePredictionPoints(prediction, match) : null;
+                      const outcomeLabel = !completed
+                        ? isMatchLocked(match)
+                          ? "Locked in"
+                          : "Saved ahead"
+                        : points === 3
+                          ? "Exact score"
+                          : points === 1
+                            ? "Correct result"
+                            : "Missed";
+                      const outcomeColor = !completed
+                        ? isMatchLocked(match)
+                          ? "text-amber-300"
+                          : "text-sky-300"
+                        : points === 3
+                          ? "text-emerald-300"
+                          : points === 1
+                            ? "text-sky-300"
+                            : "text-[var(--color-text-muted)]";
+
+                      return (
+                        <div
+                          key={`pick-${prediction.id}`}
+                          className="rounded-xl border border-[var(--color-border)] bg-white/4 px-4 py-4"
+                        >
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                              <p className="font-semibold">
+                                {match.homeTeam.name} vs {match.awayTeam.name}
+                              </p>
+                              <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                                {formatMatchDateTime(match.date)}
+                              </p>
+                            </div>
+                            <p className={`text-sm font-semibold ${outcomeColor}`}>
+                              {completed
+                                ? `${outcomeLabel} • ${points} pt${points === 1 ? "" : "s"}`
+                                : outcomeLabel}
+                            </p>
+                          </div>
+                          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                            <div className="rounded-lg border border-white/8 bg-black/10 px-3 py-2">
+                              <p className="text-[11px] uppercase tracking-wider text-[var(--color-text-muted)]">
+                                Your pick
+                              </p>
+                              <p className="mt-1 font-medium">
+                                {prediction.homeScore} – {prediction.awayScore}
+                              </p>
+                            </div>
+                            <div className="rounded-lg border border-white/8 bg-black/10 px-3 py-2">
+                              <p className="text-[11px] uppercase tracking-wider text-[var(--color-text-muted)]">
+                                {completed ? "Final score" : "Status"}
+                              </p>
+                              <p className="mt-1 font-medium">
+                                {completed
+                                  ? `${match.homeScore} – ${match.awayScore}`
+                                  : isMatchLocked(match)
+                                    ? "Kickoff passed"
+                                    : "Still editable"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="rounded-xl border border-[var(--color-border)] bg-white/4 px-4 py-4">
+                      <p className="font-semibold">
+                        {picksView === "completed"
+                          ? "No completed picks yet"
+                          : picksView === "saved"
+                            ? "No saved picks yet"
+                            : "No picks yet"}
+                      </p>
+                      <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+                        {picksView === "completed"
+                          ? "Once your predicted matches finish, you'll see the score, result, and points earned here."
+                          : picksView === "saved"
+                            ? "Your upcoming predictions will appear here as soon as you start locking them in."
+                            : "Start making predictions and this section will become your running match log."}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div className="rounded-xl border border-[var(--color-border)] bg-white/4 px-4 py-4">
+                  <p className="text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
+                    Saved and coming up
+                  </p>
+                  <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+                    Your next locked-in predictions, so you can double-check what&apos;s already covered.
+                  </p>
+
+                  <div className="mt-4 space-y-3">
+                    {upcomingPredictionHistory.length > 0 ? (
+                      upcomingPredictionHistory.slice(0, 4).map((prediction) => {
+                        const match = prediction.match!;
+                        const locked = isMatchLocked(match);
+
+                        return (
+                          <div
+                            key={`upcoming-${prediction.id}`}
+                            className="rounded-lg border border-white/8 bg-black/10 px-3 py-3"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="font-medium leading-snug">
+                                  {match.homeTeam.name} vs {match.awayTeam.name}
+                                </p>
+                                <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                                  {formatMatchDateTime(match.date)}
+                                </p>
+                              </div>
+                              <span
+                                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider ${
+                                  locked
+                                    ? "bg-amber-500/15 text-amber-300"
+                                    : "bg-emerald-500/15 text-emerald-300"
+                                }`}
+                              >
+                                {locked ? "Locked" : "Saved"}
+                              </span>
+                            </div>
+                            <p className="mt-3 text-sm text-white/85">
+                              Your pick: {prediction.homeScore} – {prediction.awayScore}
+                            </p>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="rounded-lg border border-white/8 bg-black/10 px-3 py-3">
+                        <p className="font-medium">Nothing saved ahead yet</p>
+                        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                          Your upcoming predictions will appear here as soon as you start locking them in.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

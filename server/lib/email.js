@@ -180,6 +180,7 @@ function formatReminderKickoff(date) {
 function buildMatchReminderEmailContent({ displayName, matches, matchesUrl, unsubscribeUrl }) {
   const name = displayName?.trim() || "there";
   const subject = "Your PitchPulse 26 match reminder";
+  const matchCount = matches.length;
 
   const lines = matches.map(
     (match) =>
@@ -189,7 +190,7 @@ function buildMatchReminderEmailContent({ displayName, matches, matchesUrl, unsu
   const text = [
     `Hi ${name},`,
     "",
-    "These matches are coming up tomorrow. Make your predictions before kickoff:",
+    `You have ${matchCount} ${matchCount === 1 ? "match" : "matches"} coming up tomorrow. Make your predictions before kickoff:`,
     ...lines,
     "",
     "All kickoff times below are shown in UTC.",
@@ -221,9 +222,11 @@ function buildMatchReminderEmailContent({ displayName, matches, matchesUrl, unsu
         <span style="color:#10b981;">Pitch</span>Pulse 26
       </h1>
       <p style="margin:0 0 12px; color:#f9fafb;">Hi ${safeName},</p>
-      <p style="margin:0 0 12px; color:#e5e7eb;">These matches are coming up tomorrow. Make your predictions before kickoff:</p>
-      <ul style="padding-left:20px; margin:0 0 16px;">${matchItems}</ul>
-      <p style="margin:0 0 12px; font-size:12px; color:#9ca3af;">All kickoff times shown below are in UTC.</p>
+      <p style="margin:0 0 14px; color:#e5e7eb;">You have <strong style="color:#f9fafb;">${matchCount}</strong> ${matchCount === 1 ? "match" : "matches"} coming up tomorrow. Make your predictions before kickoff:</p>
+      <div style="border:1px solid #374151; border-radius:12px; background:#0f172a; padding:16px; margin:0 0 16px;">
+        <ul style="padding-left:20px; margin:0;">${matchItems}</ul>
+      </div>
+      <p style="margin:0 0 12px; font-size:12px; color:#9ca3af;">Kickoff times in this email are shown in UTC so every reminder stays consistent.</p>
       <p style="text-align:center; margin:24px 0;">
         <a href="${safeMatchesUrl}" style="background:#10b981; color:#ffffff; padding:12px 20px; border-radius:8px; text-decoration:none; font-weight:600;">Open matches</a>
       </p>
