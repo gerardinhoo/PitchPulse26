@@ -16,6 +16,7 @@ describe("ProtectedRoute", () => {
           register: async () => {},
           logout: () => {},
           refreshMe: async () => {},
+          setUser: () => null,
         }}
       >
         <MemoryRouter initialEntries={["/protected"]}>
