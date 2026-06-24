@@ -20,6 +20,7 @@ function renderNavbar(user: {
         register: async () => {},
         logout: () => {},
         refreshMe: async () => {},
+        setUser: () => null,
       }}
     >
       <MemoryRouter>

@@ -533,6 +533,7 @@ describe("backend integration tests", () => {
       displayName: "New User",
       role: "user",
       emailVerified: false,
+      emailNotifications: true,
     });
   });
 
@@ -570,6 +571,7 @@ describe("backend integration tests", () => {
       displayName: "Fast Start",
       role: "user",
       emailVerified: true,
+      emailNotifications: true,
     });
   });
 
