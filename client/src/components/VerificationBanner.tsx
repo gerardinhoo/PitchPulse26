@@ -42,6 +42,18 @@ export default function VerificationBanner() {
           <span className="block text-yellow-100/80 mt-1">
             If you don't see the email within a few minutes, check your spam or promotions folder.
           </span>
+          <span className="block text-yellow-100/80 mt-1">
+            Still stuck?{" "}
+            <a
+              href="https://instagram.com/pitchpulse26"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-yellow-50 underline underline-offset-2 hover:text-white"
+            >
+              DM @pitchpulse26
+            </a>{" "}
+            and we&apos;ll help you get verified.
+          </span>
           {status === "sent" && (
             <span className="ml-2 text-emerald-300">Email sent.</span>
           )}

@@ -136,6 +136,9 @@ export default function AdminResults() {
           <h2 className="text-lg font-semibold text-[var(--color-text-muted)] mb-3">
             Completed ({played.length})
           </h2>
+          <p className="text-sm text-[var(--color-text-muted)] mb-4">
+            Need to fix a result? Update the score below and save again.
+          </p>
           <div className="space-y-3">
             {played.map((match) => (
               <MatchCard
@@ -147,7 +150,21 @@ export default function AdminResults() {
                 date={match.date}
                 homeScore={match.homeScore}
                 awayScore={match.awayScore}
-              />
+              >
+                <ScoreInput
+                  homeScore={scores[match.id]?.homeScore || ""}
+                  awayScore={scores[match.id]?.awayScore || ""}
+                  onChange={(field, value) => handleChange(match.id, field, value)}
+                  onSubmit={() => handleSubmit(match.id)}
+                  submitLabel="Update"
+                  submitAriaLabel={`Update final score for ${match.homeTeam.name} versus ${match.awayTeam.name}`}
+                  submitting={submitting === match.id}
+                  variant="admin"
+                  homeLabel={`${match.homeTeam.name} corrected final score`}
+                  awayLabel={`${match.awayTeam.name} corrected final score`}
+                  idPrefix={`admin-corrected-result-${match.id}`}
+                />
+              </MatchCard>
             ))}
           </div>
         </section>

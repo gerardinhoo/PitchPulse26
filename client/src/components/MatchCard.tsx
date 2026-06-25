@@ -48,13 +48,16 @@ export default function MatchCard({
       {/* Right: score or input */}
       <div className="w-full shrink-0 sm:w-auto">
         {hasResult ? (
-          <div className="text-center animate-score-pop">
-            <p className="text-xl font-bold tabular-nums">
-              {homeScore} <span className="text-[var(--color-text-muted)]">–</span> {awayScore}
-            </p>
-            <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)]">
-              Final
-            </p>
+          <div className="space-y-3">
+            <div className="text-center animate-score-pop">
+              <p className="text-xl font-bold tabular-nums">
+                {homeScore} <span className="text-[var(--color-text-muted)]">–</span> {awayScore}
+              </p>
+              <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)]">
+                Final
+              </p>
+            </div>
+            {children}
           </div>
         ) : (
           children
