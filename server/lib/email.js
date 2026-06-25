@@ -19,15 +19,15 @@ function escapeHtml(value) {
 
 function buildVerificationEmailContent({ displayName, verifyUrl }) {
   const name = displayName?.trim() || "there";
-  const subject = "Verify your PitchPulse 26 email";
+  const subject = "Confirm your PitchPulse 26 email address";
 
   const text = [
     `Hi ${name},`,
     "",
-    "Welcome to PitchPulse 26. Please verify your email to start submitting predictions:",
+    "Confirm your email address to activate your PitchPulse 26 account and start making predictions:",
     verifyUrl,
     "",
-    "This link expires in 24 hours. If you didn't create this account, you can ignore this message.",
+    "This link expires in 24 hours. If you didn't create this account, you can ignore this email.",
     "",
     "— PitchPulse 26",
   ].join("\n");
@@ -42,13 +42,13 @@ function buildVerificationEmailContent({ displayName, verifyUrl }) {
         <span style="color:#10b981;">Pitch</span>Pulse 26
       </h1>
       <p style="margin:0 0 12px; color:#f9fafb;">Hi ${safeName},</p>
-      <p style="margin:0 0 12px; color:#e5e7eb;">Welcome to PitchPulse 26. Click the button below to verify your email and start submitting predictions:</p>
+      <p style="margin:0 0 12px; color:#e5e7eb;">Confirm your email address to activate your account and start making predictions:</p>
       <p style="text-align:center; margin:24px 0;">
         <a href="${safeUrl}" style="background:#10b981; color:#ffffff; padding:12px 20px; border-radius:8px; text-decoration:none; font-weight:600;">Verify email</a>
       </p>
-      <p style="font-size:12px; color:#9ca3af; margin:0 0 8px;">Or paste this link into your browser:</p>
+      <p style="font-size:12px; color:#9ca3af; margin:0 0 8px;">If the button doesn&apos;t work, paste this link into your browser:</p>
       <p style="font-size:12px; color:#9ca3af; word-break:break-all;">${safeUrl}</p>
-      <p style="font-size:12px; color:#9ca3af; margin:16px 0 0;">This link expires in 24 hours. If you didn't create this account, you can ignore this message.</p>
+      <p style="font-size:12px; color:#9ca3af; margin:16px 0 0;">This link expires in 24 hours. If you didn&apos;t create this account, you can ignore this email.</p>
     </div>
   </body>
 </html>`;
