@@ -73,9 +73,21 @@ export default function Register() {
             : "Create your account now and start making predictions right away."}
         </p>
         {verificationRequired && (
-          <p className="text-xs text-[var(--color-text-muted)] mb-4">
-            If you don't see the verification email, check spam or promotions.
-          </p>
+          <div className="text-xs text-[var(--color-text-muted)] mb-4 space-y-1">
+            <p>If you don't see the verification email, check spam or promotions.</p>
+            <p>
+              Still stuck?{" "}
+              <a
+                href="https://instagram.com/pitchpulse26"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[var(--color-accent)] hover:underline"
+              >
+                DM @pitchpulse26
+              </a>
+              .
+            </p>
+          </div>
         )}
 
         {error && (
