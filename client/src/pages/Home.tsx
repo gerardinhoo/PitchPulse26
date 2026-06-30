@@ -6,10 +6,18 @@ import { useAuth } from "../hooks/useAuth";
 import heroBgDesktop from "../assets/custom-trophy-bg-1600.webp";
 import heroBgFallback from "../assets/custom-trophy-bg.jpg";
 import { formatMatchDateTime } from "../utils/dateTime";
+import {
+  getFinalResultLabel,
+  getKickoffDetailLabel,
+  getRoundStatusLabel,
+  TOURNAMENT_ROUND_PROGRESS,
+  type TournamentStage,
+} from "../utils/tournamentStage";
 
 type Match = {
   id: number;
   date: string;
+  tournamentStage?: TournamentStage;
   homeTeam: { name: string; code?: string | null; group: string };
   awayTeam: { name: string; code?: string | null; group: string };
   homeScore: number | null;
@@ -181,14 +189,17 @@ export default function Home() {
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,5,4,0.7)_0%,rgba(3,5,4,0.46)_24%,rgba(3,5,4,0.56)_58%,rgba(3,5,4,0.8)_100%)] sm:bg-[radial-gradient(circle_at_center,rgba(8,12,10,0.34),rgba(3,5,4,0.92))] pointer-events-none" />
         <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(0deg,rgba(7,24,14,0.18)_0%,rgba(7,24,14,0.04)_44%,rgba(7,24,14,0)_100%)] sm:bg-[radial-gradient(circle_at_38%_42%,rgba(204,164,74,0.22)_0%,rgba(204,164,74,0.12)_16%,rgba(204,164,74,0)_34%)] sm:opacity-80" />
 
-        <div className="relative z-10 max-w-3xl px-3 sm:px-6">
-          <div className="rounded-[2rem] border border-white/8 bg-[rgba(7,12,14,0.12)] px-4 py-6 shadow-[0_28px_70px_rgba(0,0,0,0.22)] backdrop-blur-[1px] sm:bg-[rgba(7,12,14,0.16)] sm:px-10 sm:py-10">
+        <div className="relative z-10 mx-auto max-w-6xl px-3 sm:px-6">
+          <div className="lg:grid lg:grid-cols-[1.12fr_0.88fr] lg:items-start lg:gap-6">
+            <div className="rounded-[2rem] border border-white/8 bg-[rgba(7,12,14,0.12)] px-4 py-6 shadow-[0_28px_70px_rgba(0,0,0,0.22)] backdrop-blur-[1px] sm:bg-[rgba(7,12,14,0.16)] sm:px-10 sm:py-10">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-200/90 animate-slide-up sm:text-xs">
               Knockout Stage Live
             </div>
-            <h1 className="mb-4 animate-slide-up text-4xl font-extrabold leading-[0.96] tracking-tight text-white [text-shadow:0_10px_28px_rgba(0,0,0,0.5)] sm:text-6xl">
-              Predict the World Cup.
-              <span>
+            <h1 className="mb-5 animate-slide-up text-4xl font-extrabold leading-[1.02] tracking-tight sm:text-5xl lg:text-[3.35rem] lg:leading-[1.04]">
+              <span className="block text-white [text-shadow:0_8px_24px_rgba(0,0,0,0.55)]">
+                Predict the World Cup.
+              </span>
+              <span className="mt-1 block bg-gradient-to-r from-emerald-300 via-emerald-200 to-amber-300 bg-clip-text text-transparent [text-shadow:0_10px_28px_rgba(0,0,0,0.35)]">
                 Win a World Cup jersey.
               </span>
             </h1>
@@ -199,9 +210,11 @@ export default function Home() {
               <p className="animate-slide-up text-left text-base leading-7 text-white/95 drop-shadow-[0_4px_14px_rgba(0,0,0,0.55)] sm:text-center sm:text-lg sm:leading-8 sm:text-white/90 sm:drop-shadow-[0_6px_18px_rgba(0,0,0,0.42)]">
                 Knockout predictions are open. Make your picks before kickoff, keep climbing the leaderboard, and compete for bragging rights.
               </p>
-              <p className="mt-3 text-sm font-medium text-emerald-200/90">
-                Free to play. No betting. No gambling.
-              </p>
+              <div className="mt-4 flex flex-col gap-2 text-left text-sm text-white/85 sm:items-center sm:text-center">
+                <span>✓ Free to play</span>
+                <span>🏆 Top prize: Official World Cup jersey</span>
+                <span>🚫 No betting. No gambling.</span>
+              </div>
               <div
                 className="mt-6 flex flex-col items-stretch gap-3 animate-slide-up sm:flex-row sm:items-center sm:justify-center"
                 style={{ animationDelay: "200ms" }}
@@ -210,7 +223,7 @@ export default function Home() {
                   to={user ? "/matches" : "/register"}
                   className="px-6 py-3 rounded-lg bg-[var(--color-accent)] text-center text-white font-semibold text-lg hover:bg-[var(--color-accent-hover)] transition-colors shadow-lg shadow-emerald-900/30 btn-glow"
                 >
-                  Start Predicting
+                  Make My Picks
                 </Link>
                 <Link
                   to="/leaderboard"
@@ -222,6 +235,57 @@ export default function Home() {
             </div>
           </div>
 
+            <aside className="mt-6 hidden lg:block lg:mt-0">
+              <div className="rounded-[1.75rem] border border-white/12 bg-[rgba(7,11,10,0.72)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.34)] backdrop-blur-sm">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-200/80">
+                  Tournament Bracket
+                </p>
+                <h2 className="mt-2 text-xl font-bold text-white">Knockout progress</h2>
+                <p className="mt-2 text-sm text-white/65">
+                  Follow each round as the tournament advances.
+                </p>
+                <div className="mt-4 space-y-2">
+                  {TOURNAMENT_ROUND_PROGRESS.map((round) => {
+                    const isActive = round.status === "in_progress";
+                    return (
+                      <div
+                        key={round.stage}
+                        className={`rounded-xl border px-4 py-3 ${
+                          isActive
+                            ? "border-emerald-400/30 bg-emerald-500/10"
+                            : "border-white/10 bg-white/5"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-semibold text-white">{round.label}</p>
+                            <p className="mt-1 text-xs text-white/60">
+                              {round.fixtureCount} fixture{round.fixtureCount === 1 ? "" : "s"}
+                            </p>
+                          </div>
+                          <span
+                            className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${
+                              isActive
+                                ? "bg-emerald-500/20 text-emerald-200"
+                                : "bg-white/8 text-white/55"
+                            }`}
+                          >
+                            {getRoundStatusLabel(round.status)}
+                          </span>
+                        </div>
+                        {round.placeholder && (
+                          <p className="mt-2 text-xs text-white/50">
+                            Fixtures unlock as winners are confirmed.
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </aside>
+          </div>
+
           {(matchesLoaded || latestCompletedMatch || nextKickoffMatch) && (
             <div
               className="mt-6 mx-auto max-w-3xl animate-slide-up rounded-2xl border border-white/12 bg-[rgba(7,11,10,0.62)] p-4 shadow-[0_20px_60px_rgba(0,0,0,0.34)] backdrop-blur-sm sm:mt-8 sm:p-5"
@@ -231,7 +295,7 @@ export default function Home() {
                 Today at PitchPulse 26
               </p>
               <p className="mt-2 text-sm text-white/65">
-                Stay on top of the latest final score and the next kickoff that needs attention.
+                Follow the latest knockout result and the next kickoff that needs your attention.
               </p>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-left">
@@ -245,7 +309,7 @@ export default function Home() {
                         {latestCompletedMatch.awayTeam.name}
                       </p>
                       <p className="mt-1 text-sm text-white/65">
-                        Final in Group {latestCompletedMatch.homeTeam.group}
+                        {getFinalResultLabel(latestCompletedMatch)}
                       </p>
                     </>
                   ) : !matchesLoaded ? (
@@ -264,7 +328,7 @@ export default function Home() {
                         {nextKickoffMatch.homeTeam.name} vs {nextKickoffMatch.awayTeam.name}
                       </p>
                       <p className="mt-1 text-sm text-white/65">
-                        {formatMatchDateTime(nextKickoffMatch.date)}
+                        {getKickoffDetailLabel(nextKickoffMatch)}
                       </p>
                     </>
                   ) : !matchesLoaded ? (
