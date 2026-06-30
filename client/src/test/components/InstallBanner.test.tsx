@@ -19,7 +19,7 @@ describe("InstallBanner", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("shows iOS install instructions on iPhone Safari", () => {
+  it("shows Safari toolbar steps on iPhone Safari", () => {
     mockMatchMedia(false);
 
     vi.stubGlobal("navigator", {
@@ -28,7 +28,7 @@ describe("InstallBanner", () => {
       platform: "iPhone",
       maxTouchPoints: 5,
       standalone: false,
-      share: vi.fn().mockResolvedValue(undefined),
+      clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
     });
 
     localStorage.removeItem("pitchpulse26-pwa-install-dismissed");
@@ -36,10 +36,12 @@ describe("InstallBanner", () => {
     render(<InstallBanner />);
 
     expect(screen.getByText("Add PitchPulse 26 to your home screen")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /add to home screen/i })).toBeInTheDocument();
+    expect(screen.getByText(/bottom toolbar/i)).toBeInTheDocument();
+    expect(screen.getByText(/Add to Home Screen/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /copy link/i })).not.toBeInTheDocument();
   });
 
-  it("shows iOS install banner on iPhone Chrome", () => {
+  it("shows copy-link guidance on iPhone Chrome", () => {
     mockMatchMedia(false);
 
     vi.stubGlobal("navigator", {
@@ -48,40 +50,36 @@ describe("InstallBanner", () => {
       platform: "iPhone",
       maxTouchPoints: 5,
       standalone: false,
-      share: vi.fn().mockResolvedValue(undefined),
+      clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
     });
 
     localStorage.removeItem("pitchpulse26-pwa-install-dismissed");
 
     render(<InstallBanner />);
 
-    expect(screen.getByRole("button", { name: /add to home screen/i })).toBeInTheDocument();
+    expect(screen.getByText(/home screen install only works/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /copy link/i })).toBeInTheDocument();
   });
 
-  it("opens the share sheet when the iOS install button is tapped", async () => {
+  it("copies the site link for iPhone Chrome users", async () => {
     mockMatchMedia(false);
 
-    const share = vi.fn().mockResolvedValue(undefined);
+    const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal("navigator", {
       userAgent:
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/120.0.6099.119 Mobile/15E148 Safari/604.1",
       platform: "iPhone",
       maxTouchPoints: 5,
       standalone: false,
-      share,
+      clipboard: { writeText },
     });
 
     localStorage.removeItem("pitchpulse26-pwa-install-dismissed");
 
     render(<InstallBanner />);
-    fireEvent.click(screen.getByRole("button", { name: /add to home screen/i }));
+    fireEvent.click(screen.getByRole("button", { name: /copy link/i }));
 
-    expect(share).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: "PitchPulse 26",
-        url: expect.any(String),
-      }),
-    );
+    expect(writeText).toHaveBeenCalled();
   });
 
   it("shows Android install help when on Android Chrome", () => {
@@ -93,12 +91,13 @@ describe("InstallBanner", () => {
       platform: "Linux armv8l",
       maxTouchPoints: 5,
       standalone: false,
+      clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
     });
 
     localStorage.removeItem("pitchpulse26-pwa-install-dismissed");
 
     render(<InstallBanner />);
 
-    expect(screen.getByText(/install app or add to home screen/i)).toBeInTheDocument();
+    expect(screen.getByText(/install app/i)).toBeInTheDocument();
   });
 });
