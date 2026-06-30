@@ -14,16 +14,20 @@ function isStandaloneMode() {
   );
 }
 
-function isIosSafari() {
+/** Any iPhone/iPad browser — Safari, Chrome, Firefox, etc. */
+function isIosDevice() {
   const ua = window.navigator.userAgent;
-  const isIOS = /iPad|iPhone|iPod/.test(ua);
-  const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
-  return isIOS && isSafari;
+  if (/iPad|iPhone|iPod/.test(ua)) return true;
+  // iPadOS 13+ reports as MacIntel
+  return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
 }
 
-function isAndroidChrome() {
-  const ua = window.navigator.userAgent;
-  return /Android/.test(ua) && /Chrome/.test(ua);
+function isAndroidDevice() {
+  return /Android/i.test(window.navigator.userAgent);
+}
+
+function canUseWebShare() {
+  return typeof navigator.share === "function";
 }
 
 function readDismissed() {
@@ -48,6 +52,7 @@ export default function InstallBanner() {
   const [showIosHelp, setShowIosHelp] = useState(false);
   const [showAndroidHelp, setShowAndroidHelp] = useState(false);
   const [installing, setInstalling] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     if (isStandaloneMode() || readDismissed()) {
@@ -64,10 +69,10 @@ export default function InstallBanner() {
 
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
 
-    if (isIosSafari()) {
+    if (isIosDevice()) {
       setShowIosHelp(true);
       setVisible(true);
-    } else if (isAndroidChrome()) {
+    } else if (isAndroidDevice()) {
       setShowAndroidHelp(true);
       setVisible(true);
     }
@@ -83,11 +88,8 @@ export default function InstallBanner() {
     setInstallEvent(null);
   };
 
-  const handleInstall = async () => {
-    if (!installEvent) {
-      if (showIosHelp || showAndroidHelp) return;
-      return;
-    }
+  const handleNativeInstall = async () => {
+    if (!installEvent) return;
 
     setInstalling(true);
     try {
@@ -99,9 +101,28 @@ export default function InstallBanner() {
     }
   };
 
+  const handleIosShare = async () => {
+    if (!canUseWebShare()) return;
+
+    setSharing(true);
+    try {
+      await navigator.share({
+        title: "PitchPulse 26",
+        text: "World Cup predictions — add to your home screen",
+        url: window.location.href,
+      });
+    } catch (err: unknown) {
+      // User cancelled the share sheet — not an error.
+      if (err instanceof Error && err.name === "AbortError") return;
+    } finally {
+      setSharing(false);
+    }
+  };
+
   if (!visible) return null;
 
   const canNativeInstall = Boolean(installEvent);
+  const showShareButton = showIosHelp && canUseWebShare();
 
   return (
     <section
@@ -113,12 +134,14 @@ export default function InstallBanner() {
           <p className="text-sm font-semibold text-white">Add PitchPulse 26 to your home screen</p>
           {showIosHelp && (
             <p className="mt-1 text-xs text-white/75">
-              iPhone Safari: Tap Share, then Add to Home Screen.
+              {showShareButton
+                ? "Tap the button below, then choose Add to Home Screen in the share menu."
+                : "Open the browser menu (⋯), tap Share, then Add to Home Screen."}
             </p>
           )}
           {showAndroidHelp && !canNativeInstall && (
             <p className="mt-1 text-xs text-white/75">
-              Android Chrome: Tap Install or Add to Home Screen.
+              Open the browser menu (⋮) and tap Install app or Add to Home screen.
             </p>
           )}
           {canNativeInstall && (
@@ -132,11 +155,21 @@ export default function InstallBanner() {
           {canNativeInstall && (
             <button
               type="button"
-              onClick={handleInstall}
+              onClick={handleNativeInstall}
               disabled={installing}
               className="rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] disabled:cursor-wait disabled:opacity-80"
             >
               {installing ? "Installing…" : "Install App"}
+            </button>
+          )}
+          {showShareButton && (
+            <button
+              type="button"
+              onClick={handleIosShare}
+              disabled={sharing}
+              className="rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] disabled:cursor-wait disabled:opacity-80"
+            >
+              {sharing ? "Opening…" : "Add to Home Screen"}
             </button>
           )}
           <button
