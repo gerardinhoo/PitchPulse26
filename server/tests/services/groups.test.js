@@ -64,6 +64,7 @@ describe("groups service", () => {
     });
     expect(prisma.match.findMany).toHaveBeenCalledWith({
       where: {
+        tournamentStage: "GROUP_STAGE",
         OR: [
           { homeTeam: { group: "A" } },
           { awayTeam: { group: "A" } },
@@ -117,6 +118,27 @@ describe("groups service", () => {
         Pts: 1,
       },
     ]);
+  });
+
+  it("ignores knockout matches that only share one team with the group", async () => {
+    prisma.team.findMany.mockResolvedValue([
+      { id: 1, name: "Mexico", code: "mx", group: "A" },
+      { id: 2, name: "South Africa", code: "za", group: "A" },
+      { id: 3, name: "South Korea", code: "kr", group: "A" },
+      { id: 4, name: "Czech Republic", code: "cz", group: "A" },
+    ]);
+    prisma.match.findMany.mockResolvedValue([
+      { homeTeamId: 1, awayTeamId: 2, homeScore: 2, awayScore: 0 },
+      { homeTeamId: 1, awayTeamId: 99, homeScore: 1, awayScore: 0 },
+    ]);
+
+    const standings = await getGroupStandings("A");
+
+    expect(standings.find((team) => team.name === "Mexico")).toMatchObject({
+      MP: 1,
+      W: 1,
+      Pts: 3,
+    });
   });
 
   it("breaks ties on goal difference and then goals for", async () => {

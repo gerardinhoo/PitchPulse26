@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="PitchPulse 26">
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d76e"/>
+      <stop offset="55%" stop-color="#d4a017"/>
+      <stop offset="100%" stop-color="#9a6f00"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="42%" r="42%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="badge">
+      <circle cx="256" cy="256" r="248"/>
+    </clipPath>
+  </defs>
+
+  <circle cx="256" cy="256" r="256" fill="#061009"/>
+  <circle cx="256" cy="256" r="248" fill="#050807"/>
+  <circle cx="256" cy="256" r="248" fill="none" stroke="#10b981" stroke-width="8"/>
+
+  <g clip-path="url(#badge)">
+    <circle cx="256" cy="220" r="170" fill="url(#glow)"/>
+
+    <!-- Trophy -->
+    <g transform="translate(118 118)">
+      <ellipse cx="52" cy="118" rx="34" ry="10" fill="#8b6914" opacity="0.55"/>
+      <path fill="url(#gold)" d="M34 34c8-10 20-16 34-16h36c18 0 32 10 38 26 6 16 2 34-10 46l-8 18c-4 8-12 14-22 16l-4 28h-28l-4-28c-10-2-18-8-22-16l-8-18c-12-12-16-30-10-46 6-16 20-26 38-26H68c-14 0-26 6-34 16z"/>
+      <circle cx="86" cy="42" r="18" fill="url(#gold)"/>
+      <path fill="#f8e7a1" d="M78 30c6 4 10 10 10 16s-4 12-10 16" opacity="0.7"/>
+    </g>
+
+    <!-- Motion lines -->
+    <g stroke="#10b981" stroke-width="7" stroke-linecap="round">
+      <line x1="198" y1="154" x2="154" y2="154"/>
+      <line x1="194" y1="176" x2="142" y2="176"/>
+      <line x1="190" y1="198" x2="132" y2="198"/>
+    </g>
+
+    <!-- Stylized P -->
+    <path fill="#ffffff" d="M248 132h58c42 0 72 28 72 68s-30 68-72 68h-34v74h-58V132zm58 104c18 0 30-12 30-36s-12-36-30-36h-34v72h34z"/>
+    <path fill="#10b981" d="M248 304h92v58h-92z"/>
+
+    <!-- Football -->
+    <circle cx="332" cy="214" r="34" fill="#f5f5f5"/>
+    <path fill="#111111" d="M332 180c10 8 16 18 16 34s-6 26-16 34c-10-8-16-18-16-34s6-26 16-34z"/>
+    <path fill="#111111" d="M298 214c8-10 18-16 34-16s26 6 34 16c-8 10-18 16-34 16s-26-6-34-16z"/>
+    <path fill="none" stroke="#111111" stroke-width="3" d="M316 198l32 32M364 198l-32 32"/>
+
+    <!-- Wordmark -->
+    <text x="256" y="392" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="44" font-weight="800" font-style="italic" letter-spacing="1">
+      <tspan fill="#ffffff">PITCH</tspan><tspan fill="#10b981">PULSE</tspan>
+    </text>
+    <text x="256" y="430" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#ffffff">26</text>
+
+    <!-- Pulse lines -->
+    <g fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M168 424h18l8-12 10 24 10-30 8 18h18"/>
+      <path d="M344 424h18l8-12 10 24 10-30 8 18h18"/>
+    </g>
+  </g>
+</svg>
