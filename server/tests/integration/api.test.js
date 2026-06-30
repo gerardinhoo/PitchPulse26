@@ -894,6 +894,9 @@ describe("backend integration tests", () => {
         tiedCount: 1,
         userId: winner.id,
         displayName: "Winner",
+        groupStagePoints: 3,
+        knockoutPoints: 0,
+        totalPoints: 3,
         points: 3,
       },
       {
@@ -901,6 +904,9 @@ describe("backend integration tests", () => {
         tiedCount: 1,
         userId: challenger.id,
         displayName: "Challenger",
+        groupStagePoints: 1,
+        knockoutPoints: 0,
+        totalPoints: 1,
         points: 1,
       },
       {
@@ -908,6 +914,9 @@ describe("backend integration tests", () => {
         tiedCount: 1,
         userId: adminUser.id,
         displayName: "Player",
+        groupStagePoints: 0,
+        knockoutPoints: 0,
+        totalPoints: 0,
         points: 0,
       },
     ]);

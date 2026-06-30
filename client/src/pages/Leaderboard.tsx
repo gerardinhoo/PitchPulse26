@@ -12,7 +12,12 @@ type LeaderboardEntry = {
   userId: number;
   displayName: string;
   points: number;
+  groupStagePoints?: number;
+  knockoutPoints?: number;
+  totalPoints?: number;
 };
+
+type LeaderboardScope = "group" | "knockout" | "overall";
 
 const RANK_LABELS: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
 
@@ -23,9 +28,21 @@ const RANK_BG: Record<number, string> = {
 };
 
 const PAGE_SIZE = 20;
+const LEADERBOARD_SCOPES: Array<{ value: LeaderboardScope; label: string }> = [
+  { value: "overall", label: "Overall" },
+  { value: "group", label: "Group Stage" },
+  { value: "knockout", label: "Knockout Stage" },
+];
+
 function parsePage(value: string | null): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : 1;
+}
+
+function parseScope(value: string | null): LeaderboardScope {
+  return LEADERBOARD_SCOPES.some((scope) => scope.value === value)
+    ? (value as LeaderboardScope)
+    : "overall";
 }
 
 function getDisplayName(player: LeaderboardEntry) {
@@ -39,6 +56,7 @@ function getDisplayName(player: LeaderboardEntry) {
 export default function Leaderboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parsePage(searchParams.get("page"));
+  const activeScope = parseScope(searchParams.get("scope"));
 
   const [leaders, setLeaders] = useState<LeaderboardEntry[]>([]);
   const [currentUserEntry, setCurrentUserEntry] = useState<LeaderboardEntry | null>(null);
@@ -59,7 +77,7 @@ export default function Leaderboard() {
       setErrorState(null);
       try {
         const pageRes = await api.get("/leaderboard", {
-          params: { page, limit: PAGE_SIZE, currentUserId: user?.id },
+          params: { page, limit: PAGE_SIZE, currentUserId: user?.id, scope: activeScope },
         });
         setLeaders(pageRes.data.data);
         setCurrentUserEntry(pageRes.data.currentUser ?? null);
@@ -88,7 +106,7 @@ export default function Leaderboard() {
 
     fetchLeaderboard();
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [page, reloadKey, user?.id]);
+  }, [page, reloadKey, user?.id, activeScope]);
 
   // Clamp out-of-range ?page=N back to the last valid page.
   useEffect(() => {
@@ -107,6 +125,14 @@ export default function Leaderboard() {
     setSearchParams(params);
   };
 
+  const handleScopeChange = (scope: LeaderboardScope) => {
+    const params = new URLSearchParams(searchParams);
+    if (scope === "overall") params.delete("scope");
+    else params.set("scope", scope);
+    params.delete("page");
+    setSearchParams(params);
+  };
+
   const handleRetry = () => {
     setReloadKey((current) => current + 1);
   };
@@ -115,10 +141,16 @@ export default function Leaderboard() {
     leaders.length > 1 && leaders.every((entry) => entry.points === leaders[0].points);
   const allTiedAtZero = everyoneTied && leaders[0]?.points === 0;
   const leader = leaders[0] ?? null;
+  const scopeLabel =
+    activeScope === "group"
+      ? "Group Stage"
+      : activeScope === "knockout"
+        ? "Knockout Stage"
+        : "Overall";
 
   const shareCardCopy = leader
-    ? `PitchPulse 26 Leaderboard\n${getDisplayName(leader)} is leading with ${leader.points} pts.\n${currentUserEntry ? `I'm ${currentUserEntry.tiedCount > 1 ? `tied with ${currentUserEntry.tiedCount - 1} others` : `ranked #${currentUserEntry.rank}`} on the table.` : "The race is live after every final score."}\nhttps://pitchpulse26.com/leaderboard`
-    : `PitchPulse 26 Leaderboard\nThe World Cup challenge is live.\nhttps://pitchpulse26.com/leaderboard`;
+    ? `PitchPulse 26 ${scopeLabel} Leaderboard\n${getDisplayName(leader)} is leading with ${leader.points} pts.\n${currentUserEntry ? `I'm ${currentUserEntry.tiedCount > 1 ? `tied with ${currentUserEntry.tiedCount - 1} others` : `ranked #${currentUserEntry.rank}`} on the table.` : "The race is live after every final score."}\nhttps://pitchpulse26.com/leaderboard`
+    : `PitchPulse 26 ${scopeLabel} Leaderboard\nThe World Cup challenge is live.\nhttps://pitchpulse26.com/leaderboard`;
 
   const handleShare = async () => {
     try {
@@ -146,6 +178,36 @@ export default function Leaderboard() {
       <h1 className="text-2xl font-bold mb-6">Leaderboard</h1>
 
       <div className="max-w-4xl mx-auto">
+        <section className="mb-6 rounded-2xl border border-amber-500/20 bg-[linear-gradient(135deg,rgba(245,158,11,0.12),rgba(6,10,9,0.94))] px-5 py-5">
+          <p className="text-xs uppercase tracking-[0.2em] text-amber-300 mb-2">Prizes</p>
+          <h2 className="text-lg font-semibold">Play for bragging rights and gear</h2>
+          <ul className="mt-3 space-y-1 text-sm text-white/80">
+            <li>1st place: World Cup jersey of choice</li>
+            <li>2nd place: World Cup game soccer ball</li>
+            <li>Free to play. No betting. No gambling.</li>
+          </ul>
+        </section>
+
+        <div className="mb-6 flex flex-wrap gap-3">
+          {LEADERBOARD_SCOPES.map((scope) => {
+            const isActive = activeScope === scope.value;
+            return (
+              <button
+                key={scope.value}
+                type="button"
+                onClick={() => handleScopeChange(scope.value)}
+                className={`rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
+                  isActive
+                    ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
+                    : "border-white/12 bg-white/4 text-[var(--color-text-muted)] hover:border-white/25 hover:text-white"
+                }`}
+              >
+                {scope.label}
+              </button>
+            );
+          })}
+        </div>
+
         {errorState ? (
           <StatePanel
             title={errorState.title}
@@ -179,8 +241,12 @@ export default function Leaderboard() {
                   </p>
                   <h2 className="text-xl font-semibold">Points reward accurate match picks</h2>
                   <p className="text-sm text-[var(--color-text-muted)] mt-2">
-                    The leaderboard totals points from scored matches only. Exact scorelines earn the most credit, and
-                    players with the same points share the same rank.
+                    {activeScope === "group" &&
+                      "This view locks in your group-stage history. Exact scorelines earn the most credit, and players with the same points share the same rank."}
+                    {activeScope === "knockout" &&
+                      "This view tracks only knockout-round points. Group-stage history stays preserved separately."}
+                    {activeScope === "overall" &&
+                      "This view stacks knockout points on top of your group-stage total so the full tournament table keeps moving."}
                   </p>
                 </div>
 
@@ -205,6 +271,13 @@ export default function Leaderboard() {
                         {currentUserEntry.points} point{currentUserEntry.points === 1 ? "" : "s"} from scored matches.
                         {allTiedAtZero ? " Everyone is level until the first scored matches are posted." : ""}
                       </p>
+                      {currentUserEntry.totalPoints !== undefined && (
+                        <p className="text-xs text-[var(--color-text-muted)] mt-2">
+                          Group Stage {currentUserEntry.groupStagePoints ?? 0} • Knockout{" "}
+                          {currentUserEntry.knockoutPoints ?? 0} • Total{" "}
+                          {currentUserEntry.totalPoints ?? currentUserEntry.points}
+                        </p>
+                      )}
                     </>
                   ) : (
                     <>
