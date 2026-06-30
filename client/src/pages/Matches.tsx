@@ -9,18 +9,16 @@ import Spinner from "../components/Spinner";
 import StatePanel from "../components/StatePanel";
 import { isEmailVerificationRequired } from "../config";
 import { formatMatchDateTime } from "../utils/dateTime";
+import {
+  getMatchStage,
+  STAGE_LABELS,
+  type TournamentStage,
+} from "../utils/tournamentStage";
 
 type Match = {
   id: number;
   date: string;
-  tournamentStage?:
-    | "GROUP_STAGE"
-    | "ROUND_OF_32"
-    | "ROUND_OF_16"
-    | "QUARTER_FINAL"
-    | "SEMI_FINAL"
-    | "THIRD_PLACE"
-    | "FINAL";
+  tournamentStage?: TournamentStage;
   homeTeam: { name: string; code?: string; group: string };
   awayTeam: { name: string; code?: string; group: string };
   homeScore: number | null;
@@ -62,15 +60,7 @@ type DashboardSummary = {
 
 type MatchView = "all" | "today" | "upcoming" | "completed";
 type PicksView = "all" | "completed" | "saved";
-type StageFilter =
-  | "all"
-  | "GROUP_STAGE"
-  | "ROUND_OF_32"
-  | "ROUND_OF_16"
-  | "QUARTER_FINAL"
-  | "SEMI_FINAL"
-  | "THIRD_PLACE"
-  | "FINAL";
+type StageFilter = "all" | TournamentStage;
 
 const PAGE_SIZE = 20;
 const MATCH_VIEWS: Array<{ value: MatchView; label: string }> = [
@@ -89,15 +79,6 @@ const STAGE_FILTERS: Array<{ value: StageFilter; label: string }> = [
   { value: "THIRD_PLACE", label: "Third Place" },
   { value: "FINAL", label: "Final" },
 ];
-const STAGE_LABELS: Record<Exclude<StageFilter, "all">, string> = {
-  GROUP_STAGE: "Group Stage",
-  ROUND_OF_32: "Round of 32",
-  ROUND_OF_16: "Round of 16",
-  QUARTER_FINAL: "Quarterfinal",
-  SEMI_FINAL: "Semifinal",
-  THIRD_PLACE: "Third Place",
-  FINAL: "Final",
-};
 
 function parsePage(value: string | null): number {
   const parsed = Number(value);
@@ -110,10 +91,6 @@ function parseView(value: string | null): MatchView {
 
 function parseStage(value: string | null): StageFilter {
   return STAGE_FILTERS.some((stage) => stage.value === value) ? (value as StageFilter) : "all";
-}
-
-function getMatchStage(match: Match): Exclude<StageFilter, "all"> {
-  return match.tournamentStage ?? "GROUP_STAGE";
 }
 
 function isKnockoutMatch(match: Match) {

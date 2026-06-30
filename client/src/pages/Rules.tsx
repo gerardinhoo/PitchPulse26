@@ -3,9 +3,9 @@ import { Link } from "react-router-dom";
 const RULE_SECTIONS = [
   {
     eyebrow: "Tournament Scope",
-    title: "Built for the World Cup group stage",
+    title: "Built for the World Cup tournament",
     body:
-      "PitchPulse 26 currently covers World Cup group-stage matches. Every prediction, point, and leaderboard movement is based on those fixtures.",
+      "PitchPulse 26 started with the group stage and now continues through the knockout rounds. Your group-stage points carry over, and every eligible knockout prediction can help you climb the leaderboard.",
   },
   {
     eyebrow: "Prediction Lock",
@@ -25,6 +25,13 @@ const RULE_SECTIONS = [
     body:
       "PitchPulse 26 is free to play and built for football fans. No betting or gambling is involved.",
   },
+  {
+    eyebrow: "Prize",
+    title: "Top prize",
+    body:
+      "Finish 1st on the leaderboard and win the World Cup jersey of your choice.",
+    note: "Prize is a thank-you for participating. Free to play. No betting. No gambling.",
+  },
 ];
 
 export default function Rules() {
@@ -39,9 +46,9 @@ export default function Rules() {
             How to play PitchPulse 26
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-white/78 sm:text-lg">
-            Everything you need to know before you start predicting: what matches count,
-            when picks lock, how points work, and why this stays a free football fan
-            challenge.
+            Everything you need to know before predicting: which matches count, when picks
+            lock, how points work, and how the leaderboard continues through the knockout
+            stage.
           </p>
         </div>
       </section>
@@ -59,6 +66,9 @@ export default function Rules() {
             <p className="mt-3 text-sm leading-7 text-[var(--color-text-muted)]">
               {section.body}
             </p>
+            {"note" in section && section.note ? (
+              <p className="mt-3 text-xs leading-6 text-white/55">{section.note}</p>
+            ) : null}
           </article>
         ))}
       </section>
@@ -70,8 +80,8 @@ export default function Rules() {
               Ready to play?
             </p>
             <p className="mt-2 text-sm leading-6 text-white/80">
-              Head to the Matches page, lock in your group-stage picks, and watch the
-              leaderboard shift as results come in.
+              Head to the Matches page, lock in your knockout picks before kickoff, and keep
+              climbing the leaderboard as results come in.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
