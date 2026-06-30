@@ -179,13 +179,18 @@ export default function Leaderboard() {
 
       <div className="max-w-4xl mx-auto">
         <section className="mb-6 rounded-2xl border border-amber-500/20 bg-[linear-gradient(135deg,rgba(245,158,11,0.12),rgba(6,10,9,0.94))] px-5 py-5">
-          <p className="text-xs uppercase tracking-[0.2em] text-amber-300 mb-2">Prizes</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-amber-300 mb-2">Prize</p>
           <h2 className="text-lg font-semibold">Play for bragging rights and gear</h2>
           <ul className="mt-3 space-y-1 text-sm text-white/80">
-            <li>1st place: World Cup jersey of choice</li>
-            <li>2nd place: World Cup game soccer ball</li>
-            <li>Free to play. No betting. No gambling.</li>
+            <li>Finish 1st on the leaderboard and choose your favorite national team's official World Cup jersey.</li>
           </ul>
+           <p className="mt-3 text-xs text-white/60">
+              Free to play. No betting. No gambling.
+           </p>
+
+           <p className="mt-1 text-xs text-white/40">
+            *Subject to availability.
+           </p>
         </section>
 
         <div className="mb-6 flex flex-wrap gap-3">
