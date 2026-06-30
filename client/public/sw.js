@@ -1,6 +1,6 @@
-const CACHE_NAME = "pitchpulse26-shell-v2";
+const CACHE_NAME = "pitchpulse26-shell-v3";
 const SHELL_URLS = [
-  "/manifest.webmanifest",
+  "/manifest.json",
   "/icons/pitchpulse-icon.svg",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
