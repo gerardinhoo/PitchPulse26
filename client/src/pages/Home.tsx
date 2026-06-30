@@ -184,12 +184,12 @@ export default function Home() {
         <div className="relative z-10 max-w-3xl px-3 sm:px-6">
           <div className="rounded-[2rem] border border-white/8 bg-[rgba(7,12,14,0.12)] px-4 py-6 shadow-[0_28px_70px_rgba(0,0,0,0.22)] backdrop-blur-[1px] sm:bg-[rgba(7,12,14,0.16)] sm:px-10 sm:py-10">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-200/90 animate-slide-up sm:text-xs">
-              Free Football Challenge
+              Knockout Stage Live
             </div>
             <h1 className="mb-4 animate-slide-up text-4xl font-extrabold leading-[0.96] tracking-tight text-white [text-shadow:0_10px_28px_rgba(0,0,0,0.5)] sm:text-6xl">
               Predict the World Cup.
-              <span className="mt-2 block text-emerald-300 [text-shadow:0_10px_28px_rgba(0,0,0,0.55)]">
-                No betting. Just football.
+              <span>
+                Win a World Cup jersey.
               </span>
             </h1>
             <div
@@ -197,8 +197,10 @@ export default function Home() {
               style={{ animationDelay: "100ms" }}
             >
               <p className="animate-slide-up text-left text-base leading-7 text-white/95 drop-shadow-[0_4px_14px_rgba(0,0,0,0.55)] sm:text-center sm:text-lg sm:leading-8 sm:text-white/90 sm:drop-shadow-[0_6px_18px_rgba(0,0,0,0.42)]">
-                Make your picks, earn points, and compete with friends throughout the
-                tournament. PitchPulse 26 is free to play and built for football fans.
+                Knockout predictions are open. Make your picks before kickoff, keep climbing the leaderboard, and compete for bragging rights.
+              </p>
+              <p className="mt-3 text-sm font-medium text-emerald-200/90">
+                Free to play. No betting. No gambling.
               </p>
               <div
                 className="mt-6 flex flex-col items-stretch gap-3 animate-slide-up sm:flex-row sm:items-center sm:justify-center"
