@@ -11,9 +11,8 @@ function getJwtSecret(secretOverride) {
 }
 
 export function createAuthMiddleware(secretOverride) {
-  const secret = getJwtSecret(secretOverride);
-
   return (req, res, next) => {
+    const secret = getJwtSecret(secretOverride);
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
@@ -32,4 +31,4 @@ export function createAuthMiddleware(secretOverride) {
   };
 }
 
-export const authMiddleware = createAuthMiddleware();
+export const authMiddleware = (req, res, next) => createAuthMiddleware()(req, res, next);

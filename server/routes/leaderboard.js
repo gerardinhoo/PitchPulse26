@@ -5,30 +5,50 @@ import { paginationSchema } from "../src/validators.js";
 
 const router = express.Router();
 
+const STAGE_SCOPES = {
+  group: { tournamentStage: "GROUP_STAGE" },
+  knockout: { tournamentStage: { not: "GROUP_STAGE" } },
+  overall: {},
+};
+
+function parseScope(rawScope) {
+  return typeof rawScope === "string" && rawScope in STAGE_SCOPES ? rawScope : "overall";
+}
+
 router.get("/", async (req, res, next) => {
   try {
     const { page, limit } = paginationSchema.parse(req.query);
+    const scope = parseScope(req.query.scope);
     const currentUserIdRaw = req.query.currentUserId;
     const currentUserId =
       typeof currentUserIdRaw === "string" && /^\d+$/.test(currentUserIdRaw)
         ? Number(currentUserIdRaw)
         : null;
-
-    // Only load predictions for matches that have results (avoids useless data)
     const users = await prisma.user.findMany({
       select: {
         id: true,
         displayName: true,
         prediction: {
           where: {
-            match: { homeScore: { not: null }, awayScore: { not: null } },
+            match: {
+              homeScore: { not: null },
+              awayScore: { not: null },
+            },
           },
-          include: { match: true },
+          include: {
+            match: {
+              select: {
+                homeScore: true,
+                awayScore: true,
+                tournamentStage: true,
+              },
+            },
+          },
         },
       },
     });
 
-    const leaderboard = buildLeaderboard(users);
+    const leaderboard = buildLeaderboard(users, { scope });
 
     // Paginate the sorted results
     const total = leaderboard.length;
@@ -42,6 +62,7 @@ router.get("/", async (req, res, next) => {
       data: paginated,
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
       currentUser,
+      scope,
     });
   } catch (error) {
     next(error);
