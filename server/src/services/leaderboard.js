@@ -24,40 +24,18 @@ export const calculatePoints = (prediction, match) => {
    return 0;
 };
 
-function getScopePoints(scope, breakdown) {
-  if (scope === "group") return breakdown.groupStagePoints;
-  if (scope === "knockout") return breakdown.knockoutPoints;
-  return breakdown.totalPoints;
-}
-
-export function buildLeaderboard(users, options = {}) {
-  const scope = options.scope ?? "overall";
+export function buildLeaderboard(users) {
   const entries = users
     .map((user) => {
-      let groupStagePoints = 0;
-      let knockoutPoints = 0;
+      let totalPoints = 0;
       for (const pred of user.prediction) {
-        const points = calculatePoints(pred, pred.match);
-        if (pred.match.tournamentStage && pred.match.tournamentStage !== "GROUP_STAGE") {
-          knockoutPoints += points;
-        } else {
-          groupStagePoints += points;
-        }
+        totalPoints += calculatePoints(pred, pred.match);
       }
-
-      const totalPoints = groupStagePoints + knockoutPoints;
 
       return {
         userId: user.id,
         displayName: user.displayName || "Anonymous",
-        groupStagePoints,
-        knockoutPoints,
-        totalPoints,
-        points: getScopePoints(scope, {
-          groupStagePoints,
-          knockoutPoints,
-          totalPoints,
-        }),
+        points: totalPoints,
       };
     })
     .sort((a, b) => b.points - a.points || a.userId - b.userId);

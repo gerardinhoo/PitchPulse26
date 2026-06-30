@@ -55,56 +55,56 @@ describe("buildLeaderboard", () => {
         id: 1,
         displayName: "Jimbo",
         prediction: [
-          { homeScore: 2, awayScore: 1, match: { homeScore: 2, awayScore: 1, tournamentStage: "GROUP_STAGE" } },
-          { homeScore: 0, awayScore: 0, match: { homeScore: 1, awayScore: 1, tournamentStage: "GROUP_STAGE" } },
+          { homeScore: 2, awayScore: 1, match: { homeScore: 2, awayScore: 1 } },
+          { homeScore: 0, awayScore: 0, match: { homeScore: 1, awayScore: 1 } },
         ],
       },
       {
         id: 2,
         displayName: "Den",
         prediction: [
-          { homeScore: 2, awayScore: 1, match: { homeScore: 2, awayScore: 1, tournamentStage: "GROUP_STAGE" } },
-          { homeScore: 0, awayScore: 0, match: { homeScore: 1, awayScore: 1, tournamentStage: "GROUP_STAGE" } },
+          { homeScore: 2, awayScore: 1, match: { homeScore: 2, awayScore: 1 } },
+          { homeScore: 0, awayScore: 0, match: { homeScore: 1, awayScore: 1 } },
         ],
       },
       {
         id: 3,
         displayName: "Drex1911",
-        prediction: [{ homeScore: 2, awayScore: 1, match: { homeScore: 2, awayScore: 1, tournamentStage: "GROUP_STAGE" } }],
+        prediction: [{ homeScore: 2, awayScore: 1, match: { homeScore: 2, awayScore: 1 } }],
       },
       {
         id: 4,
         displayName: "Charles1792",
         prediction: [
-          { homeScore: 1, awayScore: 0, match: { homeScore: 2, awayScore: 1, tournamentStage: "GROUP_STAGE" } },
-          { homeScore: 3, awayScore: 0, match: { homeScore: 0, awayScore: 1, tournamentStage: "GROUP_STAGE" } },
+          { homeScore: 1, awayScore: 0, match: { homeScore: 2, awayScore: 1 } },
+          { homeScore: 3, awayScore: 0, match: { homeScore: 0, awayScore: 1 } },
         ],
       },
       {
         id: 5,
         displayName: "Lawoe",
         prediction: [
-          { homeScore: 1, awayScore: 0, match: { homeScore: 2, awayScore: 1, tournamentStage: "GROUP_STAGE" } },
-          { homeScore: 3, awayScore: 0, match: { homeScore: 0, awayScore: 1, tournamentStage: "GROUP_STAGE" } },
+          { homeScore: 1, awayScore: 0, match: { homeScore: 2, awayScore: 1 } },
+          { homeScore: 3, awayScore: 0, match: { homeScore: 0, awayScore: 1 } },
         ],
       },
       {
         id: 6,
         displayName: "Yao",
         prediction: [
-          { homeScore: 1, awayScore: 0, match: { homeScore: 2, awayScore: 1, tournamentStage: "GROUP_STAGE" } },
-          { homeScore: 0, awayScore: 1, match: { homeScore: 0, awayScore: 0, tournamentStage: "GROUP_STAGE" } },
+          { homeScore: 1, awayScore: 0, match: { homeScore: 2, awayScore: 1 } },
+          { homeScore: 0, awayScore: 1, match: { homeScore: 0, awayScore: 0 } },
         ],
       },
     ];
 
     expect(buildLeaderboard(users)).toEqual([
-      { rank: 1, tiedCount: 2, userId: 1, displayName: "Jimbo", groupStagePoints: 4, knockoutPoints: 0, totalPoints: 4, points: 4 },
-      { rank: 1, tiedCount: 2, userId: 2, displayName: "Den", groupStagePoints: 4, knockoutPoints: 0, totalPoints: 4, points: 4 },
-      { rank: 2, tiedCount: 1, userId: 3, displayName: "Drex1911", groupStagePoints: 3, knockoutPoints: 0, totalPoints: 3, points: 3 },
-      { rank: 3, tiedCount: 3, userId: 4, displayName: "Charles1792", groupStagePoints: 1, knockoutPoints: 0, totalPoints: 1, points: 1 },
-      { rank: 3, tiedCount: 3, userId: 5, displayName: "Lawoe", groupStagePoints: 1, knockoutPoints: 0, totalPoints: 1, points: 1 },
-      { rank: 3, tiedCount: 3, userId: 6, displayName: "Yao", groupStagePoints: 1, knockoutPoints: 0, totalPoints: 1, points: 1 },
+      { rank: 1, tiedCount: 2, userId: 1, displayName: "Jimbo", points: 4 },
+      { rank: 1, tiedCount: 2, userId: 2, displayName: "Den", points: 4 },
+      { rank: 2, tiedCount: 1, userId: 3, displayName: "Drex1911", points: 3 },
+      { rank: 3, tiedCount: 3, userId: 4, displayName: "Charles1792", points: 1 },
+      { rank: 3, tiedCount: 3, userId: 5, displayName: "Lawoe", points: 1 },
+      { rank: 3, tiedCount: 3, userId: 6, displayName: "Yao", points: 1 },
     ]);
   });
 });
