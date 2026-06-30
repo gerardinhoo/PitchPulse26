@@ -9,6 +9,8 @@ const sendMatchReminderEmail = vi.fn().mockResolvedValue(undefined);
 
 const state = {
   users: [],
+  teams: [],
+  stadiums: [],
   matches: [],
   predictions: [],
   adminAuditLogs: [],
@@ -17,36 +19,54 @@ const state = {
 const counters = {
   userId: 1,
   predictionId: 1,
+  matchId: 102,
 };
 
 function resetState() {
   state.users = [];
+  state.teams = [
+    { id: 1, name: "Argentina", country: "Argentina", code: "ARG", group: "A" },
+    { id: 2, name: "Brazil", country: "Brazil", code: "BRA", group: "A" },
+    { id: 3, name: "Canada", country: "Canada", code: "CAN", group: "B" },
+    { id: 4, name: "Chile", country: "Chile", code: "CHI", group: "B" },
+  ];
+  state.stadiums = [
+    { id: 10, name: "MetLife Stadium", city: "East Rutherford", country: "USA" },
+    { id: 11, name: "BMO Field", city: "Toronto", country: "Canada" },
+  ];
   state.matches = [
     {
       id: 100,
       homeTeamId: 1,
       awayTeamId: 2,
+      stadiumId: 10,
       homeScore: null,
       awayScore: null,
       date: "2099-06-01T15:00:00.000Z",
+      tournamentStage: "GROUP_STAGE",
       homeTeam: { id: 1, name: "Argentina", code: "ARG" },
       awayTeam: { id: 2, name: "Brazil", code: "BRA" },
+      stadium: { id: 10, name: "MetLife Stadium", city: "East Rutherford", country: "USA" },
     },
     {
       id: 101,
       homeTeamId: 3,
       awayTeamId: 4,
+      stadiumId: 11,
       homeScore: null,
       awayScore: null,
       date: "2099-06-02T15:00:00.000Z",
+      tournamentStage: "GROUP_STAGE",
       homeTeam: { id: 3, name: "Canada", code: "CAN" },
       awayTeam: { id: 4, name: "Chile", code: "CHI" },
+      stadium: { id: 11, name: "BMO Field", city: "Toronto", country: "Canada" },
     },
   ];
   state.predictions = [];
   state.adminAuditLogs = [];
   counters.userId = 1;
   counters.predictionId = 1;
+  counters.matchId = 102;
   sendVerificationEmail.mockClear();
   sendPasswordResetEmail.mockClear();
   sendMatchReminderEmail.mockClear();
@@ -70,11 +90,20 @@ function findMatchById(id) {
   return state.matches.find((match) => match.id === id) ?? null;
 }
 
+function findTeamById(id) {
+  return state.teams.find((team) => team.id === id) ?? null;
+}
+
+function findStadiumById(id) {
+  return state.stadiums.find((stadium) => stadium.id === id) ?? null;
+}
+
 function buildOpenMatchRelations(match) {
   return {
     ...clone(match),
     homeTeam: clone(match.homeTeam),
     awayTeam: clone(match.awayTeam),
+    stadium: clone(match.stadium),
   };
 }
 
@@ -229,11 +258,83 @@ const prisma = {
       return state.users.map((user) => selectUser(user, select));
     },
   },
+  team: {
+    async findUnique({ where } = {}) {
+      if (where?.id === undefined) {
+        return null;
+      }
+      return clone(findTeamById(where.id));
+    },
+    async findMany({ where, orderBy } = {}) {
+      let teams = [...state.teams];
+
+      if (where?.id?.in) {
+        teams = teams.filter((team) => where.id.in.includes(team.id));
+      }
+
+      if (where?.group) {
+        teams = teams.filter((team) => team.group === where.group);
+      }
+
+      if (orderBy) {
+        teams.sort((a, b) => {
+          const rules = Array.isArray(orderBy) ? orderBy : [orderBy];
+          for (const rule of rules) {
+            const [key, direction] = Object.entries(rule)[0];
+            const left = a[key];
+            const right = b[key];
+            if (left === right) continue;
+            if (direction === "asc") return left > right ? 1 : -1;
+            return left < right ? 1 : -1;
+          }
+          return 0;
+        });
+      }
+
+      return teams.map(clone);
+    },
+  },
+  stadium: {
+    async findUnique({ where } = {}) {
+      if (where?.id === undefined) {
+        return null;
+      }
+      return clone(findStadiumById(where.id));
+    },
+    async findMany({ where, orderBy } = {}) {
+      let stadiums = [...state.stadiums];
+
+      if (where?.id?.in) {
+        stadiums = stadiums.filter((stadium) => where.id.in.includes(stadium.id));
+      }
+
+      if (orderBy) {
+        stadiums.sort((a, b) => {
+          const rules = Array.isArray(orderBy) ? orderBy : [orderBy];
+          for (const rule of rules) {
+            const [key, direction] = Object.entries(rule)[0];
+            const left = a[key];
+            const right = b[key];
+            if (left === right) continue;
+            if (direction === "asc") return left > right ? 1 : -1;
+            return left < right ? 1 : -1;
+          }
+          return 0;
+        });
+      }
+
+      return stadiums.map(clone);
+    },
+  },
   match: {
-    async findUnique({ where, select } = {}) {
+    async findUnique({ where, select, include } = {}) {
       const match = findMatchById(where.id);
       if (!match) {
         return null;
+      }
+
+      if (include?.homeTeam || include?.awayTeam || include?.stadium) {
+        return buildOpenMatchRelations(match);
       }
 
       if (!select) {
@@ -249,18 +350,52 @@ const prisma = {
 
       return result;
     },
-    async findMany({ include, orderBy } = {}) {
-      const matches = [...state.matches];
+    async findMany({ include, orderBy, where } = {}) {
+      let matches = [...state.matches];
+
+      if (where?.tournamentStage) {
+        if (typeof where.tournamentStage === "string") {
+          matches = matches.filter((match) => match.tournamentStage === where.tournamentStage);
+        } else if (where.tournamentStage.not) {
+          matches = matches.filter((match) => match.tournamentStage !== where.tournamentStage.not);
+        }
+      }
 
       if (orderBy?.date === "asc") {
         matches.sort((a, b) => new Date(a.date) - new Date(b.date));
       }
 
-      if (include?.homeTeam || include?.awayTeam) {
+      if (include?.homeTeam || include?.awayTeam || include?.stadium) {
         return matches.map(buildOpenMatchRelations);
       }
 
       return matches.map(clone);
+    },
+    async create({ data, include } = {}) {
+      const homeTeam = findTeamById(data.homeTeamId);
+      const awayTeam = findTeamById(data.awayTeamId);
+      const stadium = findStadiumById(data.stadiumId);
+      const match = {
+        id: counters.matchId++,
+        homeTeamId: data.homeTeamId,
+        awayTeamId: data.awayTeamId,
+        stadiumId: data.stadiumId,
+        date: new Date(data.date).toISOString(),
+        tournamentStage: data.tournamentStage,
+        homeScore: null,
+        awayScore: null,
+        homeTeam: clone(homeTeam),
+        awayTeam: clone(awayTeam),
+        stadium: clone(stadium),
+      };
+
+      state.matches.push(match);
+
+      if (include?.homeTeam || include?.awayTeam || include?.stadium) {
+        return buildOpenMatchRelations(match);
+      }
+
+      return clone(match);
     },
     async update({ where, data }) {
       const match = findMatchById(where.id);
@@ -271,7 +406,26 @@ const prisma = {
       }
 
       Object.assign(match, data);
+      if (data.homeTeamId !== undefined) {
+        match.homeTeam = clone(findTeamById(data.homeTeamId));
+      }
+      if (data.awayTeamId !== undefined) {
+        match.awayTeam = clone(findTeamById(data.awayTeamId));
+      }
+      if (data.stadiumId !== undefined) {
+        match.stadium = clone(findStadiumById(data.stadiumId));
+      }
+      if (data.date instanceof Date) {
+        match.date = data.date.toISOString();
+      }
       return clone(match);
+    },
+    async count({ where } = {}) {
+      let matches = [...state.matches];
+      if (where?.tournamentStage) {
+        matches = matches.filter((match) => match.tournamentStage === where.tournamentStage);
+      }
+      return matches.length;
     },
   },
   prediction: {
@@ -842,6 +996,95 @@ describe("backend integration tests", () => {
     );
   });
 
+  it("returns fixture options for admins", async () => {
+    const adminUser = await createVerifiedUser({
+      email: "admin@example.com",
+      role: "admin",
+    });
+
+    const response = await request(app)
+      .get("/api/admin/fixtures/options")
+      .set("Authorization", `Bearer ${createToken(adminUser)}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.teams).toHaveLength(4);
+    expect(response.body.stadiums).toHaveLength(2);
+    expect(response.body.teams[0]).toMatchObject({
+      id: 1,
+      name: "Argentina",
+    });
+  });
+
+  it("allows admins to create and update unplayed fixtures", async () => {
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const adminUser = await createVerifiedUser({
+      email: "admin@example.com",
+      role: "admin",
+    });
+
+    const createResponse = await request(app)
+      .post("/api/admin/matches")
+      .set("Authorization", `Bearer ${createToken(adminUser)}`)
+      .send({
+        homeTeamId: 1,
+        awayTeamId: 4,
+        stadiumId: 11,
+        date: "2099-06-10T18:00:00.000Z",
+        tournamentStage: "QUARTER_FINAL",
+      });
+
+    expect(createResponse.status).toBe(201);
+    expect(createResponse.body).toMatchObject({
+      id: 102,
+      tournamentStage: "QUARTER_FINAL",
+      homeTeam: { name: "Argentina" },
+      awayTeam: { name: "Chile" },
+      stadium: { name: "BMO Field" },
+    });
+
+    const updateResponse = await request(app)
+      .patch("/api/admin/matches/102")
+      .set("Authorization", `Bearer ${createToken(adminUser)}`)
+      .send({
+        homeTeamId: 2,
+        awayTeamId: 3,
+        stadiumId: 10,
+        date: "2099-06-11T20:00:00.000Z",
+        tournamentStage: "SEMI_FINAL",
+      });
+
+    expect(updateResponse.status).toBe(200);
+    expect(updateResponse.body).toMatchObject({
+      id: 102,
+      tournamentStage: "SEMI_FINAL",
+      homeTeam: { name: "Brazil" },
+      awayTeam: { name: "Canada" },
+      stadium: { name: "MetLife Stadium" },
+    });
+
+    expect(state.adminAuditLogs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: "match.fixture.created",
+          matchId: 102,
+          adminUserId: adminUser.id,
+        }),
+        expect.objectContaining({
+          action: "match.fixture.updated",
+          matchId: 102,
+          adminUserId: adminUser.id,
+        }),
+      ]),
+    );
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("\"event\":\"admin.match_fixture.created\""),
+    );
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("\"event\":\"admin.match_fixture.updated\""),
+    );
+  });
+
   it("computes leaderboard scoring after results are set", async () => {
     const adminUser = await createVerifiedUser({
       email: "admin@example.com",
@@ -894,6 +1137,9 @@ describe("backend integration tests", () => {
         tiedCount: 1,
         userId: winner.id,
         displayName: "Winner",
+        groupStagePoints: 3,
+        knockoutPoints: 0,
+        totalPoints: 3,
         points: 3,
       },
       {
@@ -901,6 +1147,9 @@ describe("backend integration tests", () => {
         tiedCount: 1,
         userId: challenger.id,
         displayName: "Challenger",
+        groupStagePoints: 1,
+        knockoutPoints: 0,
+        totalPoints: 1,
         points: 1,
       },
       {
@@ -908,6 +1157,9 @@ describe("backend integration tests", () => {
         tiedCount: 1,
         userId: adminUser.id,
         displayName: "Player",
+        groupStagePoints: 0,
+        knockoutPoints: 0,
+        totalPoints: 0,
         points: 0,
       },
     ]);

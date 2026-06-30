@@ -13,6 +13,14 @@ import { formatMatchDateTime } from "../utils/dateTime";
 type Match = {
   id: number;
   date: string;
+  tournamentStage:
+    | "GROUP_STAGE"
+    | "ROUND_OF_32"
+    | "ROUND_OF_16"
+    | "QUARTER_FINAL"
+    | "SEMI_FINAL"
+    | "THIRD_PLACE"
+    | "FINAL";
   homeTeam: { name: string; code?: string; group: string };
   awayTeam: { name: string; code?: string; group: string };
   homeScore: number | null;
@@ -54,6 +62,15 @@ type DashboardSummary = {
 
 type MatchView = "all" | "today" | "upcoming" | "completed";
 type PicksView = "all" | "completed" | "saved";
+type StageFilter =
+  | "all"
+  | "GROUP_STAGE"
+  | "ROUND_OF_32"
+  | "ROUND_OF_16"
+  | "QUARTER_FINAL"
+  | "SEMI_FINAL"
+  | "THIRD_PLACE"
+  | "FINAL";
 
 const PAGE_SIZE = 20;
 const MATCH_VIEWS: Array<{ value: MatchView; label: string }> = [
@@ -62,6 +79,25 @@ const MATCH_VIEWS: Array<{ value: MatchView; label: string }> = [
   { value: "upcoming", label: "Upcoming" },
   { value: "completed", label: "Completed" },
 ];
+const STAGE_FILTERS: Array<{ value: StageFilter; label: string }> = [
+  { value: "all", label: "All stages" },
+  { value: "GROUP_STAGE", label: "Group Stage" },
+  { value: "ROUND_OF_32", label: "Round of 32" },
+  { value: "ROUND_OF_16", label: "Round of 16" },
+  { value: "QUARTER_FINAL", label: "Quarterfinals" },
+  { value: "SEMI_FINAL", label: "Semifinals" },
+  { value: "THIRD_PLACE", label: "Third Place" },
+  { value: "FINAL", label: "Final" },
+];
+const STAGE_LABELS: Record<Exclude<StageFilter, "all">, string> = {
+  GROUP_STAGE: "Group Stage",
+  ROUND_OF_32: "Round of 32",
+  ROUND_OF_16: "Round of 16",
+  QUARTER_FINAL: "Quarterfinal",
+  SEMI_FINAL: "Semifinal",
+  THIRD_PLACE: "Third Place",
+  FINAL: "Final",
+};
 
 function parsePage(value: string | null): number {
   const parsed = Number(value);
@@ -70,6 +106,10 @@ function parsePage(value: string | null): number {
 
 function parseView(value: string | null): MatchView {
   return MATCH_VIEWS.some((view) => view.value === value) ? (value as MatchView) : "all";
+}
+
+function parseStage(value: string | null): StageFilter {
+  return STAGE_FILTERS.some((stage) => stage.value === value) ? (value as StageFilter) : "all";
 }
 
 function isMatchLocked(match: Match) {
@@ -131,6 +171,7 @@ export default function Matches() {
   const page = parsePage(searchParams.get("page"));
   const activeView = parseView(searchParams.get("view"));
   const activeGroup = (searchParams.get("group") ?? "").toUpperCase();
+  const activeStage = parseStage(searchParams.get("stage"));
 
   const [allMatches, setAllMatches] = useState<Match[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
@@ -210,8 +251,11 @@ export default function Matches() {
 
   const filteredMatches = allMatches.filter((match) => {
     const matchesView = matchesActiveView(match, activeView);
-    const matchesGroup = !activeGroup || match.homeTeam.group === activeGroup;
-    return matchesView && matchesGroup;
+    const matchesStage = activeStage === "all" || match.tournamentStage === activeStage;
+    const matchesGroup =
+      !activeGroup ||
+      (match.tournamentStage === "GROUP_STAGE" && match.homeTeam.group === activeGroup);
+    return matchesView && matchesStage && matchesGroup;
   });
   const totalPages = Math.max(1, Math.ceil(filteredMatches.length / PAGE_SIZE));
   const matches = filteredMatches.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -261,7 +305,12 @@ export default function Matches() {
     }
   }, [loading, page, totalPages, searchParams, setSearchParams]);
 
-  const updateFilters = (updates: { page?: number; view?: MatchView; group?: string }) => {
+  const updateFilters = (updates: {
+    page?: number;
+    view?: MatchView;
+    group?: string;
+    stage?: StageFilter;
+  }) => {
     const params = new URLSearchParams(searchParams);
 
     if (updates.page !== undefined) {
@@ -279,6 +328,11 @@ export default function Matches() {
       else params.set("group", updates.group);
     }
 
+    if (updates.stage !== undefined) {
+      if (updates.stage === "all") params.delete("stage");
+      else params.set("stage", updates.stage);
+    }
+
     setSearchParams(params);
   };
 
@@ -292,6 +346,14 @@ export default function Matches() {
 
   const handleGroupChange = (nextGroup: string) => {
     updateFilters({ group: nextGroup, page: 1 });
+  };
+
+  const handleStageChange = (nextStage: StageFilter) => {
+    updateFilters({
+      stage: nextStage,
+      group: nextStage === "all" || nextStage === "GROUP_STAGE" ? activeGroup : "",
+      page: 1,
+    });
   };
 
   const handleRetry = () => {
@@ -387,7 +449,8 @@ export default function Matches() {
       ? matches.find((match) => match.id === focusedMatchId) ?? null
       : null;
 
-  const hasActiveFilters = activeView !== "all" || Boolean(activeGroup);
+  const hasActiveFilters = activeView !== "all" || Boolean(activeGroup) || activeStage !== "all";
+  const showingGroupStageFilters = activeStage === "all" || activeStage === "GROUP_STAGE";
 
   if (loading) return <Spinner />;
 
@@ -425,6 +488,16 @@ export default function Matches() {
               </p>
             </section>
           )}
+
+          <section className="mb-6 rounded-2xl border border-sky-500/20 bg-[linear-gradient(135deg,rgba(56,189,248,0.14),rgba(6,10,9,0.94))] px-4 py-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-sky-300 mb-2">
+              Tournament Update
+            </p>
+            <h2 className="text-lg font-semibold">Knockout predictions are now open for remaining matches</h2>
+            <p className="mt-2 text-sm text-white/75">
+              Your group-stage points carry over into the overall leaderboard. Completed or already-started knockout matches stay locked.
+            </p>
+          </section>
 
           <section className="card mb-6 overflow-hidden">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -790,8 +863,34 @@ export default function Matches() {
                 </p>
                 <h2 className="text-lg font-semibold">Jump to the matches you care about</h2>
                 <p className="text-sm text-[var(--color-text-muted)] mt-1">
-                  Filter by match status or group without losing your place in the schedule.
+                  Filter by stage, match status, or group without losing your place in the schedule.
                 </p>
+              </div>
+
+              <div>
+                <p className="text-xs uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
+                  Tournament Stage
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {STAGE_FILTERS.map((stage) => {
+                    const isActive = activeStage === stage.value;
+                    return (
+                      <button
+                        key={stage.value}
+                        type="button"
+                        onClick={() => handleStageChange(stage.value)}
+                        aria-pressed={isActive}
+                        className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                          isActive
+                            ? "border-emerald-400 bg-emerald-500/15 text-white"
+                            : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-emerald-500/40 hover:text-white"
+                        }`}
+                      >
+                        {stage.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div>
@@ -820,7 +919,8 @@ export default function Matches() {
                 </div>
               </div>
 
-              <div>
+              {showingGroupStageFilters && (
+                <div>
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <p className="text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
                     Group Stage
@@ -828,7 +928,7 @@ export default function Matches() {
                   {hasActiveFilters && (
                     <button
                       type="button"
-                      onClick={() => updateFilters({ group: "", view: "all", page: 1 })}
+                      onClick={() => updateFilters({ group: "", view: "all", stage: "all", page: 1 })}
                       className="text-xs font-medium text-[var(--color-accent)] hover:text-emerald-300"
                     >
                       Clear filters
@@ -867,7 +967,8 @@ export default function Matches() {
                     );
                   })}
                 </div>
-              </div>
+                </div>
+              )}
             </div>
           </section>
 
@@ -877,6 +978,8 @@ export default function Matches() {
               description={
                 activeGroup && activeView !== "all"
                   ? `There are no ${activeView} matches in Group ${activeGroup} right now. Try another filter or clear both filters.`
+                  : activeStage !== "all"
+                    ? `There are no ${STAGE_LABELS[activeStage]} matches in this view right now. Try another stage or clear the filters.`
                   : activeGroup
                     ? `There are no matches available in Group ${activeGroup} right now. Try another group or clear the filter.`
                     : activeView === "today"
@@ -887,7 +990,7 @@ export default function Matches() {
               }
               icon={activeView === "completed" ? "📋" : "🧭"}
               actionLabel="Clear filters"
-              onAction={() => updateFilters({ group: "", view: "all", page: 1 })}
+              onAction={() => updateFilters({ group: "", view: "all", stage: "all", page: 1 })}
               tone="empty"
             />
           ) : (
@@ -897,6 +1000,7 @@ export default function Matches() {
                   Showing <span className="text-white font-medium">{matches.length}</span> of{" "}
                   <span className="text-white font-medium">{filteredMatches.length}</span>{" "}
                   {filteredMatches.length === 1 ? "match" : "matches"}
+                  {activeStage !== "all" ? ` in ${STAGE_LABELS[activeStage]}` : ""}
                   {activeGroup ? ` in Group ${activeGroup}` : ""}
                   {activeView !== "all" ? ` for ${activeView}` : ""}.
                 </p>
@@ -937,7 +1041,11 @@ export default function Matches() {
                     statusLabel = `Saved prediction: ${pred.homeScore} – ${pred.awayScore}`;
                   }
 
-                  const cardStatusLabel = `Group ${match.homeTeam.group}${
+                  const stageLabel =
+                    match.tournamentStage === "GROUP_STAGE"
+                      ? `Group ${match.homeTeam.group}`
+                      : STAGE_LABELS[match.tournamentStage];
+                  const cardStatusLabel = `${stageLabel}${
                     statusLabel ? ` • ${statusLabel}` : ""
                   }`;
 

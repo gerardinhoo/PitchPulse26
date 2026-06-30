@@ -48,6 +48,22 @@ export const matchResultSchema = z.object({
   awayScore: z.number().int().min(0, "awayScore must be >= 0"),
 });
 
+export const adminFixtureSchema = z.object({
+  homeTeamId: z.number().int().positive("homeTeamId must be a positive integer"),
+  awayTeamId: z.number().int().positive("awayTeamId must be a positive integer"),
+  stadiumId: z.number().int().positive("stadiumId must be a positive integer"),
+  date: z.string().datetime("date must be a valid ISO datetime"),
+  tournamentStage: z.enum([
+    "GROUP_STAGE",
+    "ROUND_OF_32",
+    "ROUND_OF_16",
+    "QUARTER_FINAL",
+    "SEMI_FINAL",
+    "THIRD_PLACE",
+    "FINAL",
+  ]),
+});
+
 // Reusable pagination query schema
 export const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
