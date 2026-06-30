@@ -7,16 +7,6 @@ generator client {
   output   = "../src/generated/prisma"
 }
 
-enum TournamentStage {
-  GROUP_STAGE
-  ROUND_OF_32
-  ROUND_OF_16
-  QUARTER_FINAL
-  SEMI_FINAL
-  THIRD_PLACE
-  FINAL
-}
-
 model Team {
   id        Int      @id @default(autoincrement())
   name      String
@@ -44,7 +34,6 @@ model Match {
   awayTeamId Int
   stadiumId  Int
   date       DateTime
-  tournamentStage TournamentStage @default(GROUP_STAGE)
   homeScore  Int?
   awayScore  Int?
   updatedAt  DateTime @default(now()) @updatedAt
@@ -57,7 +46,6 @@ model Match {
   stadium  Stadium @relation(fields: [stadiumId], references: [id])
 
   @@index([date])
-  @@index([tournamentStage])
   @@index([homeTeamId])
   @@index([awayTeamId])
 }
