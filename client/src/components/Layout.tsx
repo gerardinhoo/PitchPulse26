@@ -1,6 +1,7 @@
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import VerificationBanner from "./VerificationBanner";
+import InstallBanner from "./InstallBanner";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,6 +10,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         Skip to main content
       </a>
       <Navbar />
+      <InstallBanner />
       <VerificationBanner />
       <main
         id="main-content"

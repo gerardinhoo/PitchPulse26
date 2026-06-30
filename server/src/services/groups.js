@@ -33,6 +33,9 @@ function applyMatch(table, match) {
   const home = table[homeTeamId]
   const away = table[awayTeamId]
 
+  // skip knockout or cross-group fixtures not in this table
+  if (!home || !away) return
+
   home.MP++
   away.MP++
 
@@ -100,11 +103,12 @@ export const getGroupStandings = async (groupName) => {
 
   const matches = await prisma.match.findMany({
     where: {
+      tournamentStage: "GROUP_STAGE",
       OR: [
         { homeTeam: { group: groupName } },
-        { awayTeam: { group: groupName } }
-      ]
-    }
+        { awayTeam: { group: groupName } },
+      ],
+    },
   })
 
   const table = initStandings(teams)
