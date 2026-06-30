@@ -32,7 +32,7 @@ resource "aws_amplify_app" "frontend" {
 
   # SPA rewrites
   custom_rule {
-    source = "</^[^.]+$|\\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json|webp)$)([^.]+$)/>"
+    source = "</^[^.]+$|\\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json|webp|webmanifest)$)([^.]+$)/>"
     status = "200"
     target = "/index.html"
   }
