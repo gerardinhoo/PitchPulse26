@@ -10,7 +10,7 @@ import {
   getFinalResultLabel,
   getKickoffDetailLabel,
   getRoundStatusLabel,
-  TOURNAMENT_ROUND_PROGRESS,
+  getTournamentRoundProgress,
   type TournamentStage,
 } from "../utils/tournamentStage";
 
@@ -168,6 +168,11 @@ export default function Home() {
     return items.slice(0, 4);
   }, [leaders, upcomingMatches, user]);
 
+  const tournamentRoundProgress = useMemo(
+    () => getTournamentRoundProgress(allMatches),
+    [allMatches],
+  );
+
   return (
     <div className="animate-fade-in -mx-4 -mt-8">
       <section
@@ -245,7 +250,7 @@ export default function Home() {
                   Follow each round as the tournament advances.
                 </p>
                 <div className="mt-4 space-y-2">
-                  {TOURNAMENT_ROUND_PROGRESS.map((round) => {
+                  {tournamentRoundProgress.map((round) => {
                     const isActive = round.status === "in_progress";
                     return (
                       <div

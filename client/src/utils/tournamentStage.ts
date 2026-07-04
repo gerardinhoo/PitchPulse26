@@ -30,50 +30,73 @@ export type TournamentRoundProgress = {
   placeholder?: boolean;
 };
 
-/** Static progress card data; can later be driven by API counts/status. */
-export const TOURNAMENT_ROUND_PROGRESS: TournamentRoundProgress[] = [
+type TournamentProgressSourceMatch = {
+  tournamentStage?: TournamentStage;
+  homeScore: number | null;
+  awayScore: number | null;
+};
+
+const TOURNAMENT_ROUND_BLUEPRINT: Array<
+  Pick<TournamentRoundProgress, "stage" | "label" | "fixtureCount">
+> = [
   {
     stage: "ROUND_OF_32",
     label: "Round of 32",
     fixtureCount: 16,
-    status: "in_progress",
   },
   {
     stage: "ROUND_OF_16",
     label: "Round of 16",
     fixtureCount: 8,
-    status: "coming_soon",
-    placeholder: true,
   },
   {
     stage: "QUARTER_FINAL",
     label: "Quarterfinals",
     fixtureCount: 4,
-    status: "coming_soon",
-    placeholder: true,
   },
   {
     stage: "SEMI_FINAL",
     label: "Semifinals",
     fixtureCount: 2,
-    status: "coming_soon",
-    placeholder: true,
   },
   {
     stage: "THIRD_PLACE",
     label: "Third Place",
     fixtureCount: 1,
-    status: "coming_soon",
-    placeholder: true,
   },
   {
     stage: "FINAL",
     label: "Final",
     fixtureCount: 1,
-    status: "coming_soon",
-    placeholder: true,
   },
 ];
+
+function isMatchCompleted(match: TournamentProgressSourceMatch): boolean {
+  return match.homeScore !== null && match.awayScore !== null;
+}
+
+export function getTournamentRoundProgress(
+  matches: TournamentProgressSourceMatch[],
+): TournamentRoundProgress[] {
+  return TOURNAMENT_ROUND_BLUEPRINT.map((round) => {
+    const stageMatches = matches.filter((match) => getMatchStage(match) === round.stage);
+
+    if (stageMatches.length === 0) {
+      return {
+        ...round,
+        status: "coming_soon",
+        placeholder: true,
+      };
+    }
+
+    return {
+      ...round,
+      fixtureCount: stageMatches.length,
+      status: stageMatches.every(isMatchCompleted) ? "completed" : "in_progress",
+      placeholder: false,
+    };
+  });
+}
 
 export function getMatchStage(match: { tournamentStage?: TournamentStage }): TournamentStage {
   return match.tournamentStage ?? "GROUP_STAGE";

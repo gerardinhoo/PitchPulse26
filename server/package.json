@@ -12,6 +12,7 @@
     "dev:docker": "nodemon -L --exec tsx src/index.js",
     "backfill:group-stage": "node prisma/backfill-group-stage-matches.js",
     "import:round-of-32": "tsx prisma/import-round-of-32-fixtures.js",
+    "import:round-of-16": "tsx prisma/import-round-of-16-fixtures.js",
     "sync:official-group-stage": "node prisma/sync-official-group-stage-fixtures.js",
     "cleanup:load-test-users": "node scripts/cleanup-load-test-users.mjs",
     "test": "vitest run",
