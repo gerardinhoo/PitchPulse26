@@ -14,6 +14,7 @@ describe("tournamentStage helpers", () => {
 
   it("detects knockout stages", () => {
     expect(isKnockoutStage("ROUND_OF_32")).toBe(true);
+    expect(isKnockoutStage("ROUND_OF_16")).toBe(true);
     expect(isKnockoutStage("GROUP_STAGE")).toBe(false);
     expect(isKnockoutStage(null)).toBe(false);
   });
@@ -26,6 +27,7 @@ describe("tournamentStage helpers", () => {
 
   it("rejects unknown tournament stages", () => {
     expect(parseTournamentStage("ROUND_OF_32")).toBe("ROUND_OF_32");
+    expect(parseTournamentStage("ROUND_OF_16")).toBe("ROUND_OF_16");
     expect(parseTournamentStage("bogus")).toBeNull();
   });
 });
