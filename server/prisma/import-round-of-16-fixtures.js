@@ -54,7 +54,7 @@ const ROUND_OF_16_FIXTURES = [
   },
   {
     home: "Argentina",
-    away: "Australia",
+    away: "Egypt",
     venue: "Mercedes-Benz Stadium",
     date: "2026-07-07T16:00:00.000Z",
   },
