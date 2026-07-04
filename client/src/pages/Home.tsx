@@ -37,6 +37,14 @@ type ActivityItem = {
   detail: string;
 };
 
+const MOBILE_PROGRESS_STAGES = new Set([
+  "ROUND_OF_32",
+  "ROUND_OF_16",
+  "QUARTER_FINAL",
+  "SEMI_FINAL",
+  "FINAL",
+]);
+
 function getDisplayName(entry: LeaderboardEntry) {
   const name = entry.displayName?.trim();
   if (!name || name.toLowerCase() === "anonymous") {
@@ -172,12 +180,15 @@ export default function Home() {
     () => getTournamentRoundProgress(allMatches),
     [allMatches],
   );
+  const mobileTournamentRoundProgress = useMemo(
+    () => tournamentRoundProgress.filter((round) => MOBILE_PROGRESS_STAGES.has(round.stage)),
+    [tournamentRoundProgress],
+  );
 
   return (
     <div className="animate-fade-in -mx-4 -mt-8">
       <section
-        className="relative flex items-center justify-center text-center"
-        style={{ minHeight: "calc(100vh - 3.5rem)" }}
+        className="relative flex min-h-0 items-center justify-center px-1 py-6 text-center sm:min-h-[calc(100vh-3.5rem)] sm:px-0 sm:py-0"
       >
         <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(180deg,#0b120f_0%,#101915_40%,#0d1511_100%)] sm:hidden" />
         <picture className="absolute inset-0 pointer-events-none hidden sm:block">
@@ -196,11 +207,11 @@ export default function Home() {
 
         <div className="relative z-10 mx-auto max-w-6xl px-3 sm:px-6">
           <div className="lg:grid lg:grid-cols-[1.12fr_0.88fr] lg:items-start lg:gap-6">
-            <div className="rounded-[2rem] border border-white/8 bg-[rgba(7,12,14,0.12)] px-4 py-6 shadow-[0_28px_70px_rgba(0,0,0,0.22)] backdrop-blur-[1px] sm:bg-[rgba(7,12,14,0.16)] sm:px-10 sm:py-10">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-200/90 animate-slide-up sm:text-xs">
+            <div className="rounded-[1.5rem] border border-white/8 bg-[rgba(7,12,14,0.12)] px-4 py-5 shadow-[0_28px_70px_rgba(0,0,0,0.22)] backdrop-blur-[1px] sm:rounded-[2rem] sm:bg-[rgba(7,12,14,0.16)] sm:px-10 sm:py-10">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-emerald-200/90 animate-slide-up sm:mb-4 sm:px-4 sm:py-1.5 sm:text-xs sm:tracking-[0.24em]">
               Knockout Stage Live
             </div>
-            <h1 className="mb-5 animate-slide-up text-4xl font-extrabold leading-[1.02] tracking-tight sm:text-5xl lg:text-[3.35rem] lg:leading-[1.04]">
+            <h1 className="mb-4 animate-slide-up text-3xl font-extrabold leading-[1.02] tracking-tight sm:mb-5 sm:text-5xl lg:text-[3.35rem] lg:leading-[1.04]">
               <span className="block text-white [text-shadow:0_8px_24px_rgba(0,0,0,0.55)]">
                 Predict the World Cup.
               </span>
@@ -209,30 +220,30 @@ export default function Home() {
               </span>
             </h1>
             <div
-              className="mx-auto max-w-2xl rounded-2xl border border-white/10 bg-[rgba(6,10,9,0.42)] px-4 py-4 shadow-[0_18px_40px_rgba(0,0,0,0.24)] backdrop-blur-md sm:px-5 sm:py-5"
+              className="mx-auto max-w-2xl rounded-2xl border border-white/10 bg-[rgba(6,10,9,0.42)] px-4 py-3.5 shadow-[0_18px_40px_rgba(0,0,0,0.24)] backdrop-blur-md sm:px-5 sm:py-5"
               style={{ animationDelay: "100ms" }}
             >
-              <p className="animate-slide-up text-left text-base leading-7 text-white/95 drop-shadow-[0_4px_14px_rgba(0,0,0,0.55)] sm:text-center sm:text-lg sm:leading-8 sm:text-white/90 sm:drop-shadow-[0_6px_18px_rgba(0,0,0,0.42)]">
+              <p className="animate-slide-up text-left text-sm leading-6 text-white/95 drop-shadow-[0_4px_14px_rgba(0,0,0,0.55)] sm:text-center sm:text-lg sm:leading-8 sm:text-white/90 sm:drop-shadow-[0_6px_18px_rgba(0,0,0,0.42)]">
                 Knockout predictions are open. Make your picks before kickoff, keep climbing the leaderboard, and compete for bragging rights.
               </p>
-              <div className="mt-4 flex flex-col gap-2 text-left text-sm text-white/85 sm:items-center sm:text-center">
+              <div className="mt-3 flex flex-col gap-1.5 text-left text-xs text-white/85 sm:mt-4 sm:gap-2 sm:text-sm sm:items-center sm:text-center">
                 <span>✓ Free to play</span>
                 <span>🏆 Top prize: Official World Cup jersey</span>
                 <span>🚫 No betting. No gambling.</span>
               </div>
               <div
-                className="mt-6 flex flex-col items-stretch gap-3 animate-slide-up sm:flex-row sm:items-center sm:justify-center"
+                className="mt-5 flex flex-col items-stretch gap-2.5 animate-slide-up sm:mt-6 sm:gap-3 sm:flex-row sm:items-center sm:justify-center"
                 style={{ animationDelay: "200ms" }}
               >
                 <Link
                   to={user ? "/matches" : "/register"}
-                  className="px-6 py-3 rounded-lg bg-[var(--color-accent)] text-center text-white font-semibold text-lg hover:bg-[var(--color-accent-hover)] transition-colors shadow-lg shadow-emerald-900/30 btn-glow"
+                  className="rounded-lg bg-[var(--color-accent)] px-6 py-3 text-center text-base font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] shadow-lg shadow-emerald-900/30 btn-glow sm:text-lg"
                 >
                   Make My Picks
                 </Link>
                 <Link
                   to="/leaderboard"
-                  className="px-6 py-3 rounded-lg border border-white/24 bg-black/28 text-center text-white font-medium hover:bg-black/38 hover:border-white/38 transition-colors shadow-sm"
+                  className="rounded-lg border border-white/24 bg-black/28 px-6 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-black/38 hover:border-white/38 shadow-sm sm:py-3 sm:text-base"
                 >
                   View Leaderboard
                 </Link>
@@ -240,16 +251,42 @@ export default function Home() {
             </div>
           </div>
 
-            <aside className="mt-6 hidden lg:block lg:mt-0">
-              <div className="rounded-[1.75rem] border border-white/12 bg-[rgba(7,11,10,0.72)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.34)] backdrop-blur-sm">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-200/80">
+            <aside className="mt-4 lg:mt-0">
+              <div className="rounded-[1.35rem] border border-white/12 bg-[rgba(7,11,10,0.72)] p-3 shadow-[0_20px_60px_rgba(0,0,0,0.34)] backdrop-blur-sm sm:p-4 lg:rounded-[1.75rem] lg:p-5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-200/80 sm:text-[11px] sm:tracking-[0.22em]">
                   Tournament Bracket
                 </p>
-                <h2 className="mt-2 text-xl font-bold text-white">Knockout progress</h2>
-                <p className="mt-2 text-sm text-white/65">
+                <h2 className="mt-1.5 text-base font-bold text-white sm:text-lg lg:mt-2 lg:text-xl">Knockout progress</h2>
+                <p className="mt-1 hidden text-sm text-white/65 lg:mt-2 lg:block">
                   Follow each round as the tournament advances.
                 </p>
-                <div className="mt-4 space-y-2">
+                <div className="mt-3 space-y-1.5 lg:hidden">
+                  {mobileTournamentRoundProgress.map((round) => {
+                    const isActive = round.status === "in_progress";
+                    return (
+                      <div
+                        key={round.stage}
+                        className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ${
+                          isActive
+                            ? "border-emerald-400/30 bg-emerald-500/10"
+                            : "border-white/10 bg-white/5"
+                        }`}
+                      >
+                        <p className="text-sm font-semibold text-white">{round.label}</p>
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] ${
+                            isActive
+                              ? "bg-emerald-500/20 text-emerald-200"
+                              : "bg-white/8 text-white/70"
+                          }`}
+                        >
+                          {getRoundStatusLabel(round.status)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-4 hidden space-y-2 lg:block">
                   {tournamentRoundProgress.map((round) => {
                     const isActive = round.status === "in_progress";
                     return (
@@ -293,83 +330,64 @@ export default function Home() {
 
           {(matchesLoaded || latestCompletedMatch || nextKickoffMatch) && (
             <div
-              className="mt-6 mx-auto max-w-3xl animate-slide-up rounded-2xl border border-white/12 bg-[rgba(7,11,10,0.62)] p-4 shadow-[0_20px_60px_rgba(0,0,0,0.34)] backdrop-blur-sm sm:mt-8 sm:p-5"
+              className="mt-4 mx-auto max-w-3xl animate-slide-up rounded-2xl border border-white/12 bg-[rgba(7,11,10,0.62)] p-3.5 shadow-[0_20px_60px_rgba(0,0,0,0.34)] backdrop-blur-sm sm:mt-8 sm:p-5"
               style={{ animationDelay: "260ms" }}
             >
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/80 sm:text-xs sm:tracking-[0.24em]">
                 Today at PitchPulse 26
               </p>
-              <p className="mt-2 text-sm text-white/65">
+              <p className="mt-1.5 text-xs text-white/65 sm:mt-2 sm:text-sm">
                 Follow the latest knockout result and the next kickoff that needs your attention.
               </p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-left">
+              <div className="mt-3 grid gap-2.5 sm:mt-4 sm:gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-white/10 bg-white/5 px-3.5 py-3.5 text-left sm:px-4 sm:py-4">
                   <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-200/75 sm:text-[11px]">
                     Latest Result
                   </p>
                   {latestCompletedMatch ? (
                     <>
-                      <p className="mt-2 text-base font-semibold text-white sm:text-lg">
+                      <p className="mt-2 text-sm font-semibold text-white sm:text-lg">
                         {latestCompletedMatch.homeTeam.name} {latestCompletedMatch.homeScore}–{latestCompletedMatch.awayScore}{" "}
                         {latestCompletedMatch.awayTeam.name}
                       </p>
-                      <p className="mt-1 text-sm text-white/65">
+                      <p className="mt-1 text-xs text-white/65 sm:text-sm">
                         {getFinalResultLabel(latestCompletedMatch)}
                       </p>
                     </>
                   ) : !matchesLoaded ? (
-                    <p className="mt-2 text-sm text-white/65">Loading the latest result…</p>
+                    <p className="mt-2 text-xs text-white/65 sm:text-sm">Loading the latest result…</p>
                   ) : (
-                    <p className="mt-2 text-sm text-white/65">No final score yet.</p>
+                    <p className="mt-2 text-xs text-white/65 sm:text-sm">No final score yet.</p>
                   )}
                 </div>
-                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-left">
+                <div className="rounded-xl border border-white/10 bg-white/5 px-3.5 py-3.5 text-left sm:px-4 sm:py-4">
                   <p className="text-[10px] uppercase tracking-[0.18em] text-sky-200/75 sm:text-[11px]">
                     Next Kickoff
                   </p>
                   {nextKickoffMatch ? (
                     <>
-                      <p className="mt-2 text-base font-semibold text-white sm:text-lg">
+                      <p className="mt-2 text-sm font-semibold text-white sm:text-lg">
                         {nextKickoffMatch.homeTeam.name} vs {nextKickoffMatch.awayTeam.name}
                       </p>
-                      <p className="mt-1 text-sm text-white/65">
+                      <p className="mt-1 text-xs text-white/65 sm:text-sm">
                         {getKickoffDetailLabel(nextKickoffMatch)}
                       </p>
                     </>
                   ) : !matchesLoaded ? (
-                    <p className="mt-2 text-sm text-white/65">Loading the next kickoff…</p>
+                    <p className="mt-2 text-xs text-white/65 sm:text-sm">Loading the next kickoff…</p>
                   ) : (
-                    <p className="mt-2 text-sm text-white/65">All current fixtures have kicked off.</p>
+                    <p className="mt-2 text-xs text-white/65 sm:text-sm">All current fixtures have kicked off.</p>
                   )}
                 </div>
               </div>
               <Link
                 to="/matches"
-                className="mt-4 inline-flex items-center justify-center rounded-lg bg-[var(--color-accent)] px-5 py-2.5 font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
+                className="mt-3 inline-flex items-center justify-center rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)] sm:mt-4 sm:px-5 sm:py-2.5"
               >
                 Open Matches
               </Link>
             </div>
           )}
-        </div>
-      </section>
-
-      <section className="px-6 py-8 sm:py-10">
-        <div className="mx-auto max-w-5xl rounded-2xl border border-emerald-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.14),rgba(6,10,9,0.92))] px-5 py-4 shadow-[0_14px_34px_rgba(0,0,0,0.12)]">
-          <div className="grid grid-cols-2 gap-3 text-center sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-4">
-            <span className="rounded-full border border-emerald-400/20 bg-white/5 px-3 py-2 text-sm font-semibold text-emerald-200 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:text-base">
-              100% Free
-            </span>
-            <span className="rounded-full border border-white/12 bg-white/5 px-3 py-2 text-sm font-semibold text-white/88 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:text-base">
-              No Betting
-            </span>
-            <span className="rounded-full border border-white/12 bg-white/5 px-3 py-2 text-sm font-semibold text-white/88 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:text-base">
-              No Gambling
-            </span>
-            <span className="rounded-full border border-white/12 bg-white/5 px-3 py-2 text-sm font-semibold text-white/88 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:text-base">
-              Friendly Competition
-            </span>
-          </div>
         </div>
       </section>
 
@@ -537,7 +555,7 @@ export default function Home() {
               )}
             </div>
 
-            <div className="card p-5 sm:p-6">
+            <div className="hidden card p-5 sm:p-6 lg:block">
               <p className="text-xs uppercase tracking-[0.2em] text-emerald-300/80">Recent Activity</p>
               <h2 className="mt-2 text-2xl font-bold">Live community snapshot</h2>
               <p className="mt-2 text-sm text-[var(--color-text-muted)]">
