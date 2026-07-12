@@ -178,7 +178,7 @@ export default function Matches() {
       setPageState(null);
       try {
         const [matchesResult, predictionsResult, summaryResult] = await Promise.allSettled([
-          api.get("/matches", { params: { page: 1, limit: 100 } }),
+          api.get("/matches", { params: { page: 1, limit: 150 } }),
           api.get("/predictions/my", { params: { limit: 100, includeMatch: true } }),
           api.get<DashboardSummary>("/predictions/summary"),
         ]);
@@ -1021,11 +1021,37 @@ export default function Matches() {
                 </p>
               </div>
 
+              {activeStage === "SEMI_FINAL" && (
+                <section
+                  className="final-four-header mb-5 rounded-2xl px-5 py-5"
+                  aria-label="Semifinals spotlight"
+                >
+                  <div className="relative z-10 flex items-start gap-4">
+                    <span className="final-four-trophy shrink-0" aria-hidden="true">
+                      🏆
+                    </span>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.22em] text-amber-200/80">
+                        Semifinals
+                      </p>
+                      <h2 className="mt-1 text-xl font-bold text-white sm:text-2xl">
+                        The Final Four
+                      </h2>
+                      <p className="mt-1.5 text-sm text-white/75">
+                        Two matches. One place in the World Cup Final.
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              )}
+
               <div className="space-y-3 stagger-children">
                 {matches.map((match) => {
                   const pred = predictions[match.id];
                   const hasResult = match.homeScore !== null && match.awayScore !== null;
                   const isLocked = isMatchLocked(match);
+                  const matchStage = getMatchStage(match);
+                  const isSemifinal = matchStage === "SEMI_FINAL";
 
                   let statusLabel: string | undefined;
                   let statusColor = "text-emerald-400";
@@ -1054,9 +1080,9 @@ export default function Matches() {
                   }
 
                   const stageLabel =
-                    getMatchStage(match) === "GROUP_STAGE"
+                    matchStage === "GROUP_STAGE"
                       ? `Group ${match.homeTeam.group}`
-                      : STAGE_LABELS[getMatchStage(match)];
+                      : STAGE_LABELS[matchStage];
                   const cardStatusLabel = `${stageLabel}${
                     statusLabel ? ` • ${statusLabel}` : ""
                   }`;
@@ -1073,6 +1099,7 @@ export default function Matches() {
                       awayScore={match.awayScore}
                       statusLabel={cardStatusLabel}
                       statusColor={statusColor}
+                      featured={isSemifinal}
                     >
                       {!isLocked && isVerified && (
                         <ScoreInput

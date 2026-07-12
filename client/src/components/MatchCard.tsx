@@ -12,6 +12,8 @@ type Props = {
   children?: React.ReactNode; // slot for ScoreInput or prediction info
   statusLabel?: string;
   statusColor?: string;
+  /** Elevated styling for high-stakes knockout fixtures (e.g. Semifinals). */
+  featured?: boolean;
 };
 
 export default function MatchCard({
@@ -25,11 +27,16 @@ export default function MatchCard({
   children,
   statusLabel,
   statusColor = "text-[var(--color-text-muted)]",
+  featured = false,
 }: Props) {
   const hasResult = homeScore !== null && awayScore !== null;
 
   return (
-    <article className="card flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <article
+      className={`card flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between ${
+        featured ? "match-card-featured" : ""
+      }`}
+    >
       {/* Left: teams + date */}
       <div className="min-w-0 flex-1">
         <p className="font-semibold text-sm sm:text-base flex items-center gap-1.5 flex-wrap leading-snug">
@@ -41,7 +48,14 @@ export default function MatchCard({
           {formatMatchDateTime(date)}
         </p>
         {statusLabel && (
-          <p aria-live="polite" className={`text-xs mt-1 ${statusColor}`}>{statusLabel}</p>
+          <p
+            aria-live="polite"
+            className={`text-xs mt-1 ${statusColor} ${
+              featured ? "stage-label-pulse" : ""
+            }`}
+          >
+            {statusLabel}
+          </p>
         )}
       </div>
 

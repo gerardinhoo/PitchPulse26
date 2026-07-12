@@ -9,6 +9,7 @@ import { formatMatchDateTime } from "../utils/dateTime";
 import {
   getFinalResultLabel,
   getKickoffDetailLabel,
+  getMatchStage,
   getRoundStatusLabel,
   getTournamentRoundProgress,
   type TournamentStage,
@@ -76,7 +77,7 @@ export default function Home() {
     async function loadHomeData() {
       try {
         const [matchesResult, leaderboardResult] = await Promise.allSettled([
-          api.get("/matches", { params: { page: 1, limit: 100 } }),
+          api.get("/matches", { params: { page: 1, limit: 150 } }),
           api.get("/leaderboard", { params: { page: 1, limit: 5 } }),
         ]);
 
@@ -184,6 +185,13 @@ export default function Home() {
     () => tournamentRoundProgress.filter((round) => MOBILE_PROGRESS_STAGES.has(round.stage)),
     [tournamentRoundProgress],
   );
+  const semifinalMatches = useMemo(
+    () =>
+      allMatches
+        .filter((match) => getMatchStage(match) === "SEMI_FINAL")
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+    [allMatches],
+  );
 
   return (
     <div className="animate-fade-in -mx-4 -mt-8">
@@ -209,7 +217,7 @@ export default function Home() {
           <div className="lg:grid lg:grid-cols-[1.12fr_0.88fr] lg:items-start lg:gap-6">
             <div className="rounded-[1.5rem] border border-white/8 bg-[rgba(7,12,14,0.12)] px-4 py-5 shadow-[0_28px_70px_rgba(0,0,0,0.22)] backdrop-blur-[1px] sm:rounded-[2rem] sm:bg-[rgba(7,12,14,0.16)] sm:px-10 sm:py-10">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-emerald-200/90 animate-slide-up sm:mb-4 sm:px-4 sm:py-1.5 sm:text-xs sm:tracking-[0.24em]">
-              Knockout Stage Live
+              Semifinals Live
             </div>
             <h1 className="mb-4 animate-slide-up text-3xl font-extrabold leading-[1.02] tracking-tight sm:mb-5 sm:text-5xl lg:text-[3.35rem] lg:leading-[1.04]">
               <span className="block text-white [text-shadow:0_8px_24px_rgba(0,0,0,0.55)]">
@@ -327,6 +335,32 @@ export default function Home() {
               </div>
             </aside>
           </div>
+
+          {semifinalMatches.length > 0 && (
+            <div
+              className="mt-4 mx-auto max-w-3xl animate-slide-up rounded-2xl border border-amber-400/20 bg-[rgba(7,11,10,0.62)] p-3.5 shadow-[0_20px_60px_rgba(0,0,0,0.34)] backdrop-blur-sm sm:mt-6 sm:p-4"
+              style={{ animationDelay: "220ms" }}
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-200/80">
+                Road to the Final
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {semifinalMatches.map((match) => (
+                  <div
+                    key={match.id}
+                    className="rounded-xl border border-emerald-400/20 bg-emerald-500/8 px-3.5 py-3 text-left"
+                  >
+                    <p className="text-sm font-semibold text-white">
+                      {match.homeTeam.name} vs {match.awayTeam.name}
+                    </p>
+                    <p className="mt-1 text-xs text-white/65">
+                      {getKickoffDetailLabel(match)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {(matchesLoaded || latestCompletedMatch || nextKickoffMatch) && (
             <div
