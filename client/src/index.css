@@ -150,6 +150,102 @@ input[type="number"] {
   box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
 }
 
+/* Semifinal "Final Four" featured header */
+@keyframes final-four-glow {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes stage-label-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
+
+.final-four-header {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  background:
+    radial-gradient(ellipse 70% 80% at 12% 20%, rgba(250, 204, 21, 0.12), transparent 55%),
+    radial-gradient(ellipse 60% 70% at 88% 30%, rgba(16, 185, 129, 0.18), transparent 50%),
+    linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(6, 10, 9, 0.94));
+  animation: slide-up 0.45s ease-out;
+}
+
+.final-four-header::before {
+  content: "";
+  position: absolute;
+  inset: -40% auto auto 55%;
+  width: 14rem;
+  height: 14rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.22), transparent 68%);
+  pointer-events: none;
+  animation: final-four-glow 4.5s ease-in-out infinite;
+}
+
+.final-four-trophy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(250, 204, 21, 0.35);
+  background: radial-gradient(circle at 40% 35%, rgba(250, 204, 21, 0.28), rgba(16, 185, 129, 0.12));
+  box-shadow: 0 0 24px rgba(250, 204, 21, 0.18);
+  color: #fde68a;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.match-card-featured {
+  border-color: rgba(16, 185, 129, 0.35);
+  background:
+    linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(17, 24, 39, 0.96) 42%),
+    var(--color-card);
+  box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.08), 0 8px 28px rgba(0, 0, 0, 0.22);
+}
+
+.match-card-featured:hover {
+  border-color: rgba(16, 185, 129, 0.55);
+  box-shadow:
+    0 0 0 1px rgba(250, 204, 21, 0.18),
+    0 0 28px rgba(16, 185, 129, 0.16),
+    0 10px 28px rgba(0, 0, 0, 0.28);
+}
+
+.stage-label-pulse {
+  animation: stage-label-pulse 2.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-score-pop,
+  .animate-success-pulse,
+  .stagger-children > *,
+  .final-four-header,
+  .final-four-header::before,
+  .stage-label-pulse {
+    animation: none !important;
+  }
+
+  .card:hover {
+    transform: none;
+  }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

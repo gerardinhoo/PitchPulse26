@@ -51,7 +51,8 @@ export const matchResultSchema = z.object({
 // Reusable pagination query schema
 export const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
+  // WC2026 has 104 fixtures; allow enough headroom for the full knockout tree.
+  limit: z.coerce.number().int().min(1).max(150).default(20),
 });
 
 /**

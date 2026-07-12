@@ -25,8 +25,8 @@ export default function AdminResults() {
     const fetchMatches = async () => {
       try {
         // Admins need the full list to split into Pending/Completed;
-        // request the server max so no matches get hidden by pagination.
-        const res = await api.get("/matches", { params: { limit: 100 } });
+        // request enough to cover the full WC2026 schedule (104 fixtures).
+        const res = await api.get("/matches", { params: { limit: 150 } });
         setMatches(res.data.data);
 
         const existing: Record<number, ScoreEntry> = {};

@@ -123,7 +123,7 @@ describe("validation schemas", () => {
   it("rejects invalid pagination query input", () => {
     const result = paginationSchema.safeParse({
       page: "0",
-      limit: "101",
+      limit: "151",
     });
 
     expect(result.success).toBe(false);
