@@ -2,7 +2,9 @@
   "scripts": {
     "import:round-of-16": "npm --prefix server run import:round-of-16",
     "import:quarter-final": "npm --prefix server run import:quarter-final",
-    "import:semi-final": "npm --prefix server run import:semi-final"
+    "import:semi-final": "npm --prefix server run import:semi-final",
+    "import:third-place": "npm --prefix server run import:third-place",
+    "import:final": "npm --prefix server run import:final"
   },
   "devDependencies": {
     "@smithy/config-resolver": "^4.5.3",

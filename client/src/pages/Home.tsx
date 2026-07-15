@@ -7,11 +7,14 @@ import heroBgDesktop from "../assets/custom-trophy-bg-1600.webp";
 import heroBgFallback from "../assets/custom-trophy-bg.jpg";
 import { formatMatchDateTime } from "../utils/dateTime";
 import {
+  getCountdownToKickoff,
   getFinalResultLabel,
   getKickoffDetailLabel,
   getMatchStage,
   getRoundStatusLabel,
   getTournamentRoundProgress,
+  hasStageFixtures,
+  isStageCompleted,
   type TournamentStage,
 } from "../utils/tournamentStage";
 
@@ -43,6 +46,7 @@ const MOBILE_PROGRESS_STAGES = new Set([
   "ROUND_OF_16",
   "QUARTER_FINAL",
   "SEMI_FINAL",
+  "THIRD_PLACE",
   "FINAL",
 ]);
 
@@ -60,6 +64,80 @@ function PreviewTeam({ name, code }: { name: string; code?: string | null }) {
       <Flag code={code} size={18} className="shrink-0 rounded-sm" />
       <span>{name}</span>
     </span>
+  );
+}
+
+function ProgressRoundRow({
+  round,
+  condensed = false,
+}: {
+  round: ReturnType<typeof getTournamentRoundProgress>[number];
+  condensed?: boolean;
+}) {
+  const isActive = round.status === "in_progress";
+  const isFinalRound = round.stage === "FINAL";
+  const emphasize = isActive || isFinalRound;
+
+  if (condensed) {
+    return (
+      <div
+        className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ${
+          isFinalRound
+            ? "progress-round-final"
+            : isActive
+              ? "border-emerald-400/30 bg-emerald-500/10"
+              : "border-white/10 bg-white/5"
+        }`}
+      >
+        <p className="text-sm font-semibold text-white">{round.label}</p>
+        <span
+          className={`progress-round-badge shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] ${
+            emphasize
+              ? isFinalRound
+                ? "bg-amber-500/20 text-amber-200"
+                : "bg-emerald-500/20 text-emerald-200"
+              : "bg-white/8 text-white/70"
+          }`}
+        >
+          {getRoundStatusLabel(round.status)}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`rounded-xl border px-4 py-3 ${
+        isFinalRound
+          ? "progress-round-final"
+          : isActive
+            ? "border-emerald-400/30 bg-emerald-500/10"
+            : "border-white/10 bg-white/5"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-semibold text-white">{round.label}</p>
+          <p className="mt-1 text-xs text-white/60">
+            {round.fixtureCount} fixture{round.fixtureCount === 1 ? "" : "s"}
+          </p>
+        </div>
+        <span
+          className={`progress-round-badge shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${
+            emphasize
+              ? isFinalRound
+                ? "bg-amber-500/20 text-amber-200"
+                : "bg-emerald-500/20 text-emerald-200"
+              : "bg-white/8 text-white/55"
+          }`}
+        >
+          {getRoundStatusLabel(round.status)}
+        </span>
+      </div>
+      {round.placeholder && (
+        <p className="mt-2 text-xs text-white/50">Fixtures unlock as winners are confirmed.</p>
+      )}
+    </div>
   );
 }
 
@@ -114,7 +192,7 @@ export default function Home() {
   useEffect(() => {
     const intervalId = window.setInterval(() => {
       setCurrentTimeMs(Date.now());
-    }, 60_000);
+    }, 30_000);
 
     return () => window.clearInterval(intervalId);
   }, []);
@@ -192,6 +270,39 @@ export default function Home() {
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     [allMatches],
   );
+  const finalMatch = useMemo(
+    () =>
+      allMatches
+        .filter((match) => getMatchStage(match) === "FINAL")
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0] ?? null,
+    [allMatches],
+  );
+  const thirdPlaceMatch = useMemo(
+    () =>
+      allMatches
+        .filter((match) => getMatchStage(match) === "THIRD_PLACE")
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0] ?? null,
+    [allMatches],
+  );
+
+  const finalComplete = isStageCompleted(allMatches, "FINAL");
+  const hasFinalFixtures = hasStageFixtures(allMatches, "FINAL");
+  const showChampionHero = finalComplete;
+  const showFinalHero = hasFinalFixtures && !finalComplete;
+  const showSemifinalRoad = semifinalMatches.length > 0 && !hasFinalFixtures;
+  const championName = leaders[0] ? getDisplayName(leaders[0]) : null;
+  const finalCountdown =
+    finalMatch && showFinalHero
+      ? getCountdownToKickoff(finalMatch.date, currentTimeMs)
+      : null;
+
+  const heroBadge = showChampionHero
+    ? "PitchPulse 26 Champion"
+    : showFinalHero
+      ? "World Cup Final"
+      : hasStageFixtures(allMatches, "SEMI_FINAL") && !isStageCompleted(allMatches, "SEMI_FINAL")
+        ? "Semifinals Live"
+        : "PitchPulse 26";
 
   return (
     <div className="animate-fade-in -mx-4 -mt-8">
@@ -216,127 +327,200 @@ export default function Home() {
         <div className="relative z-10 mx-auto max-w-6xl px-3 sm:px-6">
           <div className="lg:grid lg:grid-cols-[1.12fr_0.88fr] lg:items-start lg:gap-6">
             <div className="rounded-[1.5rem] border border-white/8 bg-[rgba(7,12,14,0.12)] px-4 py-5 shadow-[0_28px_70px_rgba(0,0,0,0.22)] backdrop-blur-[1px] sm:rounded-[2rem] sm:bg-[rgba(7,12,14,0.16)] sm:px-10 sm:py-10">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-emerald-200/90 animate-slide-up sm:mb-4 sm:px-4 sm:py-1.5 sm:text-xs sm:tracking-[0.24em]">
-              Semifinals Live
-            </div>
-            <h1 className="mb-4 animate-slide-up text-3xl font-extrabold leading-[1.02] tracking-tight sm:mb-5 sm:text-5xl lg:text-[3.35rem] lg:leading-[1.04]">
-              <span className="block text-white [text-shadow:0_8px_24px_rgba(0,0,0,0.55)]">
-                Predict the World Cup.
-              </span>
-              <span className="mt-1 block bg-gradient-to-r from-emerald-300 via-emerald-200 to-amber-300 bg-clip-text text-transparent [text-shadow:0_10px_28px_rgba(0,0,0,0.35)]">
-                Win a World Cup jersey.
-              </span>
-            </h1>
-            <div
-              className="mx-auto max-w-2xl rounded-2xl border border-white/10 bg-[rgba(6,10,9,0.42)] px-4 py-3.5 shadow-[0_18px_40px_rgba(0,0,0,0.24)] backdrop-blur-md sm:px-5 sm:py-5"
-              style={{ animationDelay: "100ms" }}
-            >
-              <p className="animate-slide-up text-left text-sm leading-6 text-white/95 drop-shadow-[0_4px_14px_rgba(0,0,0,0.55)] sm:text-center sm:text-lg sm:leading-8 sm:text-white/90 sm:drop-shadow-[0_6px_18px_rgba(0,0,0,0.42)]">
-                Knockout predictions are open. Make your picks before kickoff, keep climbing the leaderboard, and compete for bragging rights.
-              </p>
-              <div className="mt-3 flex flex-col gap-1.5 text-left text-xs text-white/85 sm:mt-4 sm:gap-2 sm:text-sm sm:items-center sm:text-center">
-                <span>✓ Free to play</span>
-                <span>🏆 Top prize: Official World Cup jersey</span>
-                <span>🚫 No betting. No gambling.</span>
-              </div>
               <div
-                className="mt-5 flex flex-col items-stretch gap-2.5 animate-slide-up sm:mt-6 sm:gap-3 sm:flex-row sm:items-center sm:justify-center"
-                style={{ animationDelay: "200ms" }}
+                className={`mb-3 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] animate-slide-up sm:mb-4 sm:px-4 sm:py-1.5 sm:text-xs sm:tracking-[0.24em] ${
+                  showFinalHero || showChampionHero
+                    ? "border-amber-400/35 bg-amber-500/15 text-amber-100"
+                    : "border-white/15 bg-black/30 text-emerald-200/90"
+                }`}
               >
-                <Link
-                  to={user ? "/matches" : "/register"}
-                  className="rounded-lg bg-[var(--color-accent)] px-6 py-3 text-center text-base font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] shadow-lg shadow-emerald-900/30 btn-glow sm:text-lg"
-                >
-                  Make My Picks
-                </Link>
-                <Link
-                  to="/leaderboard"
-                  className="rounded-lg border border-white/24 bg-black/28 px-6 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-black/38 hover:border-white/38 shadow-sm sm:py-3 sm:text-base"
-                >
-                  View Leaderboard
-                </Link>
+                {heroBadge}
               </div>
+
+              {showChampionHero ? (
+                <>
+                  <h1 className="mb-3 animate-slide-up text-3xl font-extrabold leading-[1.02] tracking-tight sm:mb-4 sm:text-5xl lg:text-[3.35rem] lg:leading-[1.04]">
+                    <span className="block text-white [text-shadow:0_8px_24px_rgba(0,0,0,0.55)]">
+                      PitchPulse 26 Champion
+                    </span>
+                    <span className="mt-1 block bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 bg-clip-text text-transparent [text-shadow:0_10px_28px_rgba(0,0,0,0.35)]">
+                      {championName
+                        ? `Congratulations to ${championName}.`
+                        : "The tournament is complete."}
+                    </span>
+                  </h1>
+                  <div
+                    className="mx-auto max-w-2xl rounded-2xl border border-amber-400/20 bg-[rgba(6,10,9,0.42)] px-4 py-3.5 shadow-[0_18px_40px_rgba(0,0,0,0.24)] backdrop-blur-md sm:px-5 sm:py-5"
+                    style={{ animationDelay: "100ms" }}
+                  >
+                    <p className="animate-slide-up text-left text-sm leading-6 text-white/95 drop-shadow-[0_4px_14px_rgba(0,0,0,0.55)] sm:text-center sm:text-lg sm:leading-8 sm:text-white/90">
+                      Thank you to everyone who played, shared feedback, and supported PitchPulse 26
+                      throughout the tournament.
+                    </p>
+                    <div
+                      className="mt-5 flex flex-col items-stretch gap-2.5 animate-slide-up sm:mt-6 sm:flex-row sm:items-center sm:justify-center"
+                      style={{ animationDelay: "200ms" }}
+                    >
+                      <Link
+                        to="/leaderboard"
+                        className="rounded-lg bg-[var(--color-accent)] px-6 py-3 text-center text-base font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] shadow-lg shadow-emerald-900/30 btn-glow sm:text-lg"
+                      >
+                        View Final Standings
+                      </Link>
+                    </div>
+                  </div>
+                </>
+              ) : showFinalHero ? (
+                <>
+                  <h1 className="mb-3 animate-slide-up text-3xl font-extrabold leading-[1.02] tracking-tight sm:mb-4 sm:text-5xl lg:text-[3.35rem] lg:leading-[1.04]">
+                    <span className="block text-white [text-shadow:0_8px_24px_rgba(0,0,0,0.55)]">
+                      The World Cup{" "}
+                      <span className="bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 bg-clip-text text-transparent">
+                        Final
+                      </span>
+                    </span>
+                    <span className="mt-1 block text-lg font-semibold text-emerald-200/95 sm:text-2xl sm:font-bold [text-shadow:0_6px_18px_rgba(0,0,0,0.45)]">
+                      One match. One champion.
+                    </span>
+                  </h1>
+                  <div
+                    className="mx-auto max-w-2xl rounded-2xl border border-amber-400/20 bg-[rgba(6,10,9,0.42)] px-4 py-3.5 shadow-[0_18px_40px_rgba(0,0,0,0.24)] backdrop-blur-md sm:px-5 sm:py-5"
+                    style={{ animationDelay: "100ms" }}
+                  >
+                    <p className="animate-slide-up text-left text-sm leading-6 text-white/95 drop-shadow-[0_4px_14px_rgba(0,0,0,0.55)] sm:text-center sm:text-base sm:leading-7 sm:text-white/90">
+                      Make your final prediction before kickoff and see who finishes at the top of
+                      the PitchPulse 26 leaderboard.
+                    </p>
+
+                    {finalMatch && (
+                      <div className="mt-4 rounded-xl border border-amber-400/25 bg-amber-500/8 px-3.5 py-3 text-left sm:text-center">
+                        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-semibold text-white sm:justify-center sm:text-base">
+                          <PreviewTeam
+                            name={finalMatch.homeTeam.name}
+                            code={finalMatch.homeTeam.code}
+                          />
+                          <span className="text-white/50">vs</span>
+                          <PreviewTeam
+                            name={finalMatch.awayTeam.name}
+                            code={finalMatch.awayTeam.code}
+                          />
+                        </p>
+                        <p className="mt-1.5 text-xs text-white/70 sm:text-sm">
+                          {formatMatchDateTime(finalMatch.date)}
+                          {finalCountdown ? (
+                            <span className="ml-2 text-amber-200/90">· {finalCountdown}</span>
+                          ) : null}
+                        </p>
+                      </div>
+                    )}
+
+                    <div
+                      className="mt-5 flex flex-col items-stretch gap-2.5 animate-slide-up sm:mt-6 sm:gap-3 sm:flex-row sm:items-center sm:justify-center"
+                      style={{ animationDelay: "200ms" }}
+                    >
+                      <Link
+                        to={user ? "/matches?stage=FINAL" : "/register"}
+                        className="w-full rounded-lg bg-[var(--color-accent)] px-6 py-3 text-center text-base font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] shadow-lg shadow-emerald-900/30 btn-glow sm:w-auto sm:text-lg"
+                      >
+                        Make My Final Pick
+                      </Link>
+                      <Link
+                        to="/leaderboard"
+                        className="rounded-lg border border-white/24 bg-black/28 px-6 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-black/38 hover:border-white/38 shadow-sm sm:py-3 sm:text-base"
+                      >
+                        View Leaderboard
+                      </Link>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h1 className="mb-4 animate-slide-up text-3xl font-extrabold leading-[1.02] tracking-tight sm:mb-5 sm:text-5xl lg:text-[3.35rem] lg:leading-[1.04]">
+                    <span className="block text-white [text-shadow:0_8px_24px_rgba(0,0,0,0.55)]">
+                      Predict the World Cup.
+                    </span>
+                    <span className="mt-1 block bg-gradient-to-r from-emerald-300 via-emerald-200 to-amber-300 bg-clip-text text-transparent [text-shadow:0_10px_28px_rgba(0,0,0,0.35)]">
+                      Win a World Cup jersey.
+                    </span>
+                  </h1>
+                  <div
+                    className="mx-auto max-w-2xl rounded-2xl border border-white/10 bg-[rgba(6,10,9,0.42)] px-4 py-3.5 shadow-[0_18px_40px_rgba(0,0,0,0.24)] backdrop-blur-md sm:px-5 sm:py-5"
+                    style={{ animationDelay: "100ms" }}
+                  >
+                    <p className="animate-slide-up text-left text-sm leading-6 text-white/95 drop-shadow-[0_4px_14px_rgba(0,0,0,0.55)] sm:text-center sm:text-lg sm:leading-8 sm:text-white/90 sm:drop-shadow-[0_6px_18px_rgba(0,0,0,0.42)]">
+                      Knockout predictions are open. Make your picks before kickoff, keep climbing
+                      the leaderboard, and compete for bragging rights.
+                    </p>
+                    <div className="mt-3 flex flex-col gap-1.5 text-left text-xs text-white/85 sm:mt-4 sm:gap-2 sm:text-sm sm:items-center sm:text-center">
+                      <span>✓ Free to play</span>
+                      <span>🏆 Top prize: Official World Cup jersey</span>
+                      <span>🚫 No betting. No gambling.</span>
+                    </div>
+                    <div
+                      className="mt-5 flex flex-col items-stretch gap-2.5 animate-slide-up sm:mt-6 sm:gap-3 sm:flex-row sm:items-center sm:justify-center"
+                      style={{ animationDelay: "200ms" }}
+                    >
+                      <Link
+                        to={user ? "/matches" : "/register"}
+                        className="rounded-lg bg-[var(--color-accent)] px-6 py-3 text-center text-base font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] shadow-lg shadow-emerald-900/30 btn-glow sm:text-lg"
+                      >
+                        Make My Picks
+                      </Link>
+                      <Link
+                        to="/leaderboard"
+                        className="rounded-lg border border-white/24 bg-black/28 px-6 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-black/38 hover:border-white/38 shadow-sm sm:py-3 sm:text-base"
+                      >
+                        View Leaderboard
+                      </Link>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-          </div>
 
             <aside className="mt-4 lg:mt-0">
               <div className="rounded-[1.35rem] border border-white/12 bg-[rgba(7,11,10,0.72)] p-3 shadow-[0_20px_60px_rgba(0,0,0,0.34)] backdrop-blur-sm sm:p-4 lg:rounded-[1.75rem] lg:p-5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-200/80 sm:text-[11px] sm:tracking-[0.22em]">
                   Tournament Bracket
                 </p>
-                <h2 className="mt-1.5 text-base font-bold text-white sm:text-lg lg:mt-2 lg:text-xl">Knockout progress</h2>
+                <h2 className="mt-1.5 text-base font-bold text-white sm:text-lg lg:mt-2 lg:text-xl">
+                  Knockout progress
+                </h2>
                 <p className="mt-1 hidden text-sm text-white/65 lg:mt-2 lg:block">
                   Follow each round as the tournament advances.
                 </p>
                 <div className="mt-3 space-y-1.5 lg:hidden">
-                  {mobileTournamentRoundProgress.map((round) => {
-                    const isActive = round.status === "in_progress";
-                    return (
-                      <div
-                        key={round.stage}
-                        className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ${
-                          isActive
-                            ? "border-emerald-400/30 bg-emerald-500/10"
-                            : "border-white/10 bg-white/5"
-                        }`}
-                      >
-                        <p className="text-sm font-semibold text-white">{round.label}</p>
-                        <span
-                          className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] ${
-                            isActive
-                              ? "bg-emerald-500/20 text-emerald-200"
-                              : "bg-white/8 text-white/70"
-                          }`}
-                        >
-                          {getRoundStatusLabel(round.status)}
-                        </span>
-                      </div>
-                    );
-                  })}
+                  {mobileTournamentRoundProgress.map((round) => (
+                    <ProgressRoundRow key={round.stage} round={round} condensed />
+                  ))}
                 </div>
                 <div className="mt-4 hidden space-y-2 lg:block">
-                  {tournamentRoundProgress.map((round) => {
-                    const isActive = round.status === "in_progress";
-                    return (
-                      <div
-                        key={round.stage}
-                        className={`rounded-xl border px-4 py-3 ${
-                          isActive
-                            ? "border-emerald-400/30 bg-emerald-500/10"
-                            : "border-white/10 bg-white/5"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="font-semibold text-white">{round.label}</p>
-                            <p className="mt-1 text-xs text-white/60">
-                              {round.fixtureCount} fixture{round.fixtureCount === 1 ? "" : "s"}
-                            </p>
-                          </div>
-                          <span
-                            className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${
-                              isActive
-                                ? "bg-emerald-500/20 text-emerald-200"
-                                : "bg-white/8 text-white/55"
-                            }`}
-                          >
-                            {getRoundStatusLabel(round.status)}
-                          </span>
-                        </div>
-                        {round.placeholder && (
-                          <p className="mt-2 text-xs text-white/50">
-                            Fixtures unlock as winners are confirmed.
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
+                  {tournamentRoundProgress.map((round) => (
+                    <ProgressRoundRow key={round.stage} round={round} />
+                  ))}
                 </div>
               </div>
             </aside>
           </div>
 
-          {semifinalMatches.length > 0 && (
+          {showFinalHero && thirdPlaceMatch && (
+            <div
+              className="mt-4 mx-auto max-w-3xl animate-slide-up rounded-2xl border border-slate-400/20 bg-[rgba(7,11,10,0.55)] p-3.5 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-sm sm:mt-5 sm:p-4"
+              style={{ animationDelay: "200ms" }}
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-300/80">
+                Third Place
+              </p>
+              <p className="mt-2 text-sm font-semibold text-white">
+                {thirdPlaceMatch.homeTeam.name} vs {thirdPlaceMatch.awayTeam.name}
+              </p>
+              <p className="mt-1 text-xs text-white/65">
+                {getKickoffDetailLabel(thirdPlaceMatch)}
+              </p>
+            </div>
+          )}
+
+          {showSemifinalRoad && (
             <div
               className="mt-4 mx-auto max-w-3xl animate-slide-up rounded-2xl border border-amber-400/20 bg-[rgba(7,11,10,0.62)] p-3.5 shadow-[0_20px_60px_rgba(0,0,0,0.34)] backdrop-blur-sm sm:mt-6 sm:p-4"
               style={{ animationDelay: "220ms" }}
@@ -362,7 +546,7 @@ export default function Home() {
             </div>
           )}
 
-          {(matchesLoaded || latestCompletedMatch || nextKickoffMatch) && (
+          {(matchesLoaded || latestCompletedMatch || nextKickoffMatch) && !showChampionHero && (
             <div
               className="mt-4 mx-auto max-w-3xl animate-slide-up rounded-2xl border border-white/12 bg-[rgba(7,11,10,0.62)] p-3.5 shadow-[0_20px_60px_rgba(0,0,0,0.34)] backdrop-blur-sm sm:mt-8 sm:p-5"
               style={{ animationDelay: "260ms" }}
@@ -381,8 +565,8 @@ export default function Home() {
                   {latestCompletedMatch ? (
                     <>
                       <p className="mt-2 text-sm font-semibold text-white sm:text-lg">
-                        {latestCompletedMatch.homeTeam.name} {latestCompletedMatch.homeScore}–{latestCompletedMatch.awayScore}{" "}
-                        {latestCompletedMatch.awayTeam.name}
+                        {latestCompletedMatch.homeTeam.name} {latestCompletedMatch.homeScore}–
+                        {latestCompletedMatch.awayScore} {latestCompletedMatch.awayTeam.name}
                       </p>
                       <p className="mt-1 text-xs text-white/65 sm:text-sm">
                         {getFinalResultLabel(latestCompletedMatch)}
@@ -410,7 +594,9 @@ export default function Home() {
                   ) : !matchesLoaded ? (
                     <p className="mt-2 text-xs text-white/65 sm:text-sm">Loading the next kickoff…</p>
                   ) : (
-                    <p className="mt-2 text-xs text-white/65 sm:text-sm">All current fixtures have kicked off.</p>
+                    <p className="mt-2 text-xs text-white/65 sm:text-sm">
+                      All current fixtures have kicked off.
+                    </p>
                   )}
                 </div>
               </div>

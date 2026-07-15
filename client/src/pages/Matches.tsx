@@ -1021,6 +1021,30 @@ export default function Matches() {
                 </p>
               </div>
 
+              {activeStage === "FINAL" && (
+                <section
+                  className="final-match-header mb-5 rounded-2xl px-5 py-5"
+                  aria-label="World Cup Final spotlight"
+                >
+                  <div className="relative z-10 flex items-start gap-4">
+                    <span className="final-four-trophy shrink-0" aria-hidden="true">
+                      🏆
+                    </span>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.22em] text-amber-200/80">
+                        World Cup Final
+                      </p>
+                      <h2 className="mt-1 text-xl font-bold text-white sm:text-2xl">
+                        One match. One champion.
+                      </h2>
+                      <p className="mt-1.5 text-sm text-white/75">
+                        Make your final prediction before kickoff.
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              )}
+
               {activeStage === "SEMI_FINAL" && (
                 <section
                   className="final-four-header mb-5 rounded-2xl px-5 py-5"
@@ -1045,6 +1069,23 @@ export default function Matches() {
                 </section>
               )}
 
+              {activeStage === "THIRD_PLACE" && (
+                <section
+                  className="mb-5 rounded-2xl border border-slate-400/25 bg-slate-500/8 px-5 py-4"
+                  aria-label="Third Place spotlight"
+                >
+                  <p className="text-xs uppercase tracking-[0.22em] text-slate-300/80">
+                    Third Place
+                  </p>
+                  <h2 className="mt-1 text-lg font-bold text-white sm:text-xl">
+                    Bronze medal match
+                  </h2>
+                  <p className="mt-1 text-sm text-white/70">
+                    Predict the third-place playoff before kickoff.
+                  </p>
+                </section>
+              )}
+
               <div className="space-y-3 stagger-children">
                 {matches.map((match) => {
                   const pred = predictions[match.id];
@@ -1052,6 +1093,8 @@ export default function Matches() {
                   const isLocked = isMatchLocked(match);
                   const matchStage = getMatchStage(match);
                   const isSemifinal = matchStage === "SEMI_FINAL";
+                  const isFinal = matchStage === "FINAL";
+                  const isThirdPlace = matchStage === "THIRD_PLACE";
 
                   let statusLabel: string | undefined;
                   let statusColor = "text-emerald-400";
@@ -1100,6 +1143,8 @@ export default function Matches() {
                       statusLabel={cardStatusLabel}
                       statusColor={statusColor}
                       featured={isSemifinal}
+                      isFinal={isFinal}
+                      isThirdPlace={isThirdPlace}
                     >
                       {!isLocked && isVerified && (
                         <ScoreInput

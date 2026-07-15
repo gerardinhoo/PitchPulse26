@@ -29,22 +29,26 @@ describe("Leaderboard", () => {
   });
 
   it("shows a retryable error state when the leaderboard request fails", async () => {
-    let requestCount = 0;
-    mockGet.mockImplementation(() => {
-      requestCount += 1;
-      if (requestCount === 1) {
-        return Promise.reject({ response: { status: 500 } });
+    let leaderboardAttempts = 0;
+    mockGet.mockImplementation((url: string) => {
+      if (url === "/leaderboard") {
+        leaderboardAttempts += 1;
+        if (leaderboardAttempts === 1) {
+          return Promise.reject({ response: { status: 500 } });
+        }
+
+        return Promise.resolve({
+          data: {
+            data: [
+              { rank: 1, tiedCount: 1, userId: 7, displayName: "Casey", points: 12 },
+            ],
+            meta: { totalPages: 1 },
+            currentUser: { rank: 1, tiedCount: 1, userId: 7, displayName: "Casey", points: 12 },
+          },
+        });
       }
 
-      return Promise.resolve({
-        data: {
-          data: [
-            { rank: 1, tiedCount: 1, userId: 7, displayName: "Casey", points: 12 },
-          ],
-          meta: { totalPages: 1 },
-          currentUser: { rank: 1, tiedCount: 1, userId: 7, displayName: "Casey", points: 12 },
-        },
-      });
+      return Promise.resolve({ data: { data: [] } });
     });
 
     render(
@@ -62,6 +66,12 @@ describe("Leaderboard", () => {
     expect(await screen.findByText("Your Standing")).toBeInTheDocument();
     expect(screen.getAllByText("Casey")).toHaveLength(2);
     expect(screen.getByText("12 pts")).toBeInTheDocument();
-    expect(mockGet).toHaveBeenCalledTimes(2);
+    expect(mockGet).toHaveBeenCalledWith(
+      "/leaderboard",
+      expect.objectContaining({
+        params: expect.objectContaining({ page: 1, scope: "overall" }),
+      }),
+    );
+    expect(leaderboardAttempts).toBe(2);
   });
 });
