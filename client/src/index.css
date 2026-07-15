@@ -225,6 +225,183 @@ input[type="number"] {
     0 10px 28px rgba(0, 0, 0, 0.28);
 }
 
+/* World Cup Final featured card */
+@keyframes final-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes final-badge-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.35);
+  }
+  50% {
+    opacity: 0.88;
+    box-shadow: 0 0 12px 2px rgba(250, 204, 21, 0.2);
+  }
+}
+
+@keyframes confetti-burst {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-48px) scale(1);
+  }
+}
+
+.final-match-header {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(250, 204, 21, 0.35);
+  background:
+    radial-gradient(ellipse 75% 90% at 18% 15%, rgba(250, 204, 21, 0.18), transparent 55%),
+    radial-gradient(ellipse 55% 70% at 90% 25%, rgba(16, 185, 129, 0.12), transparent 50%),
+    linear-gradient(145deg, rgba(24, 20, 8, 0.96), rgba(6, 10, 9, 0.98));
+  animation: final-card-enter 0.5s ease-out;
+}
+
+.final-match-header::before {
+  content: "";
+  position: absolute;
+  inset: -45% auto auto 50%;
+  width: 16rem;
+  height: 16rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.28), transparent 68%);
+  pointer-events: none;
+  animation: final-four-glow 4.5s ease-in-out infinite;
+}
+
+.match-card-final {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(250, 204, 21, 0.42);
+  background:
+    radial-gradient(ellipse 80% 70% at 8% 0%, rgba(250, 204, 21, 0.14), transparent 50%),
+    linear-gradient(145deg, rgba(22, 18, 8, 0.98), rgba(10, 14, 12, 0.98) 55%),
+    var(--color-card);
+  box-shadow:
+    0 0 0 1px rgba(250, 204, 21, 0.14),
+    0 0 32px rgba(250, 204, 21, 0.1),
+    0 12px 32px rgba(0, 0, 0, 0.28);
+  animation: final-card-enter 0.55s ease-out;
+}
+
+.match-card-final::before {
+  content: "";
+  position: absolute;
+  top: -3rem;
+  right: -2rem;
+  width: 10rem;
+  height: 10rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.2), transparent 70%);
+  pointer-events: none;
+}
+
+.match-card-final:hover {
+  border-color: rgba(250, 204, 21, 0.58);
+  box-shadow:
+    0 0 0 1px rgba(250, 204, 21, 0.22),
+    0 0 36px rgba(250, 204, 21, 0.16),
+    0 14px 36px rgba(0, 0, 0, 0.32);
+}
+
+.match-card-third-place {
+  border-color: rgba(148, 163, 184, 0.28);
+  background:
+    linear-gradient(135deg, rgba(148, 163, 184, 0.06), rgba(17, 24, 39, 0.96) 50%),
+    var(--color-card);
+}
+
+.final-stage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(250, 204, 21, 0.4);
+  background: rgba(250, 204, 21, 0.12);
+  padding: 0.2rem 0.65rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #fde68a;
+  animation: final-badge-pulse 3s ease-in-out infinite;
+}
+
+.progress-round-final {
+  border-color: rgba(250, 204, 21, 0.32) !important;
+  background: rgba(250, 204, 21, 0.08) !important;
+}
+
+.progress-round-final .progress-round-badge {
+  background: rgba(250, 204, 21, 0.18) !important;
+  color: #fde68a !important;
+}
+
+.champion-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.champion-confetti span {
+  position: absolute;
+  bottom: 10%;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 2px;
+  opacity: 0;
+  animation: confetti-burst 1.4s ease-out forwards;
+}
+
+.champion-confetti span:nth-child(1) {
+  left: 18%;
+  background: #facc15;
+  animation-delay: 0.05s;
+}
+.champion-confetti span:nth-child(2) {
+  left: 32%;
+  background: #34d399;
+  animation-delay: 0.12s;
+}
+.champion-confetti span:nth-child(3) {
+  left: 48%;
+  background: #fde68a;
+  animation-delay: 0.18s;
+}
+.champion-confetti span:nth-child(4) {
+  left: 62%;
+  background: #10b981;
+  animation-delay: 0.08s;
+}
+.champion-confetti span:nth-child(5) {
+  left: 76%;
+  background: #fbbf24;
+  animation-delay: 0.22s;
+}
+.champion-confetti span:nth-child(6) {
+  left: 88%;
+  background: #a7f3d0;
+  animation-delay: 0.15s;
+}
+
 .stage-label-pulse {
   animation: stage-label-pulse 2.8s ease-in-out infinite;
 }
@@ -237,8 +414,17 @@ input[type="number"] {
   .stagger-children > *,
   .final-four-header,
   .final-four-header::before,
-  .stage-label-pulse {
+  .final-match-header,
+  .final-match-header::before,
+  .match-card-final,
+  .final-stage-badge,
+  .stage-label-pulse,
+  .champion-confetti span {
     animation: none !important;
+  }
+
+  .champion-confetti {
+    display: none;
   }
 
   .card:hover {

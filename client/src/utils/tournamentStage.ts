@@ -115,8 +115,43 @@ export function getFinalResultLabel(match: {
   if (stage === "ROUND_OF_16") return "Final in Round of 16";
   if (stage === "QUARTER_FINAL") return "Final in Quarterfinals";
   if (stage === "SEMI_FINAL") return "Final in Semifinals";
-  if (stage === "THIRD_PLACE") return "Final in Third Place";
+  if (stage === "THIRD_PLACE") return "Third Place result";
+  if (stage === "FINAL") return "Final result";
   return "Final";
+}
+
+/** Compact kickoff countdown from a match date (e.g. "2d 5h" or "Kickoff"). */
+export function getCountdownToKickoff(
+  kickoffIso: string,
+  nowMs: number = Date.now(),
+): string {
+  const remainingMs = new Date(kickoffIso).getTime() - nowMs;
+  if (remainingMs <= 0) return "Kickoff";
+
+  const totalMinutes = Math.floor(remainingMs / 60_000);
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+}
+
+/** True when every match in a stage has a recorded score. */
+export function isStageCompleted(
+  matches: TournamentProgressSourceMatch[],
+  stage: TournamentStage,
+): boolean {
+  const stageMatches = matches.filter((match) => getMatchStage(match) === stage);
+  return stageMatches.length > 0 && stageMatches.every(isMatchCompleted);
+}
+
+export function hasStageFixtures(
+  matches: TournamentProgressSourceMatch[],
+  stage: TournamentStage,
+): boolean {
+  return matches.some((match) => getMatchStage(match) === stage);
 }
 
 export function getKickoffDetailLabel(match: {
@@ -137,5 +172,5 @@ export function getKickoffDetailLabel(match: {
 export function getRoundStatusLabel(status: RoundProgressStatus): string {
   if (status === "in_progress") return "In Progress";
   if (status === "completed") return "Completed";
-  return "Coming Soon";
+  return "Upcoming";
 }

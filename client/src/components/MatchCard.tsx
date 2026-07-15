@@ -14,6 +14,10 @@ type Props = {
   statusColor?: string;
   /** Elevated styling for high-stakes knockout fixtures (e.g. Semifinals). */
   featured?: boolean;
+  /** Premium gold treatment for the World Cup Final card. */
+  isFinal?: boolean;
+  /** Lighter treatment for the third-place playoff. */
+  isThirdPlace?: boolean;
 };
 
 export default function MatchCard({
@@ -28,17 +32,29 @@ export default function MatchCard({
   statusLabel,
   statusColor = "text-[var(--color-text-muted)]",
   featured = false,
+  isFinal = false,
+  isThirdPlace = false,
 }: Props) {
   const hasResult = homeScore !== null && awayScore !== null;
+  const cardClass = isFinal
+    ? "match-card-final"
+    : featured
+      ? "match-card-featured"
+      : isThirdPlace
+        ? "match-card-third-place"
+        : "";
 
   return (
     <article
-      className={`card flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between ${
-        featured ? "match-card-featured" : ""
-      }`}
+      className={`card relative flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between ${cardClass}`}
     >
       {/* Left: teams + date */}
-      <div className="min-w-0 flex-1">
+      <div className="relative z-10 min-w-0 flex-1">
+        {isFinal && (
+          <span className="final-stage-badge mb-2">
+            <span aria-hidden="true">🏆</span> Final
+          </span>
+        )}
         <p className="font-semibold text-sm sm:text-base flex items-center gap-1.5 flex-wrap leading-snug">
           <Flag code={homeCode} size={16} /> {homeTeam}
           <span className="text-[var(--color-text-muted)]">vs</span>
@@ -51,7 +67,7 @@ export default function MatchCard({
           <p
             aria-live="polite"
             className={`text-xs mt-1 ${statusColor} ${
-              featured ? "stage-label-pulse" : ""
+              featured || isFinal ? "stage-label-pulse" : ""
             }`}
           >
             {statusLabel}
@@ -60,7 +76,7 @@ export default function MatchCard({
       </div>
 
       {/* Right: score or input */}
-      <div className="w-full shrink-0 sm:w-auto">
+      <div className="relative z-10 w-full shrink-0 sm:w-auto">
         {hasResult ? (
           <div className="space-y-3">
             <div className="text-center animate-score-pop">
@@ -68,7 +84,7 @@ export default function MatchCard({
                 {homeScore} <span className="text-[var(--color-text-muted)]">–</span> {awayScore}
               </p>
               <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)]">
-                Final
+                {isFinal ? "Final result" : isThirdPlace ? "Third Place result" : "Final"}
               </p>
             </div>
             {children}

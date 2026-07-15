@@ -15,6 +15,8 @@
     "import:round-of-16": "tsx prisma/import-round-of-16-fixtures.js",
     "import:quarter-final": "tsx prisma/import-quarter-final-fixtures.js",
     "import:semi-final": "tsx prisma/import-semi-final-fixtures.js",
+    "import:third-place": "tsx prisma/import-third-place-fixtures.js",
+    "import:final": "tsx prisma/import-final-fixtures.js",
     "sync:official-group-stage": "node prisma/sync-official-group-stage-fixtures.js",
     "cleanup:load-test-users": "node scripts/cleanup-load-test-users.mjs",
     "test": "vitest run",

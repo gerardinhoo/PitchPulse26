@@ -28,6 +28,7 @@ const RANK_BG: Record<number, string> = {
 };
 
 const PAGE_SIZE = 20;
+const CONFETTI_SESSION_KEY = "pp26-final-confetti-shown";
 const LEADERBOARD_SCOPES: Array<{ value: LeaderboardScope; label: string }> = [
   { value: "overall", label: "Overall" },
   { value: "group", label: "Group Stage" },
@@ -69,6 +70,8 @@ export default function Leaderboard() {
   } | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "shared" | "error">("idle");
+  const [finalStageState, setFinalStageState] = useState<"none" | "active" | "complete">("none");
+  const [showConfetti, setShowConfetti] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -76,12 +79,29 @@ export default function Leaderboard() {
       setLoading(true);
       setErrorState(null);
       try {
-        const pageRes = await api.get("/leaderboard", {
-          params: { page, limit: PAGE_SIZE, currentUserId: user?.id, scope: activeScope },
-        });
+        const [pageRes, matchesRes] = await Promise.all([
+          api.get("/leaderboard", {
+            params: { page, limit: PAGE_SIZE, currentUserId: user?.id, scope: activeScope },
+          }),
+          api.get("/matches", { params: { stage: "FINAL", page: 1, limit: 5 } }).catch(() => null),
+        ]);
         setLeaders(pageRes.data.data);
         setCurrentUserEntry(pageRes.data.currentUser ?? null);
         setTotalPages(pageRes.data.meta?.totalPages ?? 1);
+
+        const finalMatches = matchesRes?.data?.data ?? [];
+        if (finalMatches.length === 0) {
+          setFinalStageState("none");
+        } else if (
+          finalMatches.every(
+            (match: { homeScore: number | null; awayScore: number | null }) =>
+              match.homeScore !== null && match.awayScore !== null,
+          )
+        ) {
+          setFinalStageState("complete");
+        } else {
+          setFinalStageState("active");
+        }
       } catch (err: unknown) {
         const axiosErr = err as { response?: { status?: number } };
         setLeaders([]);
@@ -107,6 +127,26 @@ export default function Leaderboard() {
     fetchLeaderboard();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [page, reloadKey, user?.id, activeScope]);
+
+  useEffect(() => {
+    if (finalStageState !== "complete" || page !== 1 || activeScope !== "overall") {
+      setShowConfetti(false);
+      return;
+    }
+
+    try {
+      if (sessionStorage.getItem(CONFETTI_SESSION_KEY) === "1") {
+        setShowConfetti(false);
+        return;
+      }
+      sessionStorage.setItem(CONFETTI_SESSION_KEY, "1");
+      setShowConfetti(true);
+      const timeoutId = window.setTimeout(() => setShowConfetti(false), 1600);
+      return () => window.clearTimeout(timeoutId);
+    } catch {
+      setShowConfetti(false);
+    }
+  }, [finalStageState, page, activeScope]);
 
   // Clamp out-of-range ?page=N back to the last valid page.
   useEffect(() => {
@@ -178,6 +218,34 @@ export default function Leaderboard() {
       <h1 className="text-2xl font-bold mb-6">Leaderboard</h1>
 
       <div className="max-w-4xl mx-auto">
+        {finalStageState !== "none" && (
+          <section className="relative mb-6 overflow-hidden rounded-2xl border border-amber-400/25 bg-[linear-gradient(135deg,rgba(250,204,21,0.1),rgba(6,10,9,0.94))] px-5 py-5">
+            {showConfetti && (
+              <div className="champion-confetti" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
+            )}
+            <p className="text-xs uppercase tracking-[0.2em] text-amber-300 mb-2">
+              {finalStageState === "complete" ? "Tournament Complete" : "Final Stage"}
+            </p>
+            <h2 className="text-lg font-semibold text-white">
+              {finalStageState === "complete" ? "Final Standings" : "Final Standings Race"}
+            </h2>
+            <p className="mt-2 text-sm text-white/75">
+              {finalStageState === "complete"
+                ? leader
+                  ? `PitchPulse 26 Champion: ${getDisplayName(leader)}.`
+                  : "The World Cup challenge is complete."
+                : "One last match can still change the table."}
+            </p>
+          </section>
+        )}
+
         <section className="mb-6 rounded-2xl border border-amber-500/20 bg-[linear-gradient(135deg,rgba(245,158,11,0.12),rgba(6,10,9,0.94))] px-5 py-5">
           <p className="text-xs uppercase tracking-[0.2em] text-amber-300 mb-2">Prize</p>
           <h2 className="text-lg font-semibold">Play for bragging rights and gear</h2>
@@ -371,16 +439,24 @@ export default function Leaderboard() {
                 const listPosition = index + 1;
                 const isTop3 = !allTiedAtZero && displayRank <= 3;
                 const samePointsCount = player.tiedCount;
+                const isChampion =
+                  finalStageState === "complete" &&
+                  activeScope === "overall" &&
+                  page === 1 &&
+                  displayRank === 1 &&
+                  !allTiedAtZero;
 
                 return (
                   <div
                     key={player.userId}
                     className={`card flex justify-between items-center ${
-                      isCurrentUser
-                        ? "ring-1 ring-[var(--color-accent)] border-[var(--color-accent)]/40"
-                        : isTop3
-                          ? RANK_BG[displayRank]
-                          : ""
+                      isChampion
+                        ? "border-amber-400/40 bg-amber-500/8 ring-1 ring-amber-400/30"
+                        : isCurrentUser
+                          ? "ring-1 ring-[var(--color-accent)] border-[var(--color-accent)]/40"
+                          : isTop3
+                            ? RANK_BG[displayRank]
+                            : ""
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -389,6 +465,9 @@ export default function Leaderboard() {
                       </span>
                       <span className="font-medium">
                         {getDisplayName(player)}
+                        {isChampion && (
+                          <span className="text-xs text-amber-300 ml-2">Champion</span>
+                        )}
                         {isCurrentUser && (
                           <span className="text-xs text-[var(--color-accent)] ml-2">(you)</span>
                         )}
