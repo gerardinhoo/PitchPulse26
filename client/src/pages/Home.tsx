@@ -311,6 +311,14 @@ export default function Home() {
                     Explore Tournament History
                   </Link>
                 </div>
+                <div className="mt-3 text-center">
+                  <Link
+                    to="/statistics"
+                    className="text-sm font-medium text-amber-100/90 underline-offset-4 hover:text-amber-50 hover:underline"
+                  >
+                    View Tournament Statistics
+                  </Link>
+                </div>
               </div>
             </div>
 
@@ -449,6 +457,12 @@ export default function Home() {
                 className="inline-flex items-center justify-center rounded-lg border border-white/18 bg-black/20 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-black/30"
               >
                 Open Match Archive
+              </Link>
+              <Link
+                to="/statistics"
+                className="inline-flex items-center justify-center rounded-lg border border-amber-400/25 bg-amber-400/10 px-4 py-2.5 text-sm font-medium text-amber-100 transition-colors hover:bg-amber-400/15"
+              >
+                View Tournament Statistics
               </Link>
             </div>
           </div>
