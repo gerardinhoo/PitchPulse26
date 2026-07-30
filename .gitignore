@@ -10,3 +10,6 @@ infra/.terraform/
 infra/*.tfstate*
 infra/terraform.tfvars
 infra/.terraform.lock.hcl
+
+# Private interview prep (local only)
+docs/interview-talking-points.md
