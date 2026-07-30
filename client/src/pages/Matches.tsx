@@ -14,6 +14,10 @@ import {
   STAGE_LABELS,
   type TournamentStage,
 } from "../utils/tournamentStage";
+import {
+  isTournamentComplete,
+  POST_TOURNAMENT_UX_FREEZE,
+} from "../utils/tournamentComplete";
 
 type Match = {
   id: number;
@@ -86,7 +90,18 @@ function parsePage(value: string | null): number {
 }
 
 function parseView(value: string | null): MatchView {
-  return MATCH_VIEWS.some((view) => view.value === value) ? (value as MatchView) : "all";
+  if (MATCH_VIEWS.some((view) => view.value === value)) {
+    return value as MatchView;
+  }
+  // Archive default: Completed when the portfolio freeze is on or URL has no view.
+  return POST_TOURNAMENT_UX_FREEZE ? "completed" : "all";
+}
+
+function predictionOutcomeLabel(points: number | null) {
+  if (points === 3) return "Exact score";
+  if (points === 1) return "Correct result";
+  if (points === 0) return "Missed";
+  return null;
 }
 
 function parseStage(value: string | null): StageFilter {
@@ -254,6 +269,18 @@ export default function Matches() {
     (stage) => stage.value === "all" || availableStages.includes(stage.value),
   );
   const hasKnockoutMatches = allMatches.some(isKnockoutMatch);
+  const tournamentComplete = isTournamentComplete(allMatches);
+  const archiveMode = POST_TOURNAMENT_UX_FREEZE || tournamentComplete;
+  const hasTodayMatches = allMatches.some((match) => isMatchToday(match));
+  const hasUpcomingMatches = allMatches.some(
+    (match) => !isMatchCompleted(match) && new Date(match.date).getTime() > Date.now(),
+  );
+  const statusViewOptions = MATCH_VIEWS.filter((view) => {
+    if (!archiveMode) return true;
+    if (view.value === "today") return hasTodayMatches;
+    if (view.value === "upcoming") return hasUpcomingMatches;
+    return true;
+  });
 
   const filteredMatches = allMatches.filter((match) => {
     const matchesView = matchesActiveView(match, activeView);
@@ -310,6 +337,16 @@ export default function Matches() {
       setSearchParams(next, { replace: true });
     }
   }, [loading, page, totalPages, searchParams, setSearchParams]);
+
+  // Default archive browsing to Completed when the URL has no explicit view.
+  useEffect(() => {
+    if (loading || !archiveMode || searchParams.has("view")) {
+      return;
+    }
+    const next = new URLSearchParams(searchParams);
+    next.set("view", "completed");
+    setSearchParams(next, { replace: true });
+  }, [loading, archiveMode, searchParams, setSearchParams]);
 
   const updateFilters = (updates: {
     page?: number;
@@ -462,7 +499,14 @@ export default function Matches() {
 
   return (
     <div className="animate-fade-in pb-24 sm:pb-10">
-      <h1 className="text-2xl font-bold mb-6">Matches</h1>
+      <h1 className={`text-2xl font-bold ${archiveMode ? "mb-2" : "mb-6"}`}>
+        {archiveMode ? "Tournament Match Archive" : "Matches"}
+      </h1>
+      {archiveMode && (
+        <p className="mb-6 max-w-3xl text-sm text-[var(--color-text-muted)]">
+          Explore every fixture and result from the group stage through the World Cup Final.
+        </p>
+      )}
 
       {pageState ? (
         <StatePanel
@@ -482,7 +526,18 @@ export default function Matches() {
         />
       ) : (
         <>
-          {verificationRequired && !isVerified && (
+          {archiveMode && (
+            <section className="mb-6 rounded-2xl border border-amber-400/25 bg-[linear-gradient(135deg,rgba(250,204,21,0.1),rgba(6,10,9,0.94))] px-4 py-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-amber-300 mb-2">
+                World Cup 2026 Complete
+              </p>
+              <p className="text-sm text-white/80">
+                Predictions are closed, but the full tournament history remains available.
+              </p>
+            </section>
+          )}
+
+          {verificationRequired && !isVerified && !archiveMode && (
             <section className="mb-6 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-4">
               <p className="text-xs uppercase tracking-[0.2em] text-yellow-300 mb-2">
                 Verification Required
@@ -495,7 +550,7 @@ export default function Matches() {
             </section>
           )}
 
-          {hasKnockoutMatches && (
+          {hasKnockoutMatches && !archiveMode && (
             <section className="mb-6 rounded-2xl border border-sky-500/20 bg-[linear-gradient(135deg,rgba(56,189,248,0.14),rgba(6,10,9,0.94))] px-4 py-4">
               <p className="text-xs uppercase tracking-[0.2em] text-sky-300 mb-2">
                 Tournament Update
@@ -513,13 +568,21 @@ export default function Matches() {
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div className="max-w-2xl">
                 <p className="text-xs uppercase tracking-[0.2em] text-[var(--color-accent)] mb-2">
-                  Personal Dashboard
+                  {archiveMode ? "Your Tournament Record" : "Personal Dashboard"}
                 </p>
                 <h2 className="text-xl font-semibold">
-                  {user?.displayName ? `${user.displayName}, here’s your progress` : "Here’s your prediction progress"}
+                  {archiveMode
+                    ? user?.displayName
+                      ? `${user.displayName}, here’s your prediction history`
+                      : "Here’s your prediction history"
+                    : user?.displayName
+                      ? `${user.displayName}, here’s your progress`
+                      : "Here’s your prediction progress"}
                 </h2>
                 <p className="text-sm text-[var(--color-text-muted)] mt-2">
-                  Track how many picks you&apos;ve made, what&apos;s still open, and the next match that needs your attention.
+                  {archiveMode
+                    ? "Review your picks, final scores, and points earned across the completed tournament."
+                    : "Track how many picks you’ve made, what’s still open, and the next match that needs your attention."}
                 </p>
               </div>
 
@@ -529,16 +592,27 @@ export default function Matches() {
                   <p className="text-2xl font-bold mt-1">{summary?.predictedCount ?? "—"}</p>
                 </div>
                 <div className="rounded-xl border border-sky-500/30 bg-sky-500/10 px-4 py-3">
-                  <p className="text-xs uppercase tracking-wider text-sky-300">Remaining</p>
-                  <p className="text-2xl font-bold mt-1">{summary?.remainingCount ?? "—"}</p>
+                  <p className="text-xs uppercase tracking-wider text-sky-300">
+                    {archiveMode ? "Completed picks" : "Remaining"}
+                  </p>
+                  <p className="text-2xl font-bold mt-1">
+                    {archiveMode
+                      ? completedPredictionHistory.length
+                      : (summary?.remainingCount ?? "—")}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
-                  <p className="text-xs uppercase tracking-wider text-amber-300">Locked</p>
-                  <p className="text-2xl font-bold mt-1">{summary?.lockedCount ?? "—"}</p>
+                  <p className="text-xs uppercase tracking-wider text-amber-300">
+                    {archiveMode ? "Points earned" : "Locked"}
+                  </p>
+                  <p className="text-2xl font-bold mt-1">
+                    {archiveMode ? completedPointsTotal : (summary?.lockedCount ?? "—")}
+                  </p>
                 </div>
               </div>
             </div>
 
+            {!archiveMode && (
             <div className="mt-5 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
               <div className="rounded-xl border border-[var(--color-border)] bg-white/4 px-4 py-4">
                 <p className="text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
@@ -594,7 +668,23 @@ export default function Matches() {
                 )}
               </div>
             </div>
+            )}
 
+            {archiveMode && summary?.rank ? (
+              <div className="mt-5 rounded-xl border border-[var(--color-border)] bg-white/4 px-4 py-4">
+                <p className="text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
+                  Final standing
+                </p>
+                <p className="text-3xl font-bold mt-2 text-[var(--color-accent)]">#{summary.rank}</p>
+                <p className="text-sm mt-2 text-[var(--color-text-muted)]">
+                  {summary.points !== null
+                    ? `${summary.points} point${summary.points === 1 ? "" : "s"} after the completed tournament.`
+                    : "Your final ranking after the completed tournament."}
+                </p>
+              </div>
+            ) : null}
+
+            {!archiveMode && (
             <div className="mt-5 rounded-xl border border-[var(--color-border)] bg-white/4 px-4 py-4">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
@@ -629,8 +719,10 @@ export default function Matches() {
                 </div>
               </div>
             </div>
+            )}
           </section>
 
+          {!archiveMode && (
           <section className="mb-6 rounded-2xl border border-emerald-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.14),rgba(6,10,9,0.94))] px-5 py-5 shadow-[0_14px_34px_rgba(0,0,0,0.12)]">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="max-w-2xl">
@@ -670,6 +762,7 @@ export default function Matches() {
               </div>
             </div>
           </section>
+          )}
 
           <section className="card mb-6">
             <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[1.15fr_0.85fr]">
@@ -677,17 +770,29 @@ export default function Matches() {
                 <p className="text-xs uppercase tracking-[0.2em] text-[var(--color-accent)] mb-2">
                   Your Picks
                 </p>
-                <h2 className="text-lg font-semibold">See how your predictions are landing</h2>
+                <h2 className="text-lg font-semibold">
+                  {archiveMode
+                    ? "Your prediction history"
+                    : "See how your predictions are landing"}
+                </h2>
                 <p className="text-sm text-[var(--color-text-muted)] mt-1">
-                  Review completed picks, points earned, and the upcoming matches you&apos;ve already locked in.
+                  {archiveMode
+                    ? "Review completed picks, final scores, and points earned."
+                    : "Review completed picks, points earned, and the upcoming matches you’ve already locked in."}
                 </p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {[
-                    { value: "all", label: "All picks" },
-                    { value: "completed", label: "Completed" },
-                    { value: "saved", label: "Saved ahead" },
-                  ].map((option) => {
+                  {(archiveMode
+                    ? [
+                        { value: "all", label: "All picks" },
+                        { value: "completed", label: "Completed" },
+                      ]
+                    : [
+                        { value: "all", label: "All picks" },
+                        { value: "completed", label: "Completed" },
+                        { value: "saved", label: "Saved ahead" },
+                      ]
+                  ).map((option) => {
                     const isActive = picksView === option.value;
                     return (
                       <button
@@ -806,6 +911,7 @@ export default function Matches() {
                 </div>
               </div>
 
+              {!archiveMode && (
               <div>
                 <div className="rounded-xl border border-[var(--color-border)] bg-white/4 px-4 py-4">
                   <p className="text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
@@ -862,6 +968,7 @@ export default function Matches() {
                   </div>
                 </div>
               </div>
+              )}
             </div>
           </section>
 
@@ -871,9 +978,13 @@ export default function Matches() {
                 <p className="text-xs uppercase tracking-[0.2em] text-[var(--color-accent)] mb-2">
                   Quick Navigation
                 </p>
-                <h2 className="text-lg font-semibold">Jump to the matches you care about</h2>
+                <h2 className="text-lg font-semibold">
+                  {archiveMode ? "Browse the tournament archive" : "Jump to the matches you care about"}
+                </h2>
                 <p className="text-sm text-[var(--color-text-muted)] mt-1">
-                  Filter by stage, match status, or group without losing your place in the schedule.
+                  {archiveMode
+                    ? "Filter by stage, match status, or group to explore the full World Cup 2026 history."
+                    : "Filter by stage, match status, or group without losing your place in the schedule."}
                 </p>
               </div>
 
@@ -910,7 +1021,7 @@ export default function Matches() {
                   Match Status
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {MATCH_VIEWS.map((view) => {
+                  {statusViewOptions.map((view) => {
                     const isActive = activeView === view.value;
                     return (
                       <button
@@ -1021,7 +1132,7 @@ export default function Matches() {
                 </p>
               </div>
 
-              {activeStage === "FINAL" && (
+              {activeStage === "FINAL" && !archiveMode && (
                 <section
                   className="final-match-header mb-5 rounded-2xl px-5 py-5"
                   aria-label="World Cup Final spotlight"
@@ -1045,7 +1156,7 @@ export default function Matches() {
                 </section>
               )}
 
-              {activeStage === "SEMI_FINAL" && (
+              {activeStage === "SEMI_FINAL" && !archiveMode && (
                 <section
                   className="final-four-header mb-5 rounded-2xl px-5 py-5"
                   aria-label="Semifinals spotlight"
@@ -1069,7 +1180,7 @@ export default function Matches() {
                 </section>
               )}
 
-              {activeStage === "THIRD_PLACE" && (
+              {activeStage === "THIRD_PLACE" && !archiveMode && (
                 <section
                   className="mb-5 rounded-2xl border border-slate-400/25 bg-slate-500/8 px-5 py-4"
                   aria-label="Third Place spotlight"
@@ -1098,7 +1209,15 @@ export default function Matches() {
 
                   let statusLabel: string | undefined;
                   let statusColor = "text-emerald-400";
-                  if (isLocked) {
+                  if (archiveMode) {
+                    if (hasResult) {
+                      statusLabel = undefined;
+                      statusColor = "text-[var(--color-text-muted)]";
+                    } else {
+                      statusLabel = "No result recorded";
+                      statusColor = "text-[var(--color-text-muted)]";
+                    }
+                  } else if (isLocked) {
                     statusLabel = pred?.saved
                       ? `Predictions locked — kickoff has passed. Your prediction: ${pred.homeScore} – ${pred.awayScore}`
                       : "Predictions locked — kickoff has passed.";
@@ -1130,6 +1249,13 @@ export default function Matches() {
                     statusLabel ? ` • ${statusLabel}` : ""
                   }`;
 
+                  const historyRecord = predictionHistory.find((item) => item.matchId === match.id);
+                  const historyPoints =
+                    historyRecord && hasResult
+                      ? calculatePredictionPoints(historyRecord, match)
+                      : null;
+                  const historyOutcome = predictionOutcomeLabel(historyPoints);
+
                   return (
                     <MatchCard
                       key={match.id}
@@ -1142,11 +1268,24 @@ export default function Matches() {
                       awayScore={match.awayScore}
                       statusLabel={cardStatusLabel}
                       statusColor={statusColor}
-                      featured={isSemifinal}
+                      featured={isSemifinal && !archiveMode}
                       isFinal={isFinal}
                       isThirdPlace={isThirdPlace}
                     >
-                      {!isLocked && isVerified && (
+                      {archiveMode && historyRecord ? (
+                        <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-left text-xs sm:text-sm">
+                          <p className="text-[11px] uppercase tracking-wider text-[var(--color-text-muted)]">
+                            Your pick
+                          </p>
+                          <p className="mt-1 font-medium text-white">
+                            {historyRecord.homeScore} – {historyRecord.awayScore}
+                            {historyOutcome && historyPoints !== null
+                              ? ` · ${historyOutcome} · ${historyPoints} pt${historyPoints === 1 ? "" : "s"}`
+                              : ""}
+                          </p>
+                        </div>
+                      ) : null}
+                      {!archiveMode && !isLocked && isVerified && (
                         <ScoreInput
                           homeScore={pred?.homeScore || ""}
                           awayScore={pred?.awayScore || ""}
@@ -1185,7 +1324,7 @@ export default function Matches() {
             </>
           )}
 
-          {focusedMatch && (
+          {focusedMatch && !archiveMode && (
             <div className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)]/95 px-4 py-3 shadow-2xl backdrop-blur sm:hidden">
               <p className="text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
                 Editing prediction

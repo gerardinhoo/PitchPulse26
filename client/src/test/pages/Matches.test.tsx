@@ -21,6 +21,14 @@ vi.mock("../../hooks/useAuth", () => ({
   }),
 }));
 
+vi.mock("../../utils/tournamentComplete", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../utils/tournamentComplete")>();
+  return {
+    ...actual,
+    POST_TOURNAMENT_UX_FREEZE: false,
+  };
+});
+
 describe("Matches", () => {
   beforeEach(() => {
     mockGet.mockReset();
@@ -318,5 +326,92 @@ describe("Matches", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.queryByText("Verification Required")).not.toBeInTheDocument();
+  });
+
+  it("shows archive mode when the Final is complete", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url === "/matches") {
+        return Promise.resolve({
+          data: {
+            data: [
+              {
+                id: 50,
+                date: "2026-07-19T19:00:00.000Z",
+                tournamentStage: "FINAL",
+                homeTeam: { name: "Spain", code: "es", group: "H" },
+                awayTeam: { name: "Argentina", code: "ar", group: "J" },
+                homeScore: 1,
+                awayScore: 0,
+              },
+              {
+                id: 40,
+                date: "2026-06-14T18:00:00.000Z",
+                tournamentStage: "GROUP_STAGE",
+                homeTeam: { name: "France", code: "fr", group: "I" },
+                awayTeam: { name: "Senegal", code: "sn", group: "I" },
+                homeScore: 2,
+                awayScore: 1,
+              },
+            ],
+            meta: { totalPages: 1 },
+          },
+        });
+      }
+
+      if (url === "/predictions/my") {
+        return Promise.resolve({
+          data: {
+            data: [
+              {
+                id: 1,
+                matchId: 40,
+                homeScore: 2,
+                awayScore: 1,
+                match: {
+                  id: 40,
+                  date: "2026-06-14T18:00:00.000Z",
+                  tournamentStage: "GROUP_STAGE",
+                  homeTeam: { name: "France", code: "fr", group: "I" },
+                  awayTeam: { name: "Senegal", code: "sn", group: "I" },
+                  homeScore: 2,
+                  awayScore: 1,
+                },
+              },
+            ],
+            meta: { totalPages: 1 },
+          },
+        });
+      }
+
+      if (url === "/predictions/summary") {
+        return Promise.resolve({
+          data: {
+            predictedCount: 1,
+            remainingCount: 0,
+            lockedCount: 0,
+            nextMatch: null,
+            rank: 3,
+            points: 3,
+          },
+        });
+      }
+
+      return Promise.resolve({ data: { data: [] }, meta: { totalPages: 1 } });
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/matches"]}>
+        <Matches />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("Tournament Match Archive")).toBeInTheDocument();
+    expect(screen.getByText(/Predictions are closed/i)).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Completed", pressed: true }),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText(/predicted score/i)).not.toBeInTheDocument();
+    expect(screen.getByText("Your prediction history")).toBeInTheDocument();
+    expect(screen.getAllByText(/Exact score/i).length).toBeGreaterThanOrEqual(1);
   });
 });
