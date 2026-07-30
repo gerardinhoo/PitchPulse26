@@ -241,6 +241,7 @@ function buildMatchReminderEmailContent({ displayName, matches, matchesUrl, unsu
   return { subject, text, html };
 }
 
+/** Live-tournament next-day match reminders. Cron is disabled post-WC2026; keep for manual/future use. */
 export async function sendMatchReminderEmail({
   to,
   displayName,

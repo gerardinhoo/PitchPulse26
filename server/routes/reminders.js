@@ -1,3 +1,12 @@
+/**
+ * Match reminder API used during the live World Cup 2026 tournament.
+ *
+ * Scheduled GitHub Actions cron execution is disabled after tournament
+ * completion. The routes, secret protection, and email helpers remain for
+ * maintenance, manual dry-runs (workflow_dispatch), and possible future events.
+ *
+ * Does not affect account verification or password-reset email flows.
+ */
 import express from "express";
 import { prisma } from "../lib/prisma.js";
 import { sendMatchReminderEmail } from "../lib/email.js";
