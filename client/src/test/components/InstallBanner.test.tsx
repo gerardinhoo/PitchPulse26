@@ -33,7 +33,7 @@ describe("InstallBanner", () => {
 
     localStorage.removeItem("pitchpulse26-pwa-install-dismissed");
 
-    render(<InstallBanner />);
+    render(<InstallBanner softHidden={false} />);
 
     expect(screen.getByText("Add PitchPulse 26 to your home screen")).toBeInTheDocument();
     expect(screen.getByText(/bottom toolbar/i)).toBeInTheDocument();
@@ -55,7 +55,7 @@ describe("InstallBanner", () => {
 
     localStorage.removeItem("pitchpulse26-pwa-install-dismissed");
 
-    render(<InstallBanner />);
+    render(<InstallBanner softHidden={false} />);
 
     expect(screen.getByText(/home screen install only works/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /copy link/i })).toBeInTheDocument();
@@ -76,7 +76,7 @@ describe("InstallBanner", () => {
 
     localStorage.removeItem("pitchpulse26-pwa-install-dismissed");
 
-    render(<InstallBanner />);
+    render(<InstallBanner softHidden={false} />);
     fireEvent.click(screen.getByRole("button", { name: /copy link/i }));
 
     expect(writeText).toHaveBeenCalled();
@@ -96,8 +96,25 @@ describe("InstallBanner", () => {
 
     localStorage.removeItem("pitchpulse26-pwa-install-dismissed");
 
-    render(<InstallBanner />);
+    render(<InstallBanner softHidden={false} />);
 
     expect(screen.getByText(/install app/i)).toBeInTheDocument();
+  });
+
+  it("soft-hides by default after the tournament (portfolio freeze)", () => {
+    mockMatchMedia(false);
+
+    vi.stubGlobal("navigator", {
+      userAgent:
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+      platform: "iPhone",
+      maxTouchPoints: 5,
+      standalone: false,
+    });
+
+    localStorage.removeItem("pitchpulse26-pwa-install-dismissed");
+
+    const { container } = render(<InstallBanner />);
+    expect(container).toBeEmptyDOMElement();
   });
 });
