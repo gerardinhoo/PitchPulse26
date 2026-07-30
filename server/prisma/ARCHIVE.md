@@ -45,6 +45,8 @@ Unsubscribe and preference endpoints remain so historical emails and settings st
 
 Admins can still correct historical match results through the existing admin UI and `PATCH /api/admin/matches/:id/result` flow, including audit logging and scoring recalculation.
 
+Case-study docs: [docs/README.md](../../docs/README.md), [docs/production-runbook.md](../../docs/production-runbook.md).
+
 ## Package script classification
 
 **Active:** `dev`, `test`, Prisma migrate/generate (via standard Prisma CLI), deploy workflows.

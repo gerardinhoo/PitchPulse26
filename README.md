@@ -1,140 +1,275 @@
-# Pitch Pulse 26
+# PitchPulse 26
 
-A full-stack World Cup 2026 prediction app where fans create accounts, predict group-stage match scores, earn points, and compete on a live leaderboard.
+PitchPulse 26 is a full-stack World Cup prediction platform that allowed football fans to predict match scores, earn points, follow standings, and compete on a live leaderboard from the group stage through the Final.
 
-The current product scope is focused on World Cup 2026 group-stage matches.
+The World Cup 2026 tournament is complete. The application remains available as a **read-only tournament archive** and production case study.
 
+| | |
+|---|---|
+| **Live application** | [https://pitchpulse26.com](https://pitchpulse26.com) |
+| **GitHub repository** | [github.com/gerardinhoo/PitchPulse26](https://github.com/gerardinhoo/PitchPulse26) |
+| **Tournament statistics** | [https://pitchpulse26.com/statistics](https://pitchpulse26.com/statistics) |
+| **Final standings** | [https://pitchpulse26.com/leaderboard](https://pitchpulse26.com/leaderboard) |
+| **Match archive** | [https://pitchpulse26.com/matches](https://pitchpulse26.com/matches) |
 
-## Tech Stack
+> Free to play. No betting. No gambling.
 
-**Backend:** Node.js, Express 5, Prisma ORM, PostgreSQL (Neon, via `@prisma/adapter-neon` + `ws`)
-**Frontend:** React, TypeScript, Vite, Tailwind CSS, React Router
-**Infra:** AWS Lambda + API Gateway (backend), AWS Amplify (frontend), Terraform, GitHub Actions CI/CD
+---
 
-## Current Experience
+## 1. Project Overview
 
-- Home page with product overview and scoring explainer
-- Email/password authentication with email verification
-- Password reset flow with email-based recovery links
-- Paginated match browsing with prediction entry and save/update feedback
-- Personal dashboard on the Matches page showing prediction progress and next action
-- Dynamic group standings and leaderboard views
-- Admin results workflow for posting final scores
-- Responsive UI improvements for accessibility and mobile prediction flow
+PitchPulse 26 was designed, built, deployed, and operated as a live product during FIFA World Cup 2026. Fans registered, verified their email, predicted scores before kickoff, and climbed a cumulative leaderboard as results were posted.
 
-## Project Structure
+After the Final, the product transitioned into an archive: historical fixtures, predictions, and standings remain available; new predictions are closed; scheduled match reminders are disabled; admin historical result correction remains available.
 
+This repository documents both the software and the operational journey — including production incidents, incremental knockout-stage expansion, and post-tournament cleanup.
+
+**Case-study docs:** see [docs/README.md](docs/README.md).
+
+---
+
+## 2. Problem Solved
+
+Casual World Cup prediction groups usually live in spreadsheets, group chats, or one-off forms that break once knockout rounds begin.
+
+PitchPulse 26 provided:
+
+- A shared, authenticated place to submit and update predictions before kickoff
+- Transparent scoring (exact score vs correct result)
+- Live group standings and a tournament-wide leaderboard
+- Stage-by-stage fixture coverage as the real World Cup progressed
+- A durable public record after the tournament ended
+
+---
+
+## 3. Tournament Results
+
+### Final tournament snapshot
+
+Snapshot sourced from production `GET /api/statistics/tournament` and `GET /api/leaderboard` on **2026-07-30**. Re-verify against the live [Statistics](https://pitchpulse26.com/statistics) and [Leaderboard](https://pitchpulse26.com/leaderboard) pages if historical results are corrected later.
+
+| Result | Value |
+|--------|-------|
+| World Cup champion | Spain |
+| World Cup Final | Spain 1–0 Argentina |
+| PitchPulse 26 champion | Jimbo (84 pts) |
+| Runner-up | MaluY (77 pts) |
+| Third place | Den (67 pts) |
+| Registered players (non-admin) | 22 |
+| Active predictors | 11 |
+| Total predictions | 638 |
+| Tournament fixtures | 104 (all completed) |
+| Tournament stages supported | 7 (Group Stage → Final) |
+| Overall prediction accuracy | 57.1% (exact + correct result ÷ scored) |
+
+Champion prize (static product copy; not stored in the database): Cape Verde national team jersey selected by the winner.
+
+---
+
+## 4. Key Features
+
+- Email/password auth with JWT, email verification, and password reset (Resend)
+- Score predictions with one-per-user-per-match upsert and kickoff lock
+- Cumulative leaderboard (group + knockout) with dense ranking and scope filters
+- Dynamic group standings (MP / W / D / L / GF / GA / GD / Pts)
+- Full knockout coverage: Round of 32 → Final via incremental fixture imports
+- Admin result posting with audit logging
+- Post-tournament archive UX (homepage, Matches, Rules) + public Statistics page
+- PWA install support (soft-hidden by default after tournament completion)
+- Structured request logging, `/api/health`, `/api/ready`, CloudWatch dashboard/alarms
+
+---
+
+## 5. Architecture
+
+```mermaid
+flowchart LR
+  User[Browser / PWA] --> Amplify[AWS Amplify<br/>React + Vite]
+  Amplify --> APIGW[API Gateway HTTP API]
+  APIGW --> Lambda[AWS Lambda<br/>Express API]
+  Lambda --> Neon[(Neon PostgreSQL)]
+  Lambda --> Resend[Resend<br/>transactional email]
+  GH[GitHub Actions] --> Amplify
+  GH --> Lambda
+  TF[Terraform] --> AWS[AWS infra]
 ```
-PitchPulse26/
-├── server/
-│   ├── src/
-│   │   ├── index.js          # Express app entry point
-│   │   ├── config.js         # Environment variables
-│   │   ├── validators.js     # Zod validation schemas + middleware
-│   │   └── services/
-│   │       └── leaderboard.js # Points calculation logic
-│   ├── routes/
-│   │   ├── auth.js           # Register, login, profile
-│   │   ├── predictions.js    # Create/update & list predictions
-│   │   ├── leaderboard.js    # Ranked leaderboard
-│   │   ├── matches.js        # Match listings with group filter
-│   │   ├── teams.js          # Team listings
-│   │   ├── groups.js         # Groups + computed standings
-│   │   └── admin.js          # Admin-only match result updates
-│   ├── middleware/
-│   │   └── auth.js           # JWT verification middleware
-│   ├── lib/
-│   │   └── prisma.js         # Prisma client + Neon WebSocket config
-│   └── prisma/
-│       ├── schema.prisma     # PostgreSQL schema
-│       └── seed.js           # Seed data (48 teams, 16 stadiums, 72 group-stage matches)
-├── client/
-│   └── src/
-│       ├── pages/            # Home, Login, Register, Matches, Leaderboard, Groups, Admin
-│       ├── components/       # Navbar, Footer, MatchCard, Pagination, ScoreInput, …
-│       ├── context/          # AuthContext
-│       └── hooks/            # useAuth
-└── infra/                    # Terraform (Lambda, API Gateway, SSM, Amplify, CloudWatch)
+
+Details: [docs/architecture.md](docs/architecture.md).
+
+---
+
+## 6. Technology Stack
+
+| Layer | Choices |
+|-------|---------|
+| Frontend | React, TypeScript, Vite, Tailwind CSS, React Router, PWA (`sw.js` + manifest) |
+| Backend | Node.js 22, Express, Zod validation, JWT auth |
+| Data | PostgreSQL (Neon), Prisma ORM (`@prisma/adapter-neon`) |
+| Email | Resend (verification, password reset; historical match reminders) |
+| Infra | AWS Lambda, API Gateway, Amplify, S3 artifacts, SSM, CloudWatch, Terraform |
+| CI/CD | GitHub Actions (lint, test, build, Lambda deploy + health check) |
+
+---
+
+## 7. Prediction and Scoring Flow
+
+| Outcome | Points |
+|---------|--------|
+| Exact score | 3 |
+| Correct winner or draw (wrong scoreline) | 1 |
+| Incorrect | 0 |
+
+- Predictions locked after kickoff (API + UI).
+- After the Final is complete, prediction **writes** return `403`; historical reads remain.
+- Group-stage points carry into knockout; overall leaderboard is cumulative.
+
+Flow diagram: [docs/architecture.md](docs/architecture.md#prediction-submission-and-scoring-flow).
+
+---
+
+## 8. Authentication and Email Verification
+
+- Register → bcrypt password hash → optional verification email (Resend)
+- `REQUIRE_EMAIL_VERIFICATION` gates prediction writes until verified
+- Login issues JWT (Bearer); admin routes require `role === "admin"`
+- Forgot/reset password uses time-limited tokens and Resend delivery
+
+See [docs/security.md](docs/security.md).
+
+---
+
+## 9. Infrastructure and Deployment
+
+- **Frontend:** AWS Amplify (connected to `main`)
+- **Backend:** Lambda zip artifacts in S3 → `pitchpulse26-api`
+- **Database:** Neon Postgres (production separate from local/staging)
+- **IaC:** Terraform under `infra/`
+
+**Important production lesson:** code deployment does **not** automatically guarantee database schema compatibility. Prisma migrations must be applied deliberately against the correct database.
+
+---
+
+## 10. CI/CD
+
+Workflow: [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)
+
+On PRs and pushes to `main`: frontend lint/test/build + backend tests.  
+On push to `main`: package Lambda, upload S3 artifact, update function code, curl `/api/health`.
+
+Match reminders workflow ([`.github/workflows/reminders.yml`](.github/workflows/reminders.yml)): **scheduled cron disabled** after tournament completion; `workflow_dispatch` retained for manual dry-runs.
+
+---
+
+## 11. Observability
+
+- Structured JSON logs (`timestamp`, `level`, `event`, `requestId`, …)
+- CloudWatch dashboard `pitchpulse26-prod-overview` + error/duration/5xx alarms
+- `GET /api/health` — process liveness
+- `GET /api/ready` — includes database connectivity check
+
+See [docs/observability.md](docs/observability.md).
+
+---
+
+## 12. Security and Data Protection
+
+JWT auth, Zod input validation, Helmet, rate-limited auth routes, admin role checks, prediction lock after kickoff, audit trail for admin score changes, secrets via env/SSM/GitHub secrets — not committed.
+
+No betting or gambling features. See [docs/security.md](docs/security.md).
+
+---
+
+## 13. Production Challenges and Incidents
+
+Knockout rollout exposed a schema/migration gap (`tournamentStage`), a Prisma P3005 baseline situation, a temporary revert to restore service, fixture import sequencing, email deliverability/spam labeling, and short prediction windows for early knockout matches.
+
+Full write-ups: [docs/incident-history.md](docs/incident-history.md).
+
+---
+
+## 14. Engineering Decisions
+
+ADR-style notes: [docs/engineering-decisions.md](docs/engineering-decisions.md)  
+(examples: serverless + Neon, cumulative scoring, incremental imports, archive mode, preserving historical scripts).
+
+---
+
+## 15. Testing Strategy
+
+- Backend: Vitest unit + integration (scoring, auth, tournament-complete write gate, statistics)
+- Frontend: Vitest + Testing Library (pages, archive UX, Statistics, auth flows)
+- Manual production QA checklist in [docs/testing.md](docs/testing.md)
+- Optional Artillery baseline: [docs/performance/load-test-baseline.md](docs/performance/load-test-baseline.md)
+
+---
+
+## 16. Final Metrics
+
+Prefer live data:
+
+```bash
+curl -s https://fqblsiujfj.execute-api.us-east-1.amazonaws.com/api/statistics/tournament | jq .
 ```
 
-## Features
+See §3 for the labeled final snapshot captured for this README.
 
-- Email + password auth with JWT (1-day expiry), role-based access (`user` / `admin`)
-- Email verification flow with verified-user gating for predictions
-- Password reset request + secure reset link flow
-- Score predictions with one-per-user-per-match upsert, pre-filled on return
-- **Prediction lockout after kickoff** (API + UI) so users can't change picks mid-match
-- 12 group standings computed dynamically from results (MP / W / D / L / GF / GA / GD / Pts)
-- Leaderboard with medal icons for top 3, current-user context, and clearer tie handling
-- Paginated Matches and Leaderboard with `?page=N` URL state for shareable links
-- Matches dashboard with predicted / remaining / locked counts and next upcoming match prompt
-- Friendly empty, loading, error, and offline states across core frontend pages
-- Accessibility improvements: labels, focus states, skip link, keyboard-friendly navigation
-- Mobile prediction flow polish with larger touch targets and stacked controls
-- Admin panel to set final match scores, which updates predictions and standings
-- Responsive dark theme with hamburger nav on mobile and iOS-Safari-friendly forms (16px inputs, proper `autoComplete`/`autoCapitalize`)
+---
 
-## Getting Started
+## 17. Lessons Learned
+
+1. **Schema and code ship separately** — always migrate the target database before relying on new columns/enums in production.
+2. **Incremental delivery beats big-bang fixtures** — import each knockout round with dry-run + upsert.
+3. **Operate what you build** — CloudWatch, health/ready checks, and a rollback runbook matter as much as features.
+4. **Email deliverability is product-critical** — verification gating fails quietly if mail lands in spam.
+5. **Preserve history** — archive UX + admin correction beat wiping a finished tournament.
+
+---
+
+## 18. Future Improvements
+
+Ideas only (not implemented): automatic bracket advancement, better email deliverability, private leagues, multi-tournament support, automated result ingestion, stronger admin tooling, deeper analytics, load testing expansion, native push notifications.
+
+---
+
+## 19. Local Development
 
 ### Prerequisites
 
-- Node.js >= 22 (see `server/.nvmrc`); Vite needs 20.19+ / 22.12+ to build.
+- Node.js 22 (see `server/.nvmrc`; Vite needs a current Node 20.19+/22.12+ for builds)
 - npm
-- A free Neon PostgreSQL database (https://neon.tech) for local dev.
+- A Neon (or other Postgres) database for local use — **never** point local tooling at production casually
 
-### Server Setup
+### Server
 
 ```bash
 cd server
 nvm use
 npm install
+cp .env.example .env   # if present; otherwise create .env
 ```
-
-Create `server/.env`:
 
 ```env
 PORT=5050
-JWT_SECRET=your-secret-key-here
+JWT_SECRET="<your-jwt-secret>"
 CORS_ORIGIN=http://localhost:5173
-DATABASE_URL=postgresql://USER:PASS@<neon-host>/neondb?sslmode=require
+DATABASE_URL="<your-database-url>"
 REQUIRE_EMAIL_VERIFICATION=true
 EMAIL_FROM=no-reply@updates.pitchpulse26.com
-RESEND_API_KEY=re_xxxxxxxxx
+RESEND_API_KEY="<your-resend-api-key>"
+APP_URL=http://localhost:5173
 ```
 
-Set `REQUIRE_EMAIL_VERIFICATION=false` if you need a temporary pre-tournament fallback that lets users register and submit predictions without email verification while transactional email delivery is unavailable.
-Email verification is sent through Resend. Before it will work in any environment, add and verify a sending domain in Resend and create an API key for the app.
-
-Apply migrations and seed:
-
 ```bash
+npx prisma generate
 npx prisma migrate deploy
-npx tsx prisma/seed.js
-```
-
-If you already have a live database that only contains the first 24 opening-round fixtures, backfill the remaining group-stage matches without wiping users or predictions:
-
-```bash
-npm run backfill:group-stage -- --dry-run
-npm run backfill:group-stage
-```
-
-If you later need to correct those fixtures to a verified official schedule, fill in [server/prisma/officialGroupStageFixtures.js](/Users/gerardeklu/PitchPulse26/server/prisma/officialGroupStageFixtures.js) with the official UTC kickoff times and venues, then run:
-
-```bash
-npm run sync:official-group-stage -- --dry-run
-npm run sync:official-group-stage
-```
-
-Start the dev server:
-
-```bash
 npm run dev
 ```
 
-The API will be available at `http://localhost:5050/api`.
+API: `http://localhost:5050/api`
 
-### Client Setup
+**Do not** run `prisma migrate reset`, destructive seeds, or fixture imports against the historical production database.
+
+### Client
 
 ```bash
 cd client
@@ -142,382 +277,63 @@ npm install
 npm run dev
 ```
 
-The web app runs at `http://localhost:5173`. It reads `VITE_API_URL` (defaults to `http://localhost:5050/api`).
-To keep the frontend copy aligned with the backend fallback, you can also set `VITE_REQUIRE_EMAIL_VERIFICATION=false` in the client environment when verification is temporarily optional.
+App: `http://localhost:5173` (uses `VITE_API_URL`, defaulting to `http://localhost:5050/api`).
 
-## Dockerized Local Development
-
-The app can also run through Docker Compose while still using the shared Neon PostgreSQL database from `server/.env`.
-
-### Prerequisites
-
-- Docker Desktop or Docker Engine with Compose support
-- a populated `server/.env` file with a valid `DATABASE_URL`
-
-### Start the app
+### Tests and build
 
 ```bash
-docker compose up --build
+cd client && npm run lint && npm test && npm run build
+cd server && JWT_SECRET=test-secret npm test
 ```
 
-Available services:
+Docker Compose (frontend + backend against Neon from `server/.env`) is also supported: `docker compose up --build`.
 
-- frontend: `http://localhost:5173`
-- backend: `http://localhost:5050/api`
+---
 
-### Stop the app
+## 20. Deployment Notes
 
-```bash
-docker compose down
+1. Merge to `main` → CI runs checks → Lambda artifact deploy + health check.
+2. Amplify rebuilds the frontend from `main`.
+3. Apply Prisma migrations to the **correct** Neon database **before** relying on schema-dependent code.
+4. Validate `/api/health`, `/api/ready`, key UI routes, and (if relevant) statistics/leaderboard.
+5. Rollback: [docs/runbooks/deployment-rollback.md](docs/runbooks/deployment-rollback.md) and [docs/production-runbook.md](docs/production-runbook.md).
+
+Code deployment does not automatically guarantee database schema compatibility.
+
+---
+
+## 21. Repository Structure
+
+```
+PitchPulse26/
+├── client/                 # React + Vite frontend (PWA)
+├── server/                 # Express API, Prisma, fixture scripts
+│   └── prisma/ARCHIVE.md   # Historical import / reminder notes
+├── infra/                  # Terraform (Lambda, API GW, Amplify, monitoring, SES identity remnants)
+├── docs/                   # Case-study documentation (start here)
+├── .github/workflows/      # CI/CD + reminders (manual dispatch)
+└── USER_STORIES.md         # Historical product backlog
 ```
 
-### Reinstall container dependencies
+---
 
-If dependencies drift or containers behave oddly after package updates:
+## 22. Screenshots
 
-```bash
-docker compose down -v
-docker compose up --build
-```
+No committed screenshot assets yet. See [docs/screenshots/README.md](docs/screenshots/README.md) for the recommended capture list (homepage, archive, standings, statistics, admin, mobile).
 
-### Notes
+---
 
-- Docker Compose runs only the frontend and backend services
-- PostgreSQL is still provided by Neon, so no local database container is required
-- code changes are mounted into the containers for live reload during development
+## 23. Status
 
-## Local Development Flow
+| Area | Status |
+|------|--------|
+| World Cup 2026 predictions | Closed (archive) |
+| Historical data | Preserved |
+| Public browse / statistics / standings | Available |
+| Admin historical corrections | Available |
+| Scheduled match reminders | Disabled (manual dispatch only) |
+| Auth / verification / password reset | Active |
 
-Run the backend in one terminal:
+---
 
-```bash
-cd server
-npm run dev
-```
-
-Run the frontend in another:
-
-```bash
-cd client
-npm run dev
-```
-
-Recommended local test accounts:
-
-- `admin` account for posting final results
-- `verified user` account for prediction flows
-- `unverified user` account for verification gating and restricted prediction testing
-
-Recommended match data for manual QA:
-
-- at least 1 future match
-- at least 1 locked match (kickoff passed, no result yet)
-- at least 1 completed match with a final score
-- enough matches to trigger pagination
-- `docker compose up --build` should bring up the same app flow without local Node installs
-
-## Performance Notes
-
-Recent performance work focused on the Matches page, which had become the heaviest user flow in the app.
-
-- Initial Matches load was reduced from several overlapping requests to a smaller, focused set
-- Group and status filters now work from already-loaded schedule data instead of refetching the match list
-- Dashboard summary data now comes from a lightweight dedicated endpoint instead of duplicate schedule and leaderboard requests
-
-Main bottleneck addressed:
-
-- redundant round trips on the Matches page, especially duplicate schedule fetches and oversized dashboard lookups
-
-Remaining follow-up ideas:
-
-- add a lighter current-user leaderboard/rank path if leaderboard computation becomes expensive
-- split the Matches page orchestration into smaller hooks/components for easier future tuning
-- profile backend latency against the live Neon database after the auth recovery work lands
-
-## Admin Audit Trail
-
-Admin match result changes are persisted in the `AdminAuditLog` table.
-
-Each audit entry records:
-
-- `adminUserId`
-- `matchId`
-- `action`
-- `oldHomeScore`
-- `oldAwayScore`
-- `newHomeScore`
-- `newAwayScore`
-- `requestId`
-- `correlationId`
-- `createdAt`
-
-Current audit event name:
-
-- `match.result.updated`
-
-This makes result changes queryable in the database and traceable in structured logs for fairness and operational review.
-
-## Deployment Rollback
-
-Production rollback is documented in [docs/runbooks/deployment-rollback.md](/Users/gerardeklu/PitchPulse26/docs/runbooks/deployment-rollback.md).
-
-Current rollback approach:
-
-## Production Email Notes
-
-Email verification and password reset now use Resend.
-
-For Resend verification email delivery, configure:
-
-- server env / Lambda env: `RESEND_API_KEY`
-- server env / Lambda env: `EMAIL_FROM`
-
-Resend requires a verified sending domain before mail will deliver.
-
-## Automated Match Reminders
-
-Match reminders can be triggered automatically through GitHub Actions using:
-
-- [.github/workflows/reminders.yml](/Users/gerardeklu/PitchPulse26/.github/workflows/reminders.yml)
-
-The workflow calls the existing protected backend route:
-
-- `POST /api/reminders/run-next-day`
-
-Required GitHub configuration:
-
-- repository variable: `ENABLE_MATCH_REMINDERS=true`
-- repository variable: `REMINDER_API_URL`
-  - example: `https://fqblsiujfj.execute-api.us-east-1.amazonaws.com/api`
-- repository secret: `REMINDER_JOB_SECRET`
-
-Notes:
-
-- the scheduled workflow runs at `13:00 UTC` daily, which is `9:00 AM` Eastern during June daylight saving time
-- `workflow_dispatch` supports manual dry runs and optional `target_date` overrides for testing
-- users can unsubscribe using the link already embedded in reminder emails
-
-## Production Email Reset Notes
-
-The Lambda deploy workflow now updates function environment variables as part of deployment. Configure these before relying on production password reset emails:
-
-- GitHub secret: `LAMBDA_DATABASE_URL`
-- GitHub secret: `LAMBDA_JWT_SECRET`
-- GitHub variable: `ENABLE_LAMBDA_CONFIG_UPDATE`
-- GitHub variable: `LAMBDA_CORS_ORIGIN`
-- GitHub variable: `LAMBDA_APP_URL`
-- GitHub variable: `LAMBDA_EMAIL_FROM`
-
-Why this matters:
-
-- the backend builds password reset links from `APP_URL` or a trusted frontend origin
-- SES sending depends on the deployed Lambda having the correct `EMAIL_FROM` and region configuration
-- updating Lambda code alone does not update its environment variables, so production can drift from local behavior if config changes are only made in local `.env`
-- keep `ENABLE_LAMBDA_CONFIG_UPDATE` unset (or not `true`) until the CI IAM user is granted `lambda:UpdateFunctionConfiguration`
-
-- frontend rollback through Amplify deployment history or by reverting the bad `main` commit
-- backend rollback by redeploying the last known good Lambda artifact from S3
-- database rollback avoided by favoring backward-compatible Prisma migrations
-
-## Production Monitoring & Debugging
-
-Production monitoring is handled through AWS CloudWatch using Terraform-managed resources in [infra/monitoring.tf](/Users/gerardeklu/PitchPulse26/infra/monitoring.tf).
-
-### CloudWatch Dashboard
-
-Dashboard name:
-
-- `pitchpulse26-prod-overview`
-
-Widgets included:
-
-- Lambda `Invocations`
-- Lambda `Errors`
-- Lambda `Duration`
-- API Gateway `4xx`
-- API Gateway `5xx`
-- API Gateway `Count`
-
-### CloudWatch Alarms
-
-Current alarms:
-
-- `pitchpulse26-lambda-errors`
-- `pitchpulse26-api-5xx`
-- `pitchpulse26-lambda-duration-high`
-
-### Log Groups
-
-Current log groups:
-
-- `/aws/lambda/pitchpulse26-api`
-- `/aws/apigateway/pitchpulse26`
-
-Retention:
-
-- `14 days` for both Lambda and API Gateway logs
-
-### How To Debug Production Issues
-
-1. Open CloudWatch Dashboards and check `pitchpulse26-prod-overview`.
-2. Check whether Lambda `Errors` or API Gateway `5xx` spiked.
-3. Review Lambda `Duration` to see whether requests slowed down before failing.
-4. Open CloudWatch Logs for `/aws/lambda/pitchpulse26-api` to inspect backend exceptions.
-5. Open CloudWatch Logs for `/aws/apigateway/pitchpulse26` to review request path, method, status, and response size.
-6. Run the health check:
-
-```bash
-curl -i https://fqblsiujfj.execute-api.us-east-1.amazonaws.com/api/health
-```
-
-7. If a deployment caused the issue, follow the rollback steps in [docs/runbooks/deployment-rollback.md](/Users/gerardeklu/PitchPulse26/docs/runbooks/deployment-rollback.md).
-
-### Apply Monitoring Changes
-
-```bash
-cd infra
-terraform plan
-terraform apply
-```
-
-## API Endpoints
-
-### Public
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/health` | Health check |
-| GET | `/api/teams` | List all teams (optional `?group=A`) |
-| GET | `/api/matches` | List matches (optional `?group=A&page=1&limit=20`) |
-| GET | `/api/leaderboard` | Ranked leaderboard (`?page=1&limit=20`) |
-
-### Auth
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/register` | Create account |
-| POST | `/api/auth/login` | Login, returns JWT |
-| GET | `/api/auth/me` | Get current user profile (requires token) |
-| POST | `/api/auth/verify-email` | Verify email token |
-| POST | `/api/auth/resend-verification` | Resend verification email (requires auth) |
-| POST | `/api/auth/forgot-password` | Request a password reset link |
-| POST | `/api/auth/reset-password` | Set a new password with a valid reset token |
-
-### Protected (requires JWT)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/predictions` | Create or update a prediction |
-| GET | `/api/predictions/my` | List your predictions (`?page=1&limit=20`) |
-| GET | `/api/predictions/summary` | Get the Matches dashboard summary for the current user |
-
-### Admin (requires JWT + admin role)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| PATCH | `/api/admin/matches/:id/result` | Set match final score |
-
-### Request/Response Examples
-
-**Register:**
-```json
-POST /api/auth/register
-{ "email": "user@example.com", "password": "password123", "displayName": "Player1" }
-→ 201 { "message": "User created", "userId": 1 }
-```
-
-**Login:**
-```json
-POST /api/auth/login
-{ "email": "user@example.com", "password": "password123" }
-→ 200 { "token": "eyJhbG..." }
-```
-
-**Create Prediction:**
-```json
-POST /api/predictions  (Authorization: Bearer <token>)
-{ "matchId": 1, "homeScore": 2, "awayScore": 1 }
-```
-
-**Paginated Response Format:**
-```json
-{
-  "data": [...],
-  "meta": { "page": 1, "limit": 20, "total": 24, "totalPages": 2 }
-}
-```
-
-## Database Schema
-
-**Models:** Team, Stadium, Match, User, Prediction
-
-- **User** has `role` field (`"user"` or `"admin"`) and optional `displayName`
-- **Prediction** has a unique constraint on `(userId, matchId)` — one prediction per user per match
-- Predictions are rejected on matches that already have a result
-- Indexes on `Match.date`, `Match.homeTeamId`, `Match.awayTeamId`, `Prediction.userId`
-
-## Scoring
-
-| Outcome | Points |
-|---------|--------|
-| Exact score match | 3 |
-| Correct winner/draw | 1 |
-| Wrong | 0 |
-
-## Testing
-
-### Frontend
-
-```bash
-cd client
-npm test
-```
-
-Vitest is configured with `jsdom`, and the frontend test suite currently lives under `client/src/test`.
-
-### Backend
-
-```bash
-cd server
-npm test
-```
-
-### Type Checking
-
-```bash
-cd client
-npx tsc -b
-```
-
-### Docker Compose
-
-```bash
-docker compose up --build
-```
-
-Use this when you want a containerized local environment that still points at the shared Neon database.
-
-## Manual QA Suggestions
-
-- Register a new user and complete the email verification flow
-- Confirm unverified users cannot submit predictions
-- Submit and update predictions for upcoming matches
-- Confirm matches lock after kickoff
-- Set a final score as admin and verify leaderboard / standings update
-- Test the app in both desktop and mobile-sized viewports
-- Verify offline and retry states by temporarily stopping the API
-
-## Security
-
-- JWT authentication with secrets from environment variables
-- Passwords hashed with bcrypt (salt rounds: 10)
-- Role-based access control for admin routes
-- Input validation on all endpoints (Zod)
-- Helmet for HTTP security headers
-- Rate limiting on auth endpoints (20 req / 15 min)
-- CORS restricted to configured origin
-- Request body size limited to 10kb
-
-## License
-
-ISC
+Built and operated by Gerard Eklu.

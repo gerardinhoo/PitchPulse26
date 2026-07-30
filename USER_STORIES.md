@@ -1,5 +1,7 @@
 # PitchPulse 26 — User Stories
 
+> **Historical product backlog.** World Cup 2026 is complete and the app is a read-only archive. Stories below describe how features were built during the live tournament; they are not a claim that predictions are still open. See the root [README.md](README.md) and [docs/README.md](docs/README.md).
+
 ## Epic 1: Authentication & User Management
 
 ### PP-001: User Registration [DONE]

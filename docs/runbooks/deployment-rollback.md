@@ -1,6 +1,6 @@
 # Deployment Rollback Runbook
 
-This runbook documents how to safely roll back Pitch Pulse 26 after a bad deployment.
+This runbook documents how to safely roll back PitchPulse 26 after a bad deployment.
 
 Current deployment model:
 
@@ -8,6 +8,10 @@ Current deployment model:
 - Backend: AWS Lambda behind API Gateway
 - Database: Neon Postgres via Prisma
 - CI/CD: GitHub Actions
+
+Post-tournament note: prediction **writes** are closed while the Final remains complete (`403`). Smoke tests should expect that behavior. Prefer verifying leaderboard, statistics, match reads, auth, and admin correction instead of assuming prediction POST succeeds.
+
+Broader ops: [production-runbook.md](../production-runbook.md).
 
 ## Rollback Triggers
 
@@ -80,9 +84,11 @@ aws lambda wait function-updated --function-name pitchpulse26-api
 ### Validate
 
 - `GET /api/health` returns `200`
+- `GET /api/ready` returns ready (when investigating DB issues)
 - login works
 - `GET /api/matches` works
-- `POST /api/predictions` works for a verified user
+- `GET /api/leaderboard` and `GET /api/statistics/tournament` work
+- `POST /api/predictions` returns `403` while the tournament archive gate is active (Final complete)
 - `PATCH /api/admin/matches/:id/result` works for an admin
 
 ## Database Rollback Guidance
