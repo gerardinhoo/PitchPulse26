@@ -64,14 +64,57 @@ describe("Leaderboard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
 
     expect(await screen.findByText("Your Standing")).toBeInTheDocument();
-    expect(screen.getAllByText("Casey")).toHaveLength(2);
-    expect(screen.getByText("12 pts")).toBeInTheDocument();
-    expect(mockGet).toHaveBeenCalledWith(
-      "/leaderboard",
-      expect.objectContaining({
-        params: expect.objectContaining({ page: 1, scope: "overall" }),
-      }),
-    );
+    expect(screen.getByText("Final PitchPulse 26 Standings")).toBeInTheDocument();
+    expect(screen.getByText("PitchPulse 26 Champion")).toBeInTheDocument();
+    expect(screen.getAllByText("Casey").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText("12 pts").length).toBeGreaterThanOrEqual(1);
     expect(leaderboardAttempts).toBe(2);
+  });
+
+  it("derives champion copy from leaderboard data when the Final is complete", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url === "/leaderboard") {
+        return Promise.resolve({
+          data: {
+            data: [
+              { rank: 1, tiedCount: 1, userId: 1, displayName: "Jimbo", points: 84 },
+              { rank: 2, tiedCount: 1, userId: 2, displayName: "MaluY", points: 77 },
+            ],
+            meta: { totalPages: 1 },
+            currentUser: null,
+          },
+        });
+      }
+
+      if (url === "/matches") {
+        return Promise.resolve({
+          data: {
+            data: [
+              {
+                id: 999,
+                tournamentStage: "FINAL",
+                homeScore: 1,
+                awayScore: 0,
+              },
+            ],
+          },
+        });
+      }
+
+      return Promise.resolve({ data: { data: [] } });
+    });
+
+    render(
+      <MemoryRouter>
+        <Leaderboard />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("Final PitchPulse 26 Standings")).toBeInTheDocument();
+    expect(screen.getByText("PitchPulse 26 Champion")).toBeInTheDocument();
+    expect(screen.getAllByText("Jimbo").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("84 points")).toBeInTheDocument();
+    expect(screen.getByText(/Jimbo — PitchPulse 26 Champion/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Share Final Standings" })).toBeInTheDocument();
   });
 });

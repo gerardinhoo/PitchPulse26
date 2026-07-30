@@ -4,6 +4,10 @@ import { authMiddleware } from "../middleware/auth.js";
 import { isEmailVerificationRequired } from "../src/config.js";
 import { validate, predictionSchema, paginationSchema } from "../src/validators.js";
 import { calculatePoints } from "../src/services/leaderboard.js";
+import {
+  isTournamentComplete,
+  TOURNAMENT_CLOSED_MESSAGE,
+} from "../src/services/tournamentComplete.js";
 
 const router = express.Router();
 
@@ -23,6 +27,10 @@ router.post("/", authMiddleware, validate(predictionSchema), async (req, res, ne
     }
     if (isEmailVerificationRequired() && !user.emailVerified) {
       return res.status(403).json({ error: "Please verify your email before submitting predictions" });
+    }
+
+    if (await isTournamentComplete(prisma)) {
+      return res.status(403).json({ error: TOURNAMENT_CLOSED_MESSAGE });
     }
 
     // Prevent predictions on matches that already have results

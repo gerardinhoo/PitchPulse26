@@ -5,6 +5,10 @@ import { useAuth } from "../hooks/useAuth";
 import Pagination from "../components/Pagination";
 import Spinner from "../components/Spinner";
 import StatePanel from "../components/StatePanel";
+import {
+  isTournamentComplete,
+  POST_TOURNAMENT_UX_FREEZE,
+} from "../utils/tournamentComplete";
 
 type LeaderboardEntry = {
   rank: number;
@@ -91,13 +95,8 @@ export default function Leaderboard() {
 
         const finalMatches = matchesRes?.data?.data ?? [];
         if (finalMatches.length === 0) {
-          setFinalStageState("none");
-        } else if (
-          finalMatches.every(
-            (match: { homeScore: number | null; awayScore: number | null }) =>
-              match.homeScore !== null && match.awayScore !== null,
-          )
-        ) {
+          setFinalStageState(POST_TOURNAMENT_UX_FREEZE ? "complete" : "none");
+        } else if (isTournamentComplete(finalMatches)) {
           setFinalStageState("complete");
         } else {
           setFinalStageState("active");
@@ -188,9 +187,14 @@ export default function Leaderboard() {
         ? "Knockout Stage"
         : "Overall";
 
-  const shareCardCopy = leader
-    ? `PitchPulse 26 ${scopeLabel} Leaderboard\n${getDisplayName(leader)} is leading with ${leader.points} pts.\n${currentUserEntry ? `I'm ${currentUserEntry.tiedCount > 1 ? `tied with ${currentUserEntry.tiedCount - 1} others` : `ranked #${currentUserEntry.rank}`} on the table.` : "The race is live after every final score."}\nhttps://pitchpulse26.com/leaderboard`
-    : `PitchPulse 26 ${scopeLabel} Leaderboard\nThe World Cup challenge is live.\nhttps://pitchpulse26.com/leaderboard`;
+  const shareCardCopy =
+    finalStageState === "complete"
+      ? leader
+        ? `PitchPulse 26 Final Standings\nChampion: ${getDisplayName(leader)} (${leader.points} pts)\n${currentUserEntry ? `I'm ${currentUserEntry.tiedCount > 1 ? `tied at #${currentUserEntry.rank}` : `ranked #${currentUserEntry.rank}`} on the final table.` : "The World Cup 2026 prediction challenge is complete."}\nhttps://pitchpulse26.com/leaderboard`
+        : `PitchPulse 26 Final Standings\nThe World Cup 2026 prediction challenge is complete.\nhttps://pitchpulse26.com/leaderboard`
+      : leader
+        ? `PitchPulse 26 ${scopeLabel} Leaderboard\n${getDisplayName(leader)} is leading with ${leader.points} pts.\n${currentUserEntry ? `I'm ${currentUserEntry.tiedCount > 1 ? `tied with ${currentUserEntry.tiedCount - 1} others` : `ranked #${currentUserEntry.rank}`} on the table.` : "The race is live after every final score."}\nhttps://pitchpulse26.com/leaderboard`
+        : `PitchPulse 26 ${scopeLabel} Leaderboard\nThe World Cup challenge is live.\nhttps://pitchpulse26.com/leaderboard`;
 
   const handleShare = async () => {
     try {
@@ -215,10 +219,19 @@ export default function Leaderboard() {
 
   return (
     <div className="animate-fade-in">
-      <h1 className="text-2xl font-bold mb-6">Leaderboard</h1>
+      <h1 className="text-2xl font-bold mb-2">
+        {finalStageState === "complete" ? "Final PitchPulse 26 Standings" : "Leaderboard"}
+      </h1>
+      {finalStageState === "complete" ? (
+        <p className="mb-6 max-w-3xl text-sm text-[var(--color-text-muted)]">
+          Final rankings after the World Cup 2026.
+        </p>
+      ) : (
+        <div className="mb-6" />
+      )}
 
       <div className="max-w-4xl mx-auto">
-        {finalStageState !== "none" && (
+        {finalStageState === "complete" && leader && (
           <section className="relative mb-6 overflow-hidden rounded-2xl border border-amber-400/25 bg-[linear-gradient(135deg,rgba(250,204,21,0.1),rgba(6,10,9,0.94))] px-5 py-5">
             {showConfetti && (
               <div className="champion-confetti" aria-hidden="true">
@@ -231,35 +244,53 @@ export default function Leaderboard() {
               </div>
             )}
             <p className="text-xs uppercase tracking-[0.2em] text-amber-300 mb-2">
-              {finalStageState === "complete" ? "Tournament Complete" : "Final Stage"}
+              PitchPulse 26 Champion
             </p>
-            <h2 className="text-lg font-semibold text-white">
-              {finalStageState === "complete" ? "Final Standings" : "Final Standings Race"}
+            <h2 className="text-xl font-semibold text-white sm:text-2xl">
+              {getDisplayName(leader)}
             </h2>
             <p className="mt-2 text-sm text-white/75">
-              {finalStageState === "complete"
-                ? leader
-                  ? `PitchPulse 26 Champion: ${getDisplayName(leader)}.`
-                  : "The World Cup challenge is complete."
-                : "One last match can still change the table."}
+              {leader.points} point{leader.points === 1 ? "" : "s"}
+            </p>
+            <p className="mt-3 text-sm text-white/65">
+              The competition is complete. Explore the final rankings from the full tournament.
             </p>
           </section>
         )}
 
-        <section className="mb-6 rounded-2xl border border-amber-500/20 bg-[linear-gradient(135deg,rgba(245,158,11,0.12),rgba(6,10,9,0.94))] px-5 py-5">
-          <p className="text-xs uppercase tracking-[0.2em] text-amber-300 mb-2">Prize</p>
-          <h2 className="text-lg font-semibold">Play for bragging rights and gear</h2>
-          <ul className="mt-3 space-y-1 text-sm text-white/80">
-            <li>Finish 1st on the leaderboard and choose your favorite national team's official World Cup jersey.</li>
-          </ul>
-           <p className="mt-3 text-xs text-white/60">
-              Free to play. No betting. No gambling.
-           </p>
+        {finalStageState === "active" && (
+          <section className="relative mb-6 overflow-hidden rounded-2xl border border-amber-400/25 bg-[linear-gradient(135deg,rgba(250,204,21,0.1),rgba(6,10,9,0.94))] px-5 py-5">
+            <p className="text-xs uppercase tracking-[0.2em] text-amber-300 mb-2">Final Stage</p>
+            <h2 className="text-lg font-semibold text-white">Final Standings Race</h2>
+            <p className="mt-2 text-sm text-white/75">
+              One last match can still change the table.
+            </p>
+          </section>
+        )}
 
-           <p className="mt-1 text-xs text-white/40">
-            *Subject to availability.
-           </p>
-        </section>
+        {finalStageState === "complete" ? (
+          <section className="mb-6 rounded-2xl border border-amber-500/20 bg-[linear-gradient(135deg,rgba(245,158,11,0.12),rgba(6,10,9,0.94))] px-5 py-5">
+            <p className="text-xs uppercase tracking-[0.2em] text-amber-300 mb-2">Prize</p>
+            <h2 className="text-lg font-semibold">Tournament prize</h2>
+            <p className="mt-3 text-sm text-white/80">
+              The PitchPulse 26 champion selected a Cape Verde jersey.
+            </p>
+            <p className="mt-3 text-xs text-white/60">Free to play. No betting. No gambling.</p>
+          </section>
+        ) : (
+          <section className="mb-6 rounded-2xl border border-amber-500/20 bg-[linear-gradient(135deg,rgba(245,158,11,0.12),rgba(6,10,9,0.94))] px-5 py-5">
+            <p className="text-xs uppercase tracking-[0.2em] text-amber-300 mb-2">Prize</p>
+            <h2 className="text-lg font-semibold">Play for bragging rights and gear</h2>
+            <ul className="mt-3 space-y-1 text-sm text-white/80">
+              <li>
+                Finish 1st on the leaderboard and choose your favorite national team&apos;s official
+                World Cup jersey.
+              </li>
+            </ul>
+            <p className="mt-3 text-xs text-white/60">Free to play. No betting. No gambling.</p>
+            <p className="mt-1 text-xs text-white/40">*Subject to availability.</p>
+          </section>
+        )}
 
         <div className="mb-6 flex flex-wrap gap-3">
           {LEADERBOARD_SCOPES.map((scope) => {
@@ -301,7 +332,7 @@ export default function Leaderboard() {
               to="/matches"
               className="mt-5 inline-flex items-center justify-center rounded-lg bg-[var(--color-accent)] px-4 py-2 font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
             >
-              Make your first prediction
+              {finalStageState === "complete" ? "Explore Match Archive" : "Make your first prediction"}
             </Link>
           </div>
         ) : (
@@ -315,11 +346,13 @@ export default function Leaderboard() {
                   <h2 className="text-xl font-semibold">Points reward accurate match picks</h2>
                   <p className="text-sm text-[var(--color-text-muted)] mt-2">
                     {activeScope === "group" &&
-                      "This view locks in your group-stage history. Exact scorelines earn the most credit, and players with the same points share the same rank."}
+                      "This view locks in your group-stage history. Exact scorelines earned the most credit, and players with the same points share the same rank."}
                     {activeScope === "knockout" &&
                       "This view tracks only knockout-round points. Group-stage history stays preserved separately."}
                     {activeScope === "overall" &&
-                      "This view stacks knockout points on top of your group-stage total so the full tournament table keeps moving."}
+                      (finalStageState === "complete"
+                        ? "This view stacks knockout points on top of group-stage totals for the final tournament table."
+                        : "This view stacks knockout points on top of your group-stage total so the full tournament table keeps moving.")}
                   </p>
                 </div>
 
@@ -368,11 +401,17 @@ export default function Leaderboard() {
               <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-2xl">
                   <p className="text-xs uppercase tracking-[0.2em] text-emerald-200/80 mb-2">
-                    Share the Table
+                    {finalStageState === "complete" ? "Share Final Standings" : "Share the Table"}
                   </p>
-                  <h2 className="text-2xl font-bold">Make your leaderboard screenshot-worthy</h2>
+                  <h2 className="text-2xl font-bold">
+                    {finalStageState === "complete"
+                      ? "Share the final PitchPulse 26 standings"
+                      : "Make your leaderboard screenshot-worthy"}
+                  </h2>
                   <p className="mt-2 text-sm text-white/75">
-                    This card is built to look good in a screenshot. Share your standing and keep the football banter going.
+                    {finalStageState === "complete"
+                      ? "The competition is complete. Explore the final rankings from the full tournament."
+                      : "This card is built to look good in a screenshot. Share your standing and keep the football banter going."}
                   </p>
                 </div>
                 <button
@@ -380,7 +419,7 @@ export default function Leaderboard() {
                   onClick={handleShare}
                   className="inline-flex items-center justify-center rounded-lg bg-[var(--color-accent)] px-5 py-2.5 font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
                 >
-                  Share leaderboard
+                  {finalStageState === "complete" ? "Share Final Standings" : "Share leaderboard"}
                 </button>
               </div>
 
@@ -391,14 +430,22 @@ export default function Leaderboard() {
                       PitchPulse 26
                     </p>
                     <h3 className="mt-2 text-xl font-bold">
-                      {leader
-                        ? `${getDisplayName(leader)} leads the World Cup challenge`
-                        : "The World Cup challenge is live"}
+                      {finalStageState === "complete"
+                        ? leader
+                          ? `${getDisplayName(leader)} — PitchPulse 26 Champion`
+                          : "Final standings"
+                        : leader
+                          ? `${getDisplayName(leader)} leads the World Cup challenge`
+                          : "The World Cup challenge is live"}
                     </h3>
                     <p className="mt-2 text-sm text-white/75">
-                      {leader
-                        ? `${leader.points} point${leader.points === 1 ? "" : "s"} on the board after the latest finals.`
-                        : "Final scores will keep reshaping the table every matchday."}
+                      {finalStageState === "complete"
+                        ? leader
+                          ? `${leader.points} point${leader.points === 1 ? "" : "s"} after the World Cup 2026 Final.`
+                          : "The tournament is complete."
+                        : leader
+                          ? `${leader.points} point${leader.points === 1 ? "" : "s"} on the board after the latest finals.`
+                          : "Final scores will keep reshaping the table every matchday."}
                     </p>
                   </div>
                   {currentUserEntry && (

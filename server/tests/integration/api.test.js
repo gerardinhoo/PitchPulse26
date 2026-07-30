@@ -249,11 +249,29 @@ const prisma = {
 
       return result;
     },
-    async findMany({ include, orderBy } = {}) {
-      const matches = [...state.matches];
+    async findMany({ where, include, orderBy, select } = {}) {
+      let matches = [...state.matches];
+
+      if (where?.tournamentStage !== undefined) {
+        matches = matches.filter(
+          (match) => (match.tournamentStage ?? "GROUP_STAGE") === where.tournamentStage,
+        );
+      }
 
       if (orderBy?.date === "asc") {
         matches.sort((a, b) => new Date(a.date) - new Date(b.date));
+      }
+
+      if (select) {
+        return matches.map((match) => {
+          const result = {};
+          for (const [key, value] of Object.entries(select)) {
+            if (value) {
+              result[key] = clone(match[key]);
+            }
+          }
+          return result;
+        });
       }
 
       if (include?.homeTeam || include?.awayTeam) {
@@ -754,6 +772,45 @@ describe("backend integration tests", () => {
         }),
       }),
     ]);
+  });
+
+  it("rejects prediction writes with 403 when the Final result is recorded", async () => {
+    state.matches.push({
+      id: 999,
+      homeTeamId: 5,
+      awayTeamId: 6,
+      homeScore: 1,
+      awayScore: 0,
+      date: "2026-07-19T19:00:00.000Z",
+      tournamentStage: "FINAL",
+      homeTeam: { id: 5, name: "Spain", code: "ESP" },
+      awayTeam: { id: 6, name: "Argentina", code: "ARG" },
+    });
+
+    const user = await createVerifiedUser({
+      email: "closed@example.com",
+      displayName: "Closed Tourney",
+    });
+    const token = createToken(user);
+
+    const createResponse = await request(app)
+      .post("/api/predictions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        matchId: 100,
+        homeScore: 2,
+        awayScore: 1,
+      });
+
+    expect(createResponse.status).toBe(403);
+    expect(createResponse.body.error).toMatch(/tournament is complete/i);
+
+    const listResponse = await request(app)
+      .get("/api/predictions/my")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(listResponse.status).toBe(200);
+    expect(listResponse.body.data).toEqual([]);
   });
 
   it("returns a lightweight prediction summary for the matches dashboard", async () => {
