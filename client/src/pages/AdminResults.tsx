@@ -24,7 +24,7 @@ export default function AdminResults() {
   useEffect(() => {
     const fetchMatches = async () => {
       try {
-        // Admins need the full list to split into Pending/Completed;
+        // Admins need the full list to split fixtures needing a score vs corrections;
         // request enough to cover the full WC2026 schedule (104 fixtures).
         const res = await api.get("/matches", { params: { limit: 150 } });
         setMatches(res.data.data);
@@ -88,20 +88,31 @@ export default function AdminResults() {
 
   if (loading) return <Spinner />;
 
-  const unplayed = matches.filter((m) => m.homeScore === null);
-  const played = matches.filter((m) => m.homeScore !== null);
+  const missingResult = matches.filter((m) => m.homeScore === null);
+  const recorded = matches.filter((m) => m.homeScore !== null);
 
   return (
     <div className="animate-fade-in">
-      <h1 className="text-2xl font-bold mb-6">Admin — Set Match Results</h1>
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300/85 mb-2">
+        Tournament Maintenance
+      </p>
+      <h1 className="text-2xl font-bold mb-2">Historical Result Maintenance</h1>
+      <p className="mb-6 max-w-3xl text-sm text-[var(--color-text-muted)]">
+        Review completed fixtures and correct historical results when necessary. Changes continue
+        to use the existing audit and scoring workflows.
+      </p>
 
-      {unplayed.length > 0 && (
+      {missingResult.length > 0 && (
         <section className="mb-10">
           <h2 className="text-lg font-semibold text-[var(--color-text-muted)] mb-3">
-            Pending ({unplayed.length})
+            Fixtures without a recorded score ({missingResult.length})
           </h2>
+          <p className="text-sm text-[var(--color-text-muted)] mb-4">
+            These matches do not yet have a final score in the archive. Enter a result only if a
+            correction or backfill is required.
+          </p>
           <div className="space-y-3 stagger-children">
-            {unplayed.map((match) => (
+            {missingResult.map((match) => (
               <MatchCard
                 key={match.id}
                 homeTeam={match.homeTeam.name}
@@ -131,16 +142,17 @@ export default function AdminResults() {
         </section>
       )}
 
-      {played.length > 0 && (
+      {recorded.length > 0 && (
         <section>
           <h2 className="text-lg font-semibold text-[var(--color-text-muted)] mb-3">
-            Completed ({played.length})
+            Recorded results ({recorded.length})
           </h2>
           <p className="text-sm text-[var(--color-text-muted)] mb-4">
-            Need to fix a result? Update the score below and save again.
+            Need to fix a historical score? Update the values below and save again. The existing
+            audit trail and scoring workflows still apply.
           </p>
           <div className="space-y-3">
-            {played.map((match) => (
+            {recorded.map((match) => (
               <MatchCard
                 key={match.id}
                 homeTeam={match.homeTeam.name}

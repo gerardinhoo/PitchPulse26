@@ -1,4 +1,9 @@
 import "dotenv/config";
+/**
+ * Historical Final fixture import (World Cup 2026).
+ * Idempotent upsert with --dry-run. Do not casually re-run against production history.
+ * See prisma/ARCHIVE.md.
+ */
 import { PrismaClient } from "../src/generated/prisma/client.ts";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { neonConfig } from "@neondatabase/serverless";
