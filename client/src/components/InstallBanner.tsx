@@ -1,10 +1,19 @@
 import { useEffect, useState } from "react";
+import { POST_TOURNAMENT_UX_FREEZE } from "../utils/tournamentComplete";
 
 const DISMISS_KEY = "pitchpulse26-pwa-install-dismissed";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+};
+
+type Props = {
+  /**
+   * Soft-hide install urgency after the tournament. Defaults to the portfolio freeze flag.
+   * Pass false in tests or local demos to exercise the banner.
+   */
+  softHidden?: boolean;
 };
 
 function isStandaloneMode() {
@@ -49,7 +58,7 @@ function writeDismissed() {
   }
 }
 
-export default function InstallBanner() {
+export default function InstallBanner({ softHidden = POST_TOURNAMENT_UX_FREEZE }: Props) {
   const [visible, setVisible] = useState(false);
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [iosGuide, setIosGuide] = useState<"safari" | "chrome" | null>(null);
@@ -58,7 +67,8 @@ export default function InstallBanner() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (isStandaloneMode() || readDismissed()) {
+    // Soft-hide post-event install pressure; PWA/service worker stay registered.
+    if (softHidden || isStandaloneMode() || readDismissed()) {
       return;
     }
 
@@ -87,7 +97,7 @@ export default function InstallBanner() {
     return () => {
       window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
     };
-  }, []);
+  }, [softHidden]);
 
   const dismiss = () => {
     writeDismissed();

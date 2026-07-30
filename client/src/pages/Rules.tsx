@@ -5,13 +5,13 @@ const RULE_SECTIONS = [
     eyebrow: "Tournament Scope",
     title: "Built for the World Cup tournament",
     body:
-      "PitchPulse 26 started with the group stage and now continues through the knockout rounds. Your group-stage points carry over, and every eligible knockout prediction can help you climb the leaderboard.",
+      "PitchPulse 26 covered the FIFA World Cup 2026 from the group stage through the knockout rounds and Final. Group-stage points carried over, and every eligible knockout prediction could change the leaderboard.",
   },
   {
     eyebrow: "Prediction Lock",
-    title: "Submit before kickoff",
+    title: "Predictions locked at kickoff",
     body:
-      "You can update your scoreline until the match starts. Once kickoff happens, that prediction is locked and can no longer be changed.",
+      "Players could update a scoreline until the match started. Once kickoff happened, that prediction was locked and could no longer be changed.",
   },
   {
     eyebrow: "Scoring",
@@ -23,14 +23,20 @@ const RULE_SECTIONS = [
     eyebrow: "Competition",
     title: "Friendly, free, and football-first",
     body:
-      "PitchPulse 26 is free to play and built for football fans. No betting or gambling is involved.",
+      "PitchPulse 26 was free to play and built for football fans. No betting or gambling was involved.",
   },
   {
     eyebrow: "Prize",
     title: "Top prize",
     body:
-      "Finish 1st on the leaderboard and win the World Cup jersey of your choice.",
-    note: "Prize is a thank-you for participating. Free to play. No betting. No gambling.",
+      "The player who finished 1st on the leaderboard chose a World Cup jersey. The winner selected a Cape Verde jersey.",
+    note: "Prize was a thank-you for participating. Free to play. No betting. No gambling.",
+  },
+  {
+    eyebrow: "Status",
+    title: "Tournament complete",
+    body:
+      "The World Cup 2026 tournament is complete and predictions are closed. PitchPulse 26 remains available as a historical archive and portfolio project.",
   },
 ];
 
@@ -43,12 +49,15 @@ export default function Rules() {
             Rules
           </p>
           <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
-            How to play PitchPulse 26
+            How PitchPulse 26 worked
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-white/78 sm:text-lg">
-            Everything you need to know before predicting: which matches count, when picks
-            lock, how points work, and how the leaderboard continues through the knockout
-            stage.
+            Documentation for the completed World Cup 2026 prediction experience: which matches
+            counted, when picks locked, how points worked, and how the leaderboard ran through the
+            Final.
+          </p>
+          <p className="mt-3 text-sm font-medium text-amber-100/90">
+            The World Cup 2026 tournament is complete and predictions are closed.
           </p>
         </div>
       </section>
@@ -77,25 +86,24 @@ export default function Rules() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-emerald-200/85">
-              Ready to play?
+              Explore the archive
             </p>
             <p className="mt-2 text-sm leading-6 text-white/80">
-              Head to the Matches page, lock in your knockout picks before kickoff, and keep
-              climbing the leaderboard as results come in.
+              Review final standings and browse every match result from the completed tournament.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link
-              to="/matches"
+              to="/matches?view=completed"
               className="inline-flex items-center justify-center rounded-lg bg-[var(--color-accent)] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
             >
-              Start Predicting
+              Explore Match History
             </Link>
             <Link
               to="/leaderboard"
               className="inline-flex items-center justify-center rounded-lg border border-white/18 bg-black/20 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-black/30 hover:border-white/28"
             >
-              View Leaderboard
+              View Final Standings
             </Link>
           </div>
         </div>
