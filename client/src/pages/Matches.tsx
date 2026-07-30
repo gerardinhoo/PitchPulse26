@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import api from "../api/axios";
 import { useAuth } from "../hooks/useAuth";
 import MatchCard from "../components/MatchCard";
@@ -534,6 +534,12 @@ export default function Matches() {
               <p className="text-sm text-white/80">
                 Predictions are closed, but the full tournament history remains available.
               </p>
+              <Link
+                to="/statistics"
+                className="mt-3 inline-flex min-h-10 items-center text-sm font-medium text-amber-200 hover:text-amber-100"
+              >
+                View Tournament Statistics
+              </Link>
             </section>
           )}
 

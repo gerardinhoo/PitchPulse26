@@ -51,5 +51,6 @@ describe("Navbar", () => {
     });
 
     expect(screen.queryByText("Admin")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Statistics").length).toBeGreaterThanOrEqual(1);
   });
 });

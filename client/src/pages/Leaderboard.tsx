@@ -255,6 +255,12 @@ export default function Leaderboard() {
             <p className="mt-3 text-sm text-white/65">
               The competition is complete. Explore the final rankings from the full tournament.
             </p>
+            <Link
+              to="/statistics"
+              className="mt-4 inline-flex min-h-10 items-center text-sm font-medium text-amber-200 hover:text-amber-100"
+            >
+              View Tournament Statistics
+            </Link>
           </section>
         )}
 

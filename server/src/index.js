@@ -11,6 +11,7 @@ import teamsRoutes from "../routes/teams.js";
 import matchesRoutes from "../routes/matches.js";
 import groupsRoutes from "../routes/groups.js";
 import remindersRoutes from "../routes/reminders.js";
+import statisticsRoutes from "../routes/statistics.js";
 import { requestLogger } from "../middleware/requestLogger.js";
 import { logger } from "../lib/logger.js";
 import { prisma } from "../lib/prisma.js";
@@ -60,6 +61,7 @@ app.use("/api/teams", teamsRoutes);
 app.use("/api/matches", matchesRoutes);
 app.use("/api/groups", groupsRoutes);
 app.use("/api/reminders", remindersRoutes);
+app.use("/api/statistics", statisticsRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({
