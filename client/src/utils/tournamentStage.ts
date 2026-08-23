@@ -98,6 +98,15 @@ export function getTournamentRoundProgress(
   });
 }
 
+/** Static completed knockout rounds for archive UX while match data is still loading. */
+export function getArchiveKnockoutRoundProgress(): TournamentRoundProgress[] {
+  return TOURNAMENT_ROUND_BLUEPRINT.map((round) => ({
+    ...round,
+    status: "completed",
+    placeholder: false,
+  }));
+}
+
 export function getMatchStage(match: { tournamentStage?: TournamentStage }): TournamentStage {
   return match.tournamentStage ?? "GROUP_STAGE";
 }
