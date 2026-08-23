@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getArchiveKnockoutRoundProgress,
   getCountdownToKickoff,
   getFinalResultLabel,
   getKickoffDetailLabel,
@@ -54,8 +55,7 @@ describe("tournamentStage helpers", () => {
   });
 
   it("builds round progress from live knockout fixtures", () => {
-    const progress = getTournamentRoundProgress([
-      {
+    const progress = getTournamentRoundProgress([      {
         tournamentStage: "ROUND_OF_32",
         homeScore: 1,
         awayScore: 0,
@@ -94,6 +94,24 @@ describe("tournamentStage helpers", () => {
       stage: "FINAL",
       status: "coming_soon",
       placeholder: true,
+    });
+  });
+
+  it("returns completed archive knockout progress without match data", () => {
+    const progress = getArchiveKnockoutRoundProgress();
+
+    expect(progress).toHaveLength(6);
+    expect(progress.every((round) => round.status === "completed")).toBe(true);
+    expect(progress.every((round) => round.placeholder === false)).toBe(true);
+    expect(progress[0]).toMatchObject({
+      stage: "ROUND_OF_32",
+      fixtureCount: 16,
+      label: "Round of 32",
+    });
+    expect(progress[5]).toMatchObject({
+      stage: "FINAL",
+      fixtureCount: 1,
+      label: "Final",
     });
   });
 

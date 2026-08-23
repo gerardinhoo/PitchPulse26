@@ -12,6 +12,7 @@ import {
   POST_TOURNAMENT_UX_FREEZE,
 } from "../utils/tournamentComplete";
 import {
+  getArchiveKnockoutRoundProgress,
   getRoundStatusLabel,
   getTournamentRoundProgress,
   type TournamentStage,
@@ -65,6 +66,26 @@ function getWorldCupWinnerLabel(match: Match | null): string | null {
   if (match.homeScore > match.awayScore) return match.homeTeam.name;
   if (match.awayScore > match.homeScore) return match.awayTeam.name;
   return null;
+}
+
+function BracketProgressSkeleton({ condensed = false }: { condensed?: boolean }) {
+  const rows = condensed ? 6 : 6;
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, index) => (
+        <div
+          key={index}
+          className={`rounded-xl border border-white/10 bg-white/5 ${
+            condensed ? "px-3 py-2" : "px-4 py-3"
+          } motion-safe:animate-pulse`}
+          aria-hidden="true"
+        >
+          <div className={`rounded bg-white/10 ${condensed ? "h-4 w-28" : "h-5 w-32"}`} />
+          {!condensed && <div className="mt-2 h-3 w-20 rounded bg-white/8" />}
+        </div>
+      ))}
+    </>
+  );
 }
 
 function ProgressRoundRow({
@@ -198,10 +219,15 @@ export default function Home() {
   const showArchiveHome =
     POST_TOURNAMENT_UX_FREEZE || !matchesLoaded || tournamentComplete;
 
-  const tournamentRoundProgress = useMemo(
-    () => getTournamentRoundProgress(allMatches),
-    [allMatches],
-  );
+  const tournamentRoundProgress = useMemo(() => {
+    if (!matchesLoaded) {
+      if (POST_TOURNAMENT_UX_FREEZE) {
+        return getArchiveKnockoutRoundProgress();
+      }
+      return [];
+    }
+    return getTournamentRoundProgress(allMatches);
+  }, [allMatches, matchesLoaded]);
   const mobileTournamentRoundProgress = useMemo(
     () => tournamentRoundProgress.filter((round) => MOBILE_PROGRESS_STAGES.has(round.stage)),
     [tournamentRoundProgress],
@@ -334,14 +360,22 @@ export default function Home() {
                   Every round from the Round of 32 through the Final.
                 </p>
                 <div className="mt-3 space-y-1.5 lg:hidden">
-                  {mobileTournamentRoundProgress.map((round) => (
-                    <ProgressRoundRow key={round.stage} round={round} condensed />
-                  ))}
+                  {!matchesLoaded && !POST_TOURNAMENT_UX_FREEZE ? (
+                    <BracketProgressSkeleton condensed />
+                  ) : (
+                    mobileTournamentRoundProgress.map((round) => (
+                      <ProgressRoundRow key={round.stage} round={round} condensed />
+                    ))
+                  )}
                 </div>
                 <div className="mt-4 hidden space-y-2 lg:block">
-                  {tournamentRoundProgress.map((round) => (
-                    <ProgressRoundRow key={round.stage} round={round} />
-                  ))}
+                  {!matchesLoaded && !POST_TOURNAMENT_UX_FREEZE ? (
+                    <BracketProgressSkeleton />
+                  ) : (
+                    tournamentRoundProgress.map((round) => (
+                      <ProgressRoundRow key={round.stage} round={round} />
+                    ))
+                  )}
                 </div>
               </div>
             </aside>
