@@ -5,11 +5,22 @@ build
 tests/load/fixtures/*.csv
 !tests/load/fixtures/*.csv.example
 
+# OS / editor noise
+.DS_Store
+
+# Local SQLite / database artifacts (never commit)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
 # Terraform
 infra/.terraform/
 infra/*.tfstate*
 infra/terraform.tfvars
 infra/.terraform.lock.hcl
+*.tfplan
+tfplan-*
 
 # Private interview prep (local only)
 docs/interview-talking-points.md
