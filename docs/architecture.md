@@ -26,7 +26,8 @@ flowchart TB
   end
 
   subgraph Delivery
-    GH[GitHub Actions]
+    GH[GitHub Actions<br/>Lambda zip deploy]
+    AmplifyGit[Amplify GitHub integration<br/>frontend rebuild]
     TF[Terraform infra/]
   end
 
@@ -39,7 +40,7 @@ flowchart TB
   Lambda --> CW
   GH -->|build + deploy zip| S3
   S3 --> Lambda
-  GH -->|Amplify rebuild on main| Amplify
+  AmplifyGit --> Amplify
   TF --> Amplify
   TF --> APIGW
   TF --> Lambda

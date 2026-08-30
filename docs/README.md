@@ -16,6 +16,8 @@ PitchPulse 26 case-study documentation. The tournament is complete; the app rema
 | [runbooks/deployment-rollback.md](runbooks/deployment-rollback.md) | Amplify / Lambda rollback |
 | [performance/load-test-baseline.md](performance/load-test-baseline.md) | Artillery baseline notes |
 | [screenshots/README.md](screenshots/README.md) | Screenshot capture checklist |
+| [planning/USER_STORIES.md](planning/USER_STORIES.md) | Historical planning backlog (stale TODOs; not source of truth) |
 | [../server/prisma/ARCHIVE.md](../server/prisma/ARCHIVE.md) | Fixture import + reminder archive |
+| [../SECURITY.md](../SECURITY.md) | Public security / reporting notes |
 
 Start with the root [README.md](../README.md).

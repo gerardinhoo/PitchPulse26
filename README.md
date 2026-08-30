@@ -7,12 +7,14 @@ The World Cup 2026 tournament is complete. The application remains available as 
 | | |
 |---|---|
 | **Live application** | [https://pitchpulse26.com](https://pitchpulse26.com) |
+| **Tournament statistics** (public) | [https://pitchpulse26.com/statistics](https://pitchpulse26.com/statistics) |
+| **Final standings** (public) | [https://pitchpulse26.com/leaderboard](https://pitchpulse26.com/leaderboard) |
 | **GitHub repository** | [github.com/gerardinhoo/PitchPulse26](https://github.com/gerardinhoo/PitchPulse26) |
-| **Tournament statistics** | [https://pitchpulse26.com/statistics](https://pitchpulse26.com/statistics) |
-| **Final standings** | [https://pitchpulse26.com/leaderboard](https://pitchpulse26.com/leaderboard) |
-| **Match archive** | [https://pitchpulse26.com/matches](https://pitchpulse26.com/matches) |
+| **Match archive** | [https://pitchpulse26.com/matches](https://pitchpulse26.com/matches) (requires sign-in) |
 
 > Free to play. No betting. No gambling.
+>
+> Best public tour for recruiters: **Home → Statistics → Leaderboard**. The match archive UI requires authentication; fixture data is also available via the public API after sign-in.
 
 ---
 
@@ -89,10 +91,12 @@ flowchart LR
   APIGW --> Lambda[AWS Lambda<br/>Express API]
   Lambda --> Neon[(Neon PostgreSQL)]
   Lambda --> Resend[Resend<br/>transactional email]
-  GH[GitHub Actions] --> Amplify
-  GH --> Lambda
+  GH[GitHub Actions] --> Lambda
+  AmplifyGit[Amplify GitHub integration] --> Amplify
   TF[Terraform] --> AWS[AWS infra]
 ```
+
+Frontend deploys when Amplify rebuilds from `main` via its GitHub connection. Backend deploys from GitHub Actions (Lambda zip + health check). Terraform provisions AWS resources; it is not applied on every commit.
 
 Details: [docs/architecture.md](docs/architecture.md).
 
@@ -154,7 +158,8 @@ See [docs/security.md](docs/security.md).
 Workflow: [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)
 
 On PRs and pushes to `main`: frontend lint/test/build + backend tests.  
-On push to `main`: package Lambda, upload S3 artifact, update function code, curl `/api/health`.
+On push to `main`: package Lambda, upload S3 artifact, update function code, curl `/api/health`.  
+Amplify separately rebuilds the frontend from the `main` branch (not the Lambda job).
 
 Match reminders workflow ([`.github/workflows/reminders.yml`](.github/workflows/reminders.yml)): **scheduled cron disabled** after tournament completion; `workflow_dispatch` retained for manual dry-runs.
 
@@ -173,9 +178,9 @@ See [docs/observability.md](docs/observability.md).
 
 ## 12. Security and Data Protection
 
-JWT auth, Zod input validation, Helmet, rate-limited auth routes, admin role checks, prediction lock after kickoff, audit trail for admin score changes, secrets via env/SSM/GitHub secrets — not committed.
+JWT auth, Zod input validation, Helmet, rate-limited auth routes, admin role checks, prediction lock after kickoff, audit trail for admin score changes, secrets via env/SSM/GitHub secrets — not committed. See [SECURITY.md](SECURITY.md) and [docs/security.md](docs/security.md).
 
-No betting or gambling features. See [docs/security.md](docs/security.md).
+No betting or gambling features.
 
 ---
 
@@ -293,7 +298,7 @@ Docker Compose (frontend + backend against Neon from `server/.env`) is also supp
 ## 20. Deployment Notes
 
 1. Merge to `main` → CI runs checks → Lambda artifact deploy + health check.
-2. Amplify rebuilds the frontend from `main`.
+2. Amplify’s GitHub integration rebuilds the frontend from `main` (separate from the Lambda workflow).
 3. Apply Prisma migrations to the **correct** Neon database **before** relying on schema-dependent code.
 4. Validate `/api/health`, `/api/ready`, key UI routes, and (if relevant) statistics/leaderboard.
 5. Rollback: [docs/runbooks/deployment-rollback.md](docs/runbooks/deployment-rollback.md) and [docs/production-runbook.md](docs/production-runbook.md).
@@ -311,15 +316,36 @@ PitchPulse26/
 │   └── prisma/ARCHIVE.md   # Historical import / reminder notes
 ├── infra/                  # Terraform (Lambda, API GW, Amplify, monitoring, SES identity remnants)
 ├── docs/                   # Case-study documentation (start here)
-├── .github/workflows/      # CI/CD + reminders (manual dispatch)
-└── USER_STORIES.md         # Historical product backlog
+├── .github/workflows/      # CI/CD (Lambda) + reminders (manual dispatch)
+├── SECURITY.md             # Public security / reporting notes
+└── README.md               # Start here
 ```
+
+Historical planning notes (not a delivery checklist): [docs/planning/USER_STORIES.md](docs/planning/USER_STORIES.md).
 
 ---
 
-## 22. Screenshots
+## 22. Application Preview
 
-No committed screenshot assets yet. See [docs/screenshots/README.md](docs/screenshots/README.md) for the recommended capture list (homepage, archive, standings, statistics, admin, mobile).
+Public pages to open first: [Home](https://pitchpulse26.com), [Statistics](https://pitchpulse26.com/statistics), [Leaderboard](https://pitchpulse26.com/leaderboard).
+
+### Tournament Archive
+
+The production app remains available as the completed tournament archive — browse the final World Cup 2026 state on the live site.
+
+![PitchPulse26 tournament archive](docs/screenshots/homepage.png)
+
+### Tournament Statistics
+
+The statistics view summarizes completed matches, prediction volume, accuracy, and overall tournament activity.
+
+![PitchPulse26 tournament statistics](docs/screenshots/statistics.png)
+
+### Final Leaderboard
+
+The leaderboard shows final standings calculated from submitted predictions and match results.
+
+![PitchPulse26 final leaderboard](docs/screenshots/leaderboard.png)
 
 ---
 
